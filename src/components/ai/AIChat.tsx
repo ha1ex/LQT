@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useAIChat } from '@/hooks/useAIChat';
 import { ChatContext } from '@/types/ai';
@@ -145,101 +146,162 @@ export const AIChat: React.FC<AIChatProps> = ({ context }) => {
         </Card>
       )}
 
-      {/* Chat Messages */}
-      <Card className="flex flex-col h-[600px]">{/* Увеличил высоту для лучшего UX */}
-        <ScrollArea className="flex-1 p-4" ref={scrollAreaRef}>
-          {messages.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full text-center">
-              <Bot className="h-16 w-16 text-muted-foreground mb-4" />
-              <h3 className="text-lg font-semibold mb-2">Привет! Я ваш AI Life Coach</h3>
-              <p className="text-muted-foreground mb-4">
-                Задайте мне любой вопрос о ваших данных, целях или гипотезах. 
-                Я проанализирую информацию и дам персонализированные рекомендации.
-              </p>
-              <p className="text-sm text-muted-foreground">
-                Попробуйте быстрые вопросы выше или напишите что-то свое!
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {messages.map((message) => (
-                <div
-                  key={message.id}
-                  className={`flex gap-3 ${message.type === 'user' ? 'justify-end' : 'justify-start'} mb-4`}
-                >
-                  {message.type === 'ai' && (
-                    <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center flex-shrink-0 mt-1">
-                      <Bot className="h-4 w-4 text-primary-foreground" />
-                    </div>
-                  )}
-                  <div className="flex flex-col max-w-[75%]">
-                    <div
-                      className={`rounded-2xl px-4 py-3 ${
-                        message.type === 'user'
-                          ? 'bg-primary text-primary-foreground ml-auto'
-                          : 'bg-muted'
-                      }`}
-                    >
-                      <p className="text-sm whitespace-pre-wrap leading-relaxed">{message.content}</p>
-                    </div>
-                    <p className={`text-xs text-muted-foreground mt-1 ${
-                      message.type === 'user' ? 'text-right mr-2' : 'ml-2'
-                    }`}>
-                      {message.timestamp.toLocaleTimeString('ru-RU', { 
-                        hour: '2-digit', 
-                        minute: '2-digit' 
-                      })}
-                    </p>
-                  </div>
-                  {message.type === 'user' && (
-                    <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center flex-shrink-0 mt-1">
-                      <User className="h-4 w-4 text-secondary-foreground" />
-                    </div>
-                  )}
-                </div>
-              ))}
-              {loading && (
-                <div className="flex gap-3 justify-start mb-4">
-                  <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center flex-shrink-0 mt-1">
-                    <Bot className="h-4 w-4 text-primary-foreground" />
-                  </div>
-                  <div className="bg-muted rounded-2xl px-4 py-3">
-                    <div className="flex items-center gap-1">
-                      <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                      <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                      <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
-                    </div>
+      {/* Horizontal Layout: Input Left, Chat Right */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 h-[600px]">
+        {/* Input Panel - Left Side */}
+        <Card className="lg:col-span-1 flex flex-col">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm flex items-center gap-2">
+              <Send className="h-4 w-4" />
+              Ваш вопрос
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="flex-1 flex flex-col gap-4">
+            <div className="flex-1 flex flex-col gap-3">
+              <Textarea
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+                onKeyPress={handleKeyPress}
+                placeholder="Задайте развернутый вопрос о ваших данных, целях, гипотезах или попросите совет по улучшению жизни..."
+                disabled={loading}
+                className="flex-1 min-h-[120px] resize-none"
+              />
+              
+              {/* Quick Actions in Input Panel */}
+              {quickActions.length > 0 && (
+                <div className="space-y-2">
+                  <p className="text-xs text-muted-foreground">Или выберите готовый вопрос:</p>
+                  <div className="flex flex-wrap gap-2">
+                    {quickActions.slice(0, 4).map((action, index) => (
+                      <Badge
+                        key={index}
+                        variant="outline"
+                        className="cursor-pointer hover:bg-muted text-xs"
+                        onClick={() => handleQuickAction(action)}
+                      >
+                        {action}
+                      </Badge>
+                    ))}
                   </div>
                 </div>
               )}
             </div>
-          )}
-        </ScrollArea>
+            
+            <div className="space-y-2">
+              <Button 
+                onClick={handleSendMessage} 
+                disabled={!inputValue.trim() || loading}
+                className="w-full"
+                size="lg"
+              >
+                <Send className="h-4 w-4 mr-2" />
+                {loading ? 'Отправка...' : 'Отправить'}
+              </Button>
+              
+              {error && (
+                <p className="text-sm text-destructive">{error}</p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
 
-        {/* Input Area */}
-        <div className="border-t p-4">
-          <div className="flex gap-2">
-            <Input
-              value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              onKeyPress={handleKeyPress}
-              placeholder="Задайте вопрос о ваших данных..."
-              disabled={loading}
-              className="flex-1"
-            />
-            <Button 
-              onClick={handleSendMessage} 
-              disabled={!inputValue.trim() || loading}
-              size="icon"
-            >
-              <Send className="h-4 w-4" />
-            </Button>
-          </div>
-          {error && (
-            <p className="text-sm text-destructive mt-2">{error}</p>
-          )}
-        </div>
-      </Card>
+        {/* Chat Panel - Right Side */}
+        <Card className="lg:col-span-2 flex flex-col">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm flex items-center gap-2">
+              <Bot className="h-4 w-4" />
+              Ответы AI Coach
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="flex-1 p-0">
+            <ScrollArea className="h-full p-4" ref={scrollAreaRef}>
+              {messages.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-full text-center">
+                  <Bot className="h-16 w-16 text-muted-foreground mb-4" />
+                  <h3 className="text-lg font-semibold mb-2">Привет! Я ваш AI Life Coach</h3>
+                  <p className="text-muted-foreground mb-4">
+                    Задайте мне любой вопрос о ваших данных, целях или гипотезах. 
+                    Я проанализирую информацию и дам персонализированные рекомендации.
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Введите вопрос в поле слева или выберите быстрый вопрос!
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {messages.map((message, index) => (
+                    <div key={message.id} className="space-y-2">
+                      {message.type === 'user' && (
+                        <div className="flex items-start gap-3">
+                          <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center flex-shrink-0">
+                            <User className="h-4 w-4 text-secondary-foreground" />
+                          </div>
+                          <div className="flex-1">
+                            <div className="bg-secondary rounded-lg px-4 py-3">
+                              <p className="text-sm font-medium mb-1">Ваш вопрос:</p>
+                              <p className="text-sm whitespace-pre-wrap leading-relaxed">{message.content}</p>
+                            </div>
+                            <p className="text-xs text-muted-foreground mt-1 ml-2">
+                              {message.timestamp.toLocaleTimeString('ru-RU', { 
+                                hour: '2-digit', 
+                                minute: '2-digit' 
+                              })}
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {message.type === 'ai' && (
+                        <div className="flex items-start gap-3">
+                          <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
+                            <Bot className="h-4 w-4 text-primary-foreground" />
+                          </div>
+                          <div className="flex-1">
+                            <div className="bg-muted rounded-lg px-4 py-3">
+                              <p className="text-sm font-medium mb-2 flex items-center gap-2">
+                                <Sparkles className="h-4 w-4 text-yellow-500" />
+                                Ответ AI Coach:
+                              </p>
+                              <p className="text-sm whitespace-pre-wrap leading-relaxed">{message.content}</p>
+                            </div>
+                            <p className="text-xs text-muted-foreground mt-1 ml-2">
+                              {message.timestamp.toLocaleTimeString('ru-RU', { 
+                                hour: '2-digit', 
+                                minute: '2-digit' 
+                              })}
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                  
+                  {loading && (
+                    <div className="flex items-start gap-3">
+                      <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
+                        <Bot className="h-4 w-4 text-primary-foreground" />
+                      </div>
+                      <div className="flex-1">
+                        <div className="bg-muted rounded-lg px-4 py-3">
+                          <p className="text-sm font-medium mb-2 flex items-center gap-2">
+                            <Sparkles className="h-4 w-4 text-yellow-500" />
+                            AI Coach думает...
+                          </p>
+                          <div className="flex items-center gap-1">
+                            <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                            <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                            <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </ScrollArea>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 };
