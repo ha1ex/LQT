@@ -841,35 +841,46 @@ const LifeQualityTracker = () => {
               ))}
             </div>
           </div>
-          <div className="bg-gradient-to-br from-white to-slate-50 rounded-2xl p-6 shadow-inner">
+          <div className="bg-card border border-border rounded-2xl p-6">
             <ResponsiveContainer width="100%" height={350}>
-              <AreaChart data={getFilteredData(timeFilter)}>
+              <RechartsLineChart data={getFilteredData(timeFilter)}>
                 <defs>
                   <linearGradient id="overallGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="hsl(217 91% 60%)" stopOpacity={0.3}/>
-                    <stop offset="95%" stopColor="hsl(217 91% 60%)" stopOpacity={0.05}/>
+                    <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0.05}/>
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
-                <XAxis dataKey="week" className="text-muted-foreground text-sm" />
-                <YAxis domain={[0, 10]} className="text-muted-foreground text-sm" />
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                <XAxis 
+                  dataKey="week" 
+                  stroke="hsl(var(--muted-foreground))" 
+                  fontSize={12}
+                />
+                <YAxis 
+                  domain={[0, 10]} 
+                  stroke="hsl(var(--muted-foreground))" 
+                  fontSize={12}
+                />
                 <Tooltip 
                   contentStyle={{ 
                     backgroundColor: 'hsl(var(--card))', 
-                    border: 'none',
-                    borderRadius: '16px',
-                    boxShadow: 'var(--shadow-lg)'
+                    border: '1px solid hsl(var(--border))',
+                    borderRadius: '8px',
+                    boxShadow: 'var(--shadow-lg)',
+                    color: 'hsl(var(--card-foreground))'
                   }}
+                  formatter={(value: any) => [`${value.toFixed(1)}`, 'Общий индекс']}
+                  labelFormatter={(label) => `Неделя: ${label}`}
                 />
-                <Area
+                <Line
                   type="monotone"
                   dataKey="overall"
-                  stroke="hsl(217 91% 60%)"
-                  fillOpacity={1}
-                  fill="url(#overallGradient)"
+                  stroke="hsl(var(--primary))"
                   strokeWidth={3}
+                  dot={{ fill: 'hsl(var(--primary))', strokeWidth: 2, r: 6 }}
+                  activeDot={{ r: 8, fill: 'hsl(var(--primary))' }}
                 />
-              </AreaChart>
+              </RechartsLineChart>
             </ResponsiveContainer>
           </div>
         </div>
