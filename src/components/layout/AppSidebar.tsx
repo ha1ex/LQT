@@ -86,7 +86,7 @@ export function AppSidebar() {
                       className={getNavClass(isActive(item.url))}
                     >
                       <item.icon className="w-4 h-4 mr-2 flex-shrink-0" />
-                      {!collapsed && <span>{item.title}</span>}
+                      <span>{!collapsed ? item.title : ''}</span>
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -101,13 +101,11 @@ export function AppSidebar() {
             open={isOtherOpen || hasActiveOther} 
             onOpenChange={setIsOtherOpen}
           >
-            <CollapsibleTrigger asChild>
-              <SidebarGroupLabel className="flex items-center justify-between cursor-pointer hover:text-foreground">
-                Прочее
-                {!collapsed && (
-                  <ChevronDown className={`w-4 h-4 transition-transform ${isOtherOpen || hasActiveOther ? 'rotate-180' : ''}`} />
-                )}
-              </SidebarGroupLabel>
+            <CollapsibleTrigger className="flex items-center justify-between cursor-pointer hover:text-foreground w-full p-2">
+              <SidebarGroupLabel>Прочее</SidebarGroupLabel>
+              {!collapsed && (
+                <ChevronDown className={`w-4 h-4 transition-transform ${isOtherOpen || hasActiveOther ? 'rotate-180' : ''}`} />
+              )}
             </CollapsibleTrigger>
             <CollapsibleContent>
               <SidebarGroupContent>
@@ -121,7 +119,7 @@ export function AppSidebar() {
                           className={getNavClass(isActive(item.url))}
                         >
                           <item.icon className="w-4 h-4 mr-2 flex-shrink-0" />
-                          {!collapsed && <span>{item.title}</span>}
+                          <span>{!collapsed ? item.title : ''}</span>
                         </NavLink>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
