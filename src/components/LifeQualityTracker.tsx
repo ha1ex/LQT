@@ -941,7 +941,7 @@ const LifeQualityTracker = () => {
             </div>
             <div className="space-y-3">
               {generateWeeklyInsights().slice(0, 3).map((insight, index) => (
-                <div key={index} className="p-3 bg-gradient-to-r from-slate-50 to-transparent rounded-lg border border-slate-100">
+                <div key={index} className="p-3 bg-muted/30 rounded-lg border border-border">
                   <p className="text-sm text-muted-foreground leading-relaxed">
                     {typeof insight === 'string' ? insight : insight.description || insight.title || ''}
                   </p>

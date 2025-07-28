@@ -126,7 +126,7 @@ const PersonalInsights: React.FC<PersonalInsightsProps> = ({
       <Card className={`card-modern animate-fade-in ${className}`}>
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-lg">
-            <Brain className="w-5 h-5 text-gray-600" />
+            <Brain className="w-5 h-5 text-primary" />
             Ваши инсайты
           </CardTitle>
         </CardHeader>
@@ -150,7 +150,7 @@ const PersonalInsights: React.FC<PersonalInsightsProps> = ({
       <Card className={`card-modern animate-fade-in ${className}`}>
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-lg">
-            <Brain className="w-5 h-5 text-gray-600" />
+            <Brain className="w-5 h-5 text-primary" />
             Ваши инсайты
           </CardTitle>
         </CardHeader>
@@ -170,7 +170,7 @@ const PersonalInsights: React.FC<PersonalInsightsProps> = ({
     <Card className={`card-modern animate-fade-in ${className}`}>
       <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-lg">
-            <Brain className="w-5 h-5 text-gray-600" />
+            <Brain className="w-5 h-5 text-primary" />
             Ваши инсайты
           </CardTitle>
       </CardHeader>
