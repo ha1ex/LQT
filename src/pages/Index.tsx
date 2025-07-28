@@ -1,11 +1,7 @@
 import LifeQualityTracker from "@/components/LifeQualityTracker";
 
 const Index = () => {
-  return (
-    <div className="min-h-full">
-      <LifeQualityTracker />
-    </div>
-  );
+  return <LifeQualityTracker />;
 };
 
 export default Index;

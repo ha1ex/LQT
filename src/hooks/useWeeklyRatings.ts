@@ -247,10 +247,10 @@ export const useWeeklyRatings = () => {
       
       const ratings: Record<string, number> = {};
       testMetrics.forEach(metric => {
-        // Add some seasonal variation and randomness  
-        const baseScore = 50 + Math.sin((i / 20) * Math.PI * 2) * 20; // Seasonal wave
-        const randomVariation = (Math.random() - 0.5) * 40; // Random ±20
-        ratings[metric] = Math.max(1, Math.min(100, Math.round(baseScore + randomVariation)));
+        // Add some seasonal variation and randomness
+        const baseScore = 5 + Math.sin((i / 20) * Math.PI * 2) * 2; // Seasonal wave
+        const randomVariation = (Math.random() - 0.5) * 4; // Random ±2
+        ratings[metric] = Math.max(1, Math.min(10, Math.round(baseScore + randomVariation)));
       });
 
       const ratingsValues = Object.values(ratings);
@@ -258,10 +258,10 @@ export const useWeeklyRatings = () => {
       
       // Determine mood based on overall score
       let mood: WeeklyRating['mood'] = 'neutral';
-      if (overallScore >= 80) mood = 'excellent';
-      else if (overallScore >= 65) mood = 'good';
-      else if (overallScore >= 40) mood = 'neutral';
-      else if (overallScore >= 25) mood = 'poor';
+      if (overallScore >= 8) mood = 'excellent';
+      else if (overallScore >= 6.5) mood = 'good';
+      else if (overallScore >= 4) mood = 'neutral';
+      else if (overallScore >= 2.5) mood = 'poor';
       else mood = 'terrible';
 
       newRatings[weekId] = {

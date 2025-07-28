@@ -92,29 +92,12 @@ export const GlobalDataProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const toggleDemoMode = useCallback(() => {
     const currentDemoMode = localStorage.getItem('lqt_demo_mode') === 'true';
     
-    setSyncStatus(prev => ({ ...prev, isLoading: true }));
-    
     if (currentDemoMode) {
-      // Turning off demo mode - clear all data including demo flag
+      // Turning off demo mode - clear demo data
       localStorage.removeItem('lqt_demo_mode');
-      localStorage.removeItem('lqt_hypotheses');
-      localStorage.removeItem('lqt_weekly_ratings');
-      localStorage.removeItem('lqt_subjects');
-      localStorage.removeItem('lqt_ai_insights');
-      localStorage.removeItem('lqt_ai_chat_history');
-      
-      setTimeout(() => {
-        setSyncStatus(prev => ({ ...prev, isLoading: false }));
-        window.location.reload();
-      }, 500);
+      clearAllData();
     } else {
-      // Turning on demo mode - clear real data first, then generate demo data
-      localStorage.removeItem('lqt_hypotheses');
-      localStorage.removeItem('lqt_weekly_ratings');
-      localStorage.removeItem('lqt_subjects');
-      localStorage.removeItem('lqt_ai_insights');
-      localStorage.removeItem('lqt_ai_chat_history');
-      
+      // Turning on demo mode - generate demo data
       localStorage.setItem('lqt_demo_mode', 'true');
       generateDemoData();
     }

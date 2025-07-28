@@ -35,9 +35,9 @@ export const generateComprehensiveRatingData = (): WeeklyRatingData => {
     const weeklyNotes: Record<string, string> = {};
 
     metrics.forEach(metric => {
-      const baseRating = 50 + Math.random() * 30; // 50-80 base range
-      const adjustedRating = Math.max(1, Math.min(100, 
-        Math.round(baseRating * seasonalFactor * trendFactor + (Math.random() - 0.5) * 10)
+      const baseRating = 5 + Math.random() * 3; // 5-8 base range
+      const adjustedRating = Math.max(1, Math.min(10, 
+        Math.round(baseRating * seasonalFactor * trendFactor + (Math.random() - 0.5))
       ));
       
       weeklyRatings[metric] = adjustedRating;
@@ -56,10 +56,10 @@ export const generateComprehensiveRatingData = (): WeeklyRatingData => {
       Object.values(weeklyRatings).reduce((sum, rating) => sum + rating, 0) / metrics.length
     );
 
-    const mood = overallScore >= 80 ? 'excellent' :
-                 overallScore >= 60 ? 'good' :
-                 overallScore >= 40 ? 'neutral' :
-                 overallScore >= 20 ? 'poor' : 'terrible';
+    const mood = overallScore >= 8 ? 'excellent' :
+                 overallScore >= 6 ? 'good' :
+                 overallScore >= 4 ? 'neutral' :
+                 overallScore >= 2 ? 'poor' : 'terrible';
 
     const keyEvents = [];
     if (Math.random() > 0.6) {
@@ -101,8 +101,8 @@ export const generateComprehensiveHypotheses = (): EnhancedHypothesis[] => {
       goal: {
         metricId: 'physical_health',
         description: 'Кардинально улучшить физическое состояние',
-        targetValue: 90,
-        currentValue: 40
+        targetValue: 9,
+        currentValue: 4
       },
       subjects: ['self'],
       conditions: 'Буду заниматься спортом 5 раз в неделю: 3 раза силовые + 2 раза кардио по 60 минут, соблюдать режим питания',
@@ -155,8 +155,8 @@ export const generateComprehensiveHypotheses = (): EnhancedHypothesis[] => {
       goal: {
         metricId: 'relationships',
         description: 'Построить глубокие отношения с близкими',
-        targetValue: 90,
-        currentValue: 60
+        targetValue: 9,
+        currentValue: 6
       },
       subjects: ['self', 'family', 'friends'],
       conditions: 'Буду проводить качественное время с семьей 2 часа в день, звонить друзьям раз в неделю, практиковать активное слушание',
@@ -203,8 +203,8 @@ export const generateComprehensiveHypotheses = (): EnhancedHypothesis[] => {
       goal: {
         metricId: 'productivity',
         description: 'Достичь пикового уровня продуктивности',
-        targetValue: 80,
-        currentValue: 50
+        targetValue: 8,
+        currentValue: 5
       },
       subjects: ['self'],
       conditions: 'Буду использовать технику Pomodoro, планировать день с вечера, убрать отвлекающие факторы, работать блоками по 90 минут',

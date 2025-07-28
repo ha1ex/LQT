@@ -1,4 +1,3 @@
-
 import { WeeklyRating } from '@/types/weeklyRating';
 import { AppDataState } from '@/types/app';
 
@@ -15,14 +14,6 @@ export const BASE_METRICS = [
   { id: 'travel', name: 'Путешествия', icon: '✈️', category: 'lifestyle' },
   { id: 'mental_health', name: 'Ментальное здоровье', icon: '🧠', category: 'mental' }
 ];
-
-// Helper function to ensure valid numeric values
-const ensureValidNumber = (value: number, defaultValue: number = 0): number => {
-  if (typeof value !== 'number' || isNaN(value) || !isFinite(value)) {
-    return defaultValue;
-  }
-  return value;
-};
 
 // Адаптер для преобразования данных из GlobalDataProvider в формат mockData
 export const adaptWeeklyRatingsToMockData = (
@@ -50,7 +41,7 @@ export const adaptWeeklyRatingsToMockData = (
           // Находим соответствующую метрику по ID
           const metric = BASE_METRICS.find(m => m.id === metricId);
           if (metric && typeof value === 'number' && !isNaN(value)) {
-            weekData[metric.name] = ensureValidNumber(value, 0);
+            weekData[metric.name] = value;
           }
         });
       }
@@ -62,10 +53,9 @@ export const adaptWeeklyRatingsToMockData = (
       
       let overallScore = 0;
       if (values.length > 0) {
-        const sum = values.reduce((sum, val) => sum + ensureValidNumber(val, 0), 0);
-        overallScore = ensureValidNumber(sum / values.length, 0);
+        overallScore = parseFloat((values.reduce((sum, val) => sum + val, 0) / values.length).toFixed(1));
       } else if (typeof rating.overallScore === 'number' && !isNaN(rating.overallScore)) {
-        overallScore = ensureValidNumber(rating.overallScore, 0);
+        overallScore = rating.overallScore;
       }
       
       console.log('Week data calculation:', { 
@@ -75,7 +65,7 @@ export const adaptWeeklyRatingsToMockData = (
         originalOverallScore: rating.overallScore 
       });
       
-      weekData.overall = overallScore;
+      weekData.overall = isNaN(overallScore) ? 0 : overallScore;
 
       return weekData;
     })
