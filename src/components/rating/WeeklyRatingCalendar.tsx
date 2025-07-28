@@ -10,6 +10,7 @@ import { CalendarDayData, WeeklyRating } from '@/types/weeklyRating';
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Plus, History } from 'lucide-react';
 import { EmptyStateCard } from '@/components/ui/empty-state-card';
 import { useGlobalData } from '@/contexts/GlobalDataProvider';
+import { ErrorBoundary } from '@/components/ui/error-boundary';
 import { HistoricalWeekEntry } from './HistoricalWeekEntry';
 import { HistoricalDataWizard } from './HistoricalDataWizard';
 
@@ -201,7 +202,8 @@ const WeeklyRatingCalendar: React.FC<WeeklyRatingCalendarProps> = ({
 
 
   return (
-    <div className="space-y-6">
+    <ErrorBoundary>
+      <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold">Календарь оценок</h2>
@@ -437,7 +439,8 @@ const WeeklyRatingCalendar: React.FC<WeeklyRatingCalendarProps> = ({
         onBulkSave={handleBulkSave}
         existingRatings={ratings}
       />
-    </div>
+      </div>
+    </ErrorBoundary>
   );
 };
 

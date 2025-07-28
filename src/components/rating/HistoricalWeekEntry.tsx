@@ -15,6 +15,7 @@ import { ru } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { WeeklyRating } from '@/types/weeklyRating';
 import { BASE_METRICS } from '@/utils/dataAdapter';
+import { useToast } from '@/hooks/use-toast';
 
 interface HistoricalWeekEntryProps {
   isOpen: boolean;
@@ -31,6 +32,7 @@ export const HistoricalWeekEntry: React.FC<HistoricalWeekEntryProps> = ({
   existingRating,
   selectedDate
 }) => {
+  const { toast } = useToast();
   const [weekDate, setWeekDate] = useState<Date>(selectedDate || new Date());
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [ratings, setRatings] = useState<Record<string, number>>({});
@@ -71,6 +73,14 @@ export const HistoricalWeekEntry: React.FC<HistoricalWeekEntryProps> = ({
 
   const addKeyEvent = () => {
     if (newEvent.trim()) {
+      if (keyEvents.length >= 10) {
+        toast({
+          title: "Слишком много событий",
+          description: "Максимум 10 ключевых событий на неделю",
+          variant: "destructive"
+        });
+        return;
+      }
       setKeyEvents(prev => [...prev, newEvent.trim()]);
       setNewEvent('');
     }
@@ -81,14 +91,52 @@ export const HistoricalWeekEntry: React.FC<HistoricalWeekEntryProps> = ({
   };
 
   const handleSave = () => {
+    // Validate data before saving
     const ratingData: Partial<WeeklyRating> = {
       ratings,
       notes,
       mood,
       keyEvents
     };
-    onSave(weekDate, ratingData);
-    onClose();
+
+    // Basic validation
+    if (Object.keys(ratings).length === 0) {
+      toast({
+        title: "Ошибка валидации",
+        description: "Необходимо оценить хотя бы один критерий",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Validate ratings are in correct range
+    const hasInvalidRatings = Object.values(ratings).some(rating => 
+      typeof rating !== 'number' || rating < 1 || rating > 10 || !Number.isInteger(rating)
+    );
+
+    if (hasInvalidRatings) {
+      toast({
+        title: "Ошибка валидации",
+        description: "Все оценки должны быть целыми числами от 1 до 10",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      onSave(weekDate, ratingData);
+      toast({
+        title: "Успешно сохранено",
+        description: existingRating ? "Неделя обновлена" : "Новая неделя добавлена"
+      });
+      onClose();
+    } catch (error) {
+      toast({
+        title: "Ошибка сохранения",
+        description: "Не удалось сохранить данные. Попробуйте еще раз.",
+        variant: "destructive"
+      });
+    }
   };
 
   const getRatingColor = (rating: number) => {
@@ -101,12 +149,19 @@ export const HistoricalWeekEntry: React.FC<HistoricalWeekEntryProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent 
+        className="max-w-4xl max-h-[90vh] overflow-y-auto"
+        aria-describedby="historical-week-description"
+      >
         <DialogHeader>
           <DialogTitle>
             {existingRating ? 'Редактировать неделю' : 'Добавить историческую неделю'}
           </DialogTitle>
         </DialogHeader>
+        
+        <div id="historical-week-description" className="sr-only">
+          Форма для добавления или редактирования оценок качества жизни за выбранную неделю
+        </div>
 
         <div className="space-y-6">
           {/* Week Selection */}
@@ -118,7 +173,13 @@ export const HistoricalWeekEntry: React.FC<HistoricalWeekEntryProps> = ({
               <div className="flex items-center gap-4">
                 <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
                   <PopoverTrigger asChild>
-                    <Button variant="outline" className="w-[280px] justify-start text-left font-normal">
+                    <Button 
+                      variant="outline" 
+                      className="w-[280px] justify-start text-left font-normal"
+                      aria-label="Выберите неделю для оценки"
+                      aria-expanded={calendarOpen}
+                      aria-haspopup="dialog"
+                    >
                       <CalendarIcon className="mr-2 h-4 w-4" />
                       {format(weekStart, 'dd.MM.yyyy', { locale: ru })} - {format(weekEnd, 'dd.MM.yyyy', { locale: ru })}
                     </Button>
@@ -166,6 +227,8 @@ export const HistoricalWeekEntry: React.FC<HistoricalWeekEntryProps> = ({
                           size="sm"
                           className="aspect-square p-0 text-xs"
                           onClick={() => updateRating(metric.id, value)}
+                          aria-label={`Оценить ${metric.name} на ${value} из 10`}
+                          aria-pressed={ratings[metric.id] === value}
                         >
                           {value}
                         </Button>
@@ -176,6 +239,8 @@ export const HistoricalWeekEntry: React.FC<HistoricalWeekEntryProps> = ({
                       value={notes[metric.id] || ''}
                       onChange={(e) => updateNote(metric.id, e.target.value)}
                       className="min-h-[60px]"
+                      aria-label={`Заметка для ${metric.name}`}
+                      maxLength={500}
                     />
                   </div>
                 ))}
@@ -190,7 +255,7 @@ export const HistoricalWeekEntry: React.FC<HistoricalWeekEntryProps> = ({
             </CardHeader>
             <CardContent>
               <Select value={mood} onValueChange={(value) => setMood(value as WeeklyRating['mood'])}>
-                <SelectTrigger className="w-[200px]">
+                <SelectTrigger className="w-[200px]" aria-label="Выберите общее настроение">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -216,8 +281,10 @@ export const HistoricalWeekEntry: React.FC<HistoricalWeekEntryProps> = ({
                   value={newEvent}
                   onChange={(e) => setNewEvent(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && addKeyEvent()}
+                  aria-label="Добавить ключевое событие"
+                  maxLength={100}
                 />
-                <Button onClick={addKeyEvent} size="sm">
+                <Button onClick={addKeyEvent} size="sm" aria-label="Добавить событие">
                   <Plus className="w-4 h-4" />
                 </Button>
               </div>
@@ -230,6 +297,7 @@ export const HistoricalWeekEntry: React.FC<HistoricalWeekEntryProps> = ({
                         variant="ghost"
                         size="sm"
                         onClick={() => removeKeyEvent(index)}
+                        aria-label={`Удалить событие: ${event}`}
                       >
                         <Trash2 className="w-4 h-4" />
                       </Button>
