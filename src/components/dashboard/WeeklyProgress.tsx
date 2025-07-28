@@ -94,7 +94,7 @@ const WeeklyProgress: React.FC<WeeklyProgressProps> = ({
 
         {Math.abs(changePercent) > 5 && (
           <div className={`text-xs p-2 rounded-md ${
-            change > 0 ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'
+            change > 0 ? 'bg-green-500/10 text-green-600 dark:bg-green-400/10 dark:text-green-400' : 'bg-red-500/10 text-red-600 dark:bg-red-400/10 dark:text-red-400'
           }`}>
             {change > 0 ? '📈' : '📉'} {Math.abs(changePercent).toFixed(1)}% за неделю
           </div>

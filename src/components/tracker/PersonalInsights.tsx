@@ -107,9 +107,9 @@ const PersonalInsights: React.FC<PersonalInsightsProps> = ({
 
   const getCorrelationColor = (type: 'positive' | 'negative', percentage: number) => {
     if (type === 'positive') {
-      return 'text-green-600 bg-green-50 border-green-200';
+      return 'text-green-600 bg-green-500/10 border-green-500/20 dark:text-green-400 dark:bg-green-400/10 dark:border-green-400/20';
     } else {
-      return 'text-red-600 bg-red-50 border-red-200';
+      return 'text-red-600 bg-red-500/10 border-red-500/20 dark:text-red-400 dark:bg-red-400/10 dark:border-red-400/20';
     }
   };
 
