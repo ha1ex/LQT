@@ -265,9 +265,9 @@ const LifeQualityTracker = () => {
     
     const values = metrics
       .map(metric => weekData[metric.name])
-      .filter(value => typeof value === 'number' && value !== null && value !== undefined);
+      .filter(value => typeof value === 'number' && value !== null && value !== undefined && !isNaN(value));
     
-    return values.length > 0 ? values.reduce((sum, val) => sum + val, 0) / values.length : 0;
+    return values.length > 0 ? parseFloat((values.reduce((sum, val) => sum + val, 0) / values.length).toFixed(1)) : 0;
   };
 
   // Адаптированные данные из GlobalDataProvider
@@ -642,19 +642,24 @@ const LifeQualityTracker = () => {
       );
     }
 
-    const latestWeek = mockData[mockData.length - 1];
-    const prevWeek = mockData.length > 1 ? mockData[mockData.length - 2] : latestWeek;
-    const weekChange = latestWeek.overall - prevWeek.overall;
+    const latestWeek = mockData && mockData.length > 0 ? mockData[mockData.length - 1] : null;
+    const prevWeek = mockData && mockData.length > 1 ? mockData[mockData.length - 2] : latestWeek;
+    const weekChange = latestWeek && prevWeek && !isNaN(latestWeek.overall) && !isNaN(prevWeek.overall) 
+      ? latestWeek.overall - prevWeek.overall 
+      : 0;
     const filteredData = getFilteredData(timeFilter);
     
-    const topMetrics = allMetrics
+    const topMetrics = latestWeek ? allMetrics
       .map(metric => ({
         ...metric,
-        value: latestWeek[metric.name] || 0,
-        change: (latestWeek[metric.name] || 0) - (prevWeek[metric.name] || 0)
+        value: typeof latestWeek[metric.name] === 'number' && !isNaN(latestWeek[metric.name]) ? latestWeek[metric.name] : 0,
+        change: latestWeek && prevWeek 
+          ? (typeof latestWeek[metric.name] === 'number' && !isNaN(latestWeek[metric.name]) ? latestWeek[metric.name] : 0) - 
+            (typeof prevWeek[metric.name] === 'number' && !isNaN(prevWeek[metric.name]) ? prevWeek[metric.name] : 0)
+          : 0
       }))
       .sort((a, b) => b.value - a.value)
-      .slice(0, 6);
+      .slice(0, 6) : [];
 
     return (
       <div className="p-4 lg:p-6 space-y-6">
@@ -1251,12 +1256,14 @@ const LifeQualityTracker = () => {
 
     const metricData = mockData.map(week => ({
       ...week,
-      value: week[metric.name] || 0
+      value: typeof week[metric.name] === 'number' && !isNaN(week[metric.name]) ? week[metric.name] : 0
     }));
 
-    const latestValue = metricData[metricData.length - 1].value;
-    const prevValue = metricData[metricData.length - 2].value;
-    const change = latestValue - prevValue;
+    const latestValue = metricData.length > 0 && typeof metricData[metricData.length - 1].value === 'number' 
+      ? metricData[metricData.length - 1].value : 0;
+    const prevValue = metricData.length > 1 && typeof metricData[metricData.length - 2].value === 'number' 
+      ? metricData[metricData.length - 2].value : 0;
+    const change = !isNaN(latestValue) && !isNaN(prevValue) ? latestValue - prevValue : 0;
 
     return (
       <div className="space-y-6">

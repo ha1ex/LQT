@@ -40,7 +40,7 @@ export const adaptWeeklyRatingsToMockData = (
         Object.entries(rating.ratings).forEach(([metricId, value]) => {
           // Находим соответствующую метрику по ID
           const metric = BASE_METRICS.find(m => m.id === metricId);
-          if (metric && typeof value === 'number' && !isNaN(value)) {
+          if (metric && typeof value === 'number' && !isNaN(value) && value !== null && value !== undefined) {
             weekData[metric.name] = value;
           }
         });
