@@ -1,7 +1,9 @@
 import { useState, useCallback } from 'react';
 import { AIInsight, AIGoalSuggestion, AIHypothesisImprovement, AIAnalysisContext, AIResponse } from '@/types/ai';
+import { useDemoMode } from './useDemoMode';
 
 export const useAIInsights = () => {
+  const { isDemoMode } = useDemoMode();
   const [insights, setInsights] = useState<AIInsight[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -90,7 +92,109 @@ export const useAIInsights = () => {
     }
   };
 
-  const callOpenAI = async (prompt: string): Promise<AIResponse> => {
+  // Генерация демо ответов
+  const generateDemoResponse = (context: 'dashboard' | 'goals' | 'hypothesis'): AIResponse => {
+    switch (context) {
+      case 'dashboard':
+        return {
+          insights: [
+            {
+              id: `demo_insight_${Date.now()}`,
+              type: 'focus_area',
+              title: 'Отличная динамика роста',
+              description: 'Ваши показатели показывают устойчивый рост на 34% за последний месяц. Особенно впечатляют результаты в области ментального здоровья и финансов.',
+              action: 'Продолжайте придерживаться текущей стратегии и рассмотрите увеличение физической активности для максимального эффекта',
+              metricId: 'mental_health',
+              confidence: 0.89,
+              createdAt: new Date()
+            },
+            {
+              id: `demo_insight_${Date.now() + 1}`,
+              type: 'pattern',
+              title: 'Возможность для баланса',
+              description: 'Заметна небольшая нестабильность в области ментального здоровья на фоне роста других показателей. Это может указывать на переутомление.',
+              action: 'Добавьте 15-20 минут медитации или дыхательных практик в ежедневную рутину',
+              metricId: 'mental_health',
+              confidence: 0.75,
+              createdAt: new Date()
+            }
+          ],
+          goals: [],
+          hypothesis_improvements: [],
+          patterns: [
+            {
+              title: 'Сильная корреляция: физическая активность и настроение',
+              description: 'В дни с высокой физической активностью ваше общее настроение улучшается на 67%',
+              correlation: 0.67,
+              metrics: ['physical_health', 'mood']
+            }
+          ]
+        };
+
+      case 'goals':
+        return {
+          insights: [],
+          goals: [
+            {
+              metricId: 'physical_health',
+              currentValue: 6,
+              suggestedTarget: 8,
+              reasoning: 'Физическое здоровье показывает хороший потенциал для роста и положительно влияет на все остальные сферы',
+              priority: 'high',
+              title: 'Улучшить физическую форму до уровня 8/10 за 6 недель'
+            },
+            {
+              metricId: 'mental_health',
+              currentValue: 5,
+              suggestedTarget: 7,
+              reasoning: 'Ментальное здоровье требует внимания для поддержания общего баланса',
+              priority: 'medium',
+              title: 'Стабилизировать ментальное состояние на уровне 7/10'
+            }
+          ],
+          hypothesis_improvements: [],
+          patterns: []
+        };
+
+      case 'hypothesis':
+        return {
+          insights: [],
+          goals: [],
+          hypothesis_improvements: [
+            {
+              field: 'conditions',
+              original: 'если буду заниматься спортом',
+              improved: 'если буду заниматься кардио-тренировками 30 минут, 4 раза в неделю по утрам',
+              explanation: 'Более конкретные условия позволят точнее отслеживать выполнение гипотезы'
+            },
+            {
+              field: 'expectedOutcome',
+              original: 'то буду чувствовать себя лучше',
+              improved: 'то мой уровень энергии повысится с 6/10 до 8/10, а качество сна улучшится на 20%',
+              explanation: 'Измеримые результаты помогут объективно оценить эффективность'
+            }
+          ],
+          patterns: []
+        };
+
+      default:
+        return { 
+          insights: [], 
+          goals: [], 
+          hypothesis_improvements: [], 
+          patterns: [] 
+        };
+    }
+  };
+
+  const callOpenAI = async (prompt: string, context: 'dashboard' | 'goals' | 'hypothesis'): Promise<AIResponse> => {
+    // В демо режиме возвращаем мок-ответ
+    if (isDemoMode) {
+      // Имитируем задержку API
+      await new Promise(resolve => setTimeout(resolve, 800));
+      return generateDemoResponse(context);
+    }
+
     const apiKey = getApiKey();
     if (!apiKey) {
       throw new Error('API ключ OpenAI не найден. Пожалуйста, введите его в настройках.');
@@ -152,7 +256,7 @@ export const useAIInsights = () => {
       }
 
       const prompt = generatePrompt(context, data, hypothesisData);
-      const response = await callOpenAI(prompt);
+      const response = await callOpenAI(prompt, context);
 
       // Кэшируем результат
       localStorage.setItem(cacheKey, JSON.stringify(response));
@@ -186,6 +290,6 @@ export const useAIInsights = () => {
     error,
     generateInsights,
     clearCache,
-    hasApiKey: !!getApiKey()
+    hasApiKey: !!getApiKey() || isDemoMode // В демо режиме всегда считаем что API ключ есть
   };
 };
