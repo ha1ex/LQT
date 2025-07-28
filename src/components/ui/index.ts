@@ -59,3 +59,20 @@ export { EmptyStateCard } from './empty-state-card';
 export { EmptyStateView } from './empty-state-view';
 export { DemoModeToggle } from './demo-mode-toggle';
 export { SafeChartWrapper } from './safe-chart';
+export { 
+  ResponsiveContainer as SafeResponsiveContainer,
+  LineChart as SafeLineChart,
+  AreaChart as SafeAreaChart,
+  BarChart as SafeBarChart,
+  PieChart as SafePieChart,
+  Pie as SafePie,
+  Line as SafeLine,
+  Area as SafeArea,
+  Bar as SafeBar,
+  XAxis as SafeXAxis,
+  YAxis as SafeYAxis,
+  CartesianGrid as SafeCartesianGrid,
+  Tooltip as SafeTooltip,
+  Legend as SafeLegend,
+  Cell as SafeCell
+} from './safe-recharts';
