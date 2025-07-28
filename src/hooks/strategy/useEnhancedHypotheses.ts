@@ -14,29 +14,29 @@ import {
   sortHypothesesByPriority,
   createDefaultWeeklyProgress
 } from '@/utils/strategy';
+import { useDemoMode, getDemoDataIfAvailable } from '@/hooks/useDemoMode';
 
 const STORAGE_KEY = 'lqt_hypotheses';
 
 export const useEnhancedHypotheses = () => {
   const [hypotheses, setHypotheses] = useState<EnhancedHypothesis[]>([]);
   const [loading, setLoading] = useState(true);
+  const { isDemoMode } = useDemoMode();
 
   // Load hypotheses from localStorage on mount
   useEffect(() => {
     console.log('useEnhancedHypotheses: Starting to load from localStorage');
     try {
-      const isDemoMode = localStorage.getItem('lqt_demo_mode') === 'true';
       console.log('useEnhancedHypotheses: Demo mode active:', isDemoMode);
       
-      const stored = localStorage.getItem(STORAGE_KEY);
-      console.log('useEnhancedHypotheses: Stored data:', stored ? 'exists' : 'none');
+      const stored = getDemoDataIfAvailable(STORAGE_KEY, []);
+      console.log('useEnhancedHypotheses: Stored data:', Array.isArray(stored) ? `${stored.length} items` : 'none');
       
-      if (stored && (isDemoMode || stored !== 'null')) {
-        const parsed = JSON.parse(stored);
-        console.log('useEnhancedHypotheses: Parsed data length:', parsed.length);
+      if (Array.isArray(stored) && stored.length > 0) {
+        console.log('useEnhancedHypotheses: Processing data...');
         
         // Convert date strings back to Date objects and migrate old data
-        const converted = parsed.map((h: any) => {
+        const converted = stored.map((h: any) => {
           // Migration: convert old tasks to weeklyProgress if needed
           if (h.tasks && !h.weeklyProgress) {
             const { createDefaultWeeklyProgress } = require('@/utils/strategy');
@@ -60,7 +60,7 @@ export const useEnhancedHypotheses = () => {
         setHypotheses(converted);
         console.log('useEnhancedHypotheses: Set hypotheses:', converted.length + ' items');
       } else {
-        console.log('useEnhancedHypotheses: No stored data or not in demo mode, setting empty array');
+        console.log('useEnhancedHypotheses: No stored data, setting empty array');
         setHypotheses([]);
       }
     } catch (error) {
@@ -70,7 +70,7 @@ export const useEnhancedHypotheses = () => {
       console.log('useEnhancedHypotheses: Setting loading to false');
       setLoading(false);
     }
-  }, []);
+  }, [isDemoMode]);
 
   // Save hypotheses to localStorage whenever they change
   const saveToStorage = useCallback((hypothesesData: EnhancedHypothesis[]) => {

@@ -2,39 +2,51 @@ import { useState, useEffect, useCallback } from 'react';
 import { WeeklyRating, WeeklyRatingData, WeeklyRatingAnalytics } from '@/types/weeklyRating';
 import { startOfWeek, endOfWeek, format, addWeeks, subWeeks, parseISO } from 'date-fns';
 import { ru } from 'date-fns/locale';
+import { useDemoMode, getDemoDataIfAvailable } from './useDemoMode';
 
-const STORAGE_KEY = 'weekly_ratings_data';
+const STORAGE_KEY = 'lqt_weekly_ratings';
 
 export const useWeeklyRatings = () => {
   const [ratings, setRatings] = useState<WeeklyRatingData>({});
   const [currentWeek, setCurrentWeek] = useState<Date>(new Date());
   const [isLoading, setIsLoading] = useState(true);
+  const { isDemoMode } = useDemoMode();
 
   // Load data from localStorage on mount
   useEffect(() => {
     try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        const parsed = JSON.parse(stored);
+      console.log('useWeeklyRatings: Loading data, demo mode:', isDemoMode);
+      
+      // Try to get data from the correct key or fallback to demo data
+      const stored = getDemoDataIfAvailable(STORAGE_KEY, {});
+      
+      if (stored && Object.keys(stored).length > 0) {
+        console.log('useWeeklyRatings: Found data, processing...', Object.keys(stored).length, 'weeks');
+        
         // Convert date strings back to Date objects
         const converted: WeeklyRatingData = {};
-        Object.keys(parsed).forEach(key => {
+        Object.keys(stored).forEach(key => {
           converted[key] = {
-            ...parsed[key],
-            startDate: parseISO(parsed[key].startDate),
-            endDate: parseISO(parsed[key].endDate),
-            createdAt: parseISO(parsed[key].createdAt),
-            updatedAt: parseISO(parsed[key].updatedAt),
+            ...stored[key],
+            startDate: parseISO(stored[key].startDate),
+            endDate: parseISO(stored[key].endDate),
+            createdAt: parseISO(stored[key].createdAt),
+            updatedAt: parseISO(stored[key].updatedAt),
           };
         });
         setRatings(converted);
+        console.log('useWeeklyRatings: Data loaded successfully');
+      } else {
+        console.log('useWeeklyRatings: No data found');
+        setRatings({});
       }
     } catch (error) {
       console.error('Error loading weekly ratings:', error);
+      setRatings({});
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [isDemoMode]);
 
   // Save to localStorage whenever ratings change
   const saveToStorage = useCallback((newRatings: WeeklyRatingData) => {
