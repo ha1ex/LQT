@@ -45,6 +45,7 @@ import { StrategyDashboard, HypothesisWizard, HypothesisDetail } from './strateg
 import { AdaptiveDashboard, AIWelcomeWizard } from './ai';
 import { WeeklyRatingCalendar, WeekDetailModal, RatingAnalytics } from './rating';
 import { ProblemAreas, WeeklyProgress, Strengths, AIRecommendations } from './dashboard';
+import { UnifiedDashboard } from './unified/UnifiedDashboard';
 import { useIntegratedData } from '@/hooks/useIntegratedData';
 import { useWeeklyRatings } from '@/hooks/useWeeklyRatings';
 import { useGlobalData } from '@/contexts/GlobalDataProvider';
