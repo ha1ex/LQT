@@ -29,17 +29,17 @@ export const HypothesisCard: React.FC<HypothesisCardProps> = ({
       onClick={onView}
     >
       {/* Gradient Background Overlay */}
-      <div className="absolute inset-0 bg-gradient-to-br from-primary/2 via-transparent to-secondary/2 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+      <div className="absolute inset-0 bg-primary/2 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
       
       <CardContent className="p-6 relative">
         {/* Header with Priority and Validation */}
         <div className="flex items-start justify-between mb-4">
           <div className="flex items-center space-x-3">
             {/* Priority Badge */}
-            <div className={`
-              w-12 h-12 rounded-xl flex items-center justify-center text-white font-bold text-sm shadow-lg
-              bg-gradient-to-r ${priorityCategory.gradient} group-hover:scale-110 transition-transform duration-300
-            `}>
+            <div 
+              className="w-12 h-12 rounded-xl flex items-center justify-center text-white font-bold text-sm shadow-lg group-hover:scale-110 transition-transform duration-300"
+              style={{ background: priorityCategory.gradient }}
+            >
               #{priority}
             </div>
             
@@ -65,9 +65,7 @@ export const HypothesisCard: React.FC<HypothesisCardProps> = ({
           
           {/* Progress Percentage */}
           <div className="text-right">
-            <div className={`
-              text-2xl font-bold bg-gradient-to-r ${progressColor} bg-clip-text text-transparent
-            `}>
+            <div className="text-2xl font-bold text-primary">
               {hypothesis.progress}%
             </div>
             <p className="text-xs text-muted-foreground">прогресс</p>
@@ -134,17 +132,12 @@ export const HypothesisCard: React.FC<HypothesisCardProps> = ({
             </span>
           </div>
           
-          <div className="relative">
-            <Progress 
-              value={hypothesis.progress} 
-              className="h-3"
-            />
-            <div className={`
-              absolute inset-0 h-3 rounded-full bg-gradient-to-r ${progressColor} shadow-sm
-            `} 
-            style={{ width: `${hypothesis.progress}%` }} 
-            />
-          </div>
+            <div className="relative">
+              <Progress 
+                value={hypothesis.progress} 
+                className="h-3"
+              />
+            </div>
         </div>
 
         {/* Meta Information */}
