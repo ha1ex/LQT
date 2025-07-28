@@ -19,10 +19,8 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
           {/* Header */}
           <header className="h-14 flex items-center justify-between border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-4">
             <div className="flex items-center gap-2">
-              <SidebarTrigger asChild>
-                <Button variant="ghost" size="sm">
-                  <Menu className="w-4 h-4" />
-                </Button>
+              <SidebarTrigger className="p-2 hover:bg-accent hover:text-accent-foreground rounded-md transition-colors">
+                <Menu className="w-4 h-4" />
               </SidebarTrigger>
             </div>
             
