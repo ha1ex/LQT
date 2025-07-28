@@ -9,6 +9,10 @@ import Index from "./pages/Index";
 import Settings from "./pages/Settings";
 import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
+import Ratings from "./pages/Ratings";
+import Analytics from "./pages/Analytics";
+import Strategies from "./pages/Strategies";
+import AICoach from "./pages/AICoach";
 
 const queryClient = new QueryClient();
 
@@ -24,11 +28,11 @@ const App = () => (
               <Route path="/" element={<Index />} />
               <Route path="/settings" element={<Settings />} />
               <Route path="/profile" element={<Profile />} />
-              {/* Other routes to be added later */}
-              <Route path="/ratings" element={<Index />} />
-              <Route path="/analytics" element={<Index />} />
-              <Route path="/strategies" element={<Index />} />
-              <Route path="/ai-coach" element={<Index />} />
+              {/* Actual pages */}
+              <Route path="/ratings" element={<Ratings />} />
+              <Route path="/analytics" element={<Analytics />} />
+              <Route path="/strategies" element={<Strategies />} />
+              <Route path="/ai-coach" element={<AICoach />} />
               <Route path="/help" element={<Index />} />
               
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
