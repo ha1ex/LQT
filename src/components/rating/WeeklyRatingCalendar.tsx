@@ -1,9 +1,10 @@
+
 import React, { useState, useMemo } from 'react';
 import { Calendar } from '@/components/ui/calendar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { format, isSameDay, startOfWeek, endOfWeek, eachDayOfInterval } from 'date-fns';
+import { format, isSameDay, startOfWeek, endOfWeek, eachDayOfInterval, isValid } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { CalendarDayData, WeeklyRating } from '@/types/weeklyRating';
@@ -15,6 +16,28 @@ interface WeeklyRatingCalendarProps {
   onDateSelect: (date: Date) => void;
   onWeekSelect: (rating: WeeklyRating) => void;
 }
+
+// Helper function to safely format dates
+const safeFormat = (date: Date | string | number, formatStr: string, options?: any) => {
+  try {
+    const dateObj = typeof date === 'string' ? new Date(date) : date;
+    if (!isValid(dateObj)) {
+      console.warn('Invalid date provided to safeFormat:', date);
+      return 'Invalid Date';
+    }
+    return format(dateObj, formatStr, options);
+  } catch (error) {
+    console.error('Error formatting date:', error, date);
+    return 'Invalid Date';
+  }
+};
+
+// Helper function to safely create date objects
+const safeDate = (date: any): Date => {
+  if (!date) return new Date();
+  const dateObj = typeof date === 'string' ? new Date(date) : date;
+  return isValid(dateObj) ? dateObj : new Date();
+};
 
 const WeeklyRatingCalendar: React.FC<WeeklyRatingCalendarProps> = ({
   ratings,
@@ -38,6 +61,7 @@ const WeeklyRatingCalendar: React.FC<WeeklyRatingCalendarProps> = ({
 
   // Get score color
   const getScoreColor = (score: number) => {
+    if (isNaN(score) || !isFinite(score)) return 'text-gray-600 bg-gray-50';
     if (score >= 8) return 'text-green-600 bg-green-50';
     if (score >= 6.5) return 'text-green-500 bg-green-50';
     if (score >= 4) return 'text-yellow-600 bg-yellow-50';
@@ -50,20 +74,31 @@ const WeeklyRatingCalendar: React.FC<WeeklyRatingCalendarProps> = ({
     const data: Record<string, CalendarDayData> = {};
     
     Object.values(ratings).forEach(rating => {
-      const weekDays = eachDayOfInterval({
-        start: rating.startDate,
-        end: rating.endDate
-      });
+      if (!rating || !rating.startDate || !rating.endDate) return;
       
-      weekDays.forEach(day => {
-        const dayKey = format(day, 'yyyy-MM-dd');
-        data[dayKey] = {
-          date: day,
-          hasRating: true,
-          overallScore: rating.overallScore,
-          mood: rating.mood
-        };
-      });
+      const startDate = safeDate(rating.startDate);
+      const endDate = safeDate(rating.endDate);
+      
+      try {
+        const weekDays = eachDayOfInterval({
+          start: startDate,
+          end: endDate
+        });
+        
+        weekDays.forEach(day => {
+          const dayKey = safeFormat(day, 'yyyy-MM-dd');
+          if (dayKey !== 'Invalid Date') {
+            data[dayKey] = {
+              date: day,
+              hasRating: true,
+              overallScore: typeof rating.overallScore === 'number' && isFinite(rating.overallScore) ? rating.overallScore : 0,
+              mood: rating.mood
+            };
+          }
+        });
+      } catch (error) {
+        console.error('Error processing rating dates:', error, rating);
+      }
     });
     
     return data;
@@ -71,7 +106,7 @@ const WeeklyRatingCalendar: React.FC<WeeklyRatingCalendarProps> = ({
 
   // Custom day cell component
   const DayCell = ({ date }: { date: Date }) => {
-    const dayKey = format(date, 'yyyy-MM-dd');
+    const dayKey = safeFormat(date, 'yyyy-MM-dd');
     const dayData = calendarData[dayKey];
     const isSelected = isSameDay(date, selectedDate);
     
@@ -80,7 +115,7 @@ const WeeklyRatingCalendar: React.FC<WeeklyRatingCalendarProps> = ({
         "relative w-full h-full flex items-center justify-center",
         isSelected && "bg-primary text-primary-foreground rounded-md"
       )}>
-        <span className="text-sm">{format(date, 'd')}</span>
+        <span className="text-sm">{safeFormat(date, 'd')}</span>
         {dayData?.hasRating && (
           <div className={cn(
             "absolute bottom-0 left-1/2 transform -translate-x-1/2 w-2 h-2 rounded-full",
@@ -93,7 +128,13 @@ const WeeklyRatingCalendar: React.FC<WeeklyRatingCalendarProps> = ({
 
   // Get sorted ratings for list view
   const sortedRatings = useMemo(() => {
-    return Object.values(ratings).sort((a, b) => b.startDate.getTime() - a.startDate.getTime());
+    return Object.values(ratings)
+      .filter(rating => rating && rating.startDate && rating.endDate)
+      .sort((a, b) => {
+        const dateA = safeDate(a.startDate);
+        const dateB = safeDate(b.startDate);
+        return dateB.getTime() - dateA.getTime();
+      });
   }, [ratings]);
 
   return (
@@ -127,7 +168,7 @@ const WeeklyRatingCalendar: React.FC<WeeklyRatingCalendarProps> = ({
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg">
-                  {format(selectedDate, 'LLLL yyyy', { locale: ru })}
+                  {safeFormat(selectedDate, 'LLLL yyyy', { locale: ru })}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -174,7 +215,7 @@ const WeeklyRatingCalendar: React.FC<WeeklyRatingCalendarProps> = ({
             {(() => {
               const weekStart = startOfWeek(selectedDate, { locale: ru });
               const weekEnd = endOfWeek(selectedDate, { locale: ru });
-              const weekKey = format(weekStart, 'yyyy-MM-dd');
+              const weekKey = safeFormat(weekStart, 'yyyy-MM-dd');
               const weekRating = ratings[weekKey];
 
               if (!weekRating) {
@@ -185,7 +226,7 @@ const WeeklyRatingCalendar: React.FC<WeeklyRatingCalendarProps> = ({
                         <CalendarIcon className="w-8 h-8 mx-auto mb-2 opacity-50" />
                         <p>Нет данных для этой недели</p>
                         <p className="text-sm mt-1">
-                          {format(weekStart, 'dd.MM', { locale: ru })} - {format(weekEnd, 'dd.MM', { locale: ru })}
+                          {safeFormat(weekStart, 'dd.MM', { locale: ru })} - {safeFormat(weekEnd, 'dd.MM', { locale: ru })}
                         </p>
                       </div>
                     </CardContent>
@@ -193,20 +234,22 @@ const WeeklyRatingCalendar: React.FC<WeeklyRatingCalendarProps> = ({
                 );
               }
 
+              const validScore = typeof weekRating.overallScore === 'number' && isFinite(weekRating.overallScore) ? weekRating.overallScore : 0;
+
               return (
                 <Card className="cursor-pointer hover:shadow-md transition-shadow"
                       onClick={() => onWeekSelect(weekRating)}>
                   <CardHeader className="pb-3">
                     <div className="flex items-center justify-between">
                       <CardTitle className="text-lg">
-                        Неделя {weekRating.weekNumber}
+                        Неделя {weekRating.weekNumber || 0}
                       </CardTitle>
-                      <Badge className={cn("px-2 py-1", getScoreColor(weekRating.overallScore))}>
-                        {weekRating.overallScore.toFixed(1)}
+                      <Badge className={cn("px-2 py-1", getScoreColor(validScore))}>
+                        {validScore.toFixed(1)}
                       </Badge>
                     </div>
                     <p className="text-sm text-muted-foreground">
-                      {format(weekRating.startDate, 'dd.MM', { locale: ru })} - {format(weekRating.endDate, 'dd.MM', { locale: ru })}
+                      {safeFormat(safeDate(weekRating.startDate), 'dd.MM', { locale: ru })} - {safeFormat(safeDate(weekRating.endDate), 'dd.MM', { locale: ru })}
                     </p>
                   </CardHeader>
                   <CardContent className="space-y-3">
@@ -215,7 +258,7 @@ const WeeklyRatingCalendar: React.FC<WeeklyRatingCalendarProps> = ({
                       <span className="text-sm capitalize">{weekRating.mood}</span>
                     </div>
                     
-                    {weekRating.keyEvents.length > 0 && (
+                    {weekRating.keyEvents && weekRating.keyEvents.length > 0 && (
                       <div>
                         <p className="text-sm font-medium mb-1">Ключевые события:</p>
                         <ul className="text-sm text-muted-foreground space-y-1">
@@ -230,7 +273,7 @@ const WeeklyRatingCalendar: React.FC<WeeklyRatingCalendarProps> = ({
                     )}
                     
                     <div className="text-sm text-muted-foreground">
-                      Оценено критериев: {Object.keys(weekRating.ratings).length}
+                      Оценено критериев: {weekRating.ratings ? Object.keys(weekRating.ratings).length : 0}
                     </div>
                   </CardContent>
                 </Card>
@@ -249,41 +292,45 @@ const WeeklyRatingCalendar: React.FC<WeeklyRatingCalendarProps> = ({
               </CardContent>
             </Card>
           ) : (
-            sortedRatings.map((rating) => (
-              <Card key={rating.id} className="cursor-pointer hover:shadow-md transition-shadow"
-                    onClick={() => onWeekSelect(rating)}>
-                <CardContent className="pt-6">
-                  <div className="flex items-center justify-between mb-3">
-                    <div>
-                      <h3 className="font-semibold">Неделя {rating.weekNumber}</h3>
-                      <p className="text-sm text-muted-foreground">
-                        {format(rating.startDate, 'dd.MM.yyyy', { locale: ru })} - {format(rating.endDate, 'dd.MM.yyyy', { locale: ru })}
-                      </p>
-                    </div>
-                    <Badge className={cn("px-2 py-1", getScoreColor(rating.overallScore))}>
-                      {rating.overallScore.toFixed(1)}
-                    </Badge>
-                  </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className={cn("w-3 h-3 rounded-full", getMoodColor(rating.mood))} />
-                      <span className="text-sm capitalize">{rating.mood}</span>
+            sortedRatings.map((rating) => {
+              const validScore = typeof rating.overallScore === 'number' && isFinite(rating.overallScore) ? rating.overallScore : 0;
+              
+              return (
+                <Card key={rating.id} className="cursor-pointer hover:shadow-md transition-shadow"
+                      onClick={() => onWeekSelect(rating)}>
+                  <CardContent className="pt-6">
+                    <div className="flex items-center justify-between mb-3">
+                      <div>
+                        <h3 className="font-semibold">Неделя {rating.weekNumber || 0}</h3>
+                        <p className="text-sm text-muted-foreground">
+                          {safeFormat(safeDate(rating.startDate), 'dd.MM.yyyy', { locale: ru })} - {safeFormat(safeDate(rating.endDate), 'dd.MM.yyyy', { locale: ru })}
+                        </p>
+                      </div>
+                      <Badge className={cn("px-2 py-1", getScoreColor(validScore))}>
+                        {validScore.toFixed(1)}
+                      </Badge>
                     </div>
                     
-                    <div className="text-sm text-muted-foreground">
-                      {Object.keys(rating.ratings).length} критериев
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className={cn("w-3 h-3 rounded-full", getMoodColor(rating.mood))} />
+                        <span className="text-sm capitalize">{rating.mood}</span>
+                      </div>
+                      
+                      <div className="text-sm text-muted-foreground">
+                        {rating.ratings ? Object.keys(rating.ratings).length : 0} критериев
+                      </div>
                     </div>
-                  </div>
-                  
-                  {rating.keyEvents.length > 0 && (
-                    <div className="mt-2 text-sm text-muted-foreground">
-                      События: {rating.keyEvents.join(', ')}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            ))
+                    
+                    {rating.keyEvents && rating.keyEvents.length > 0 && (
+                      <div className="mt-2 text-sm text-muted-foreground">
+                        События: {rating.keyEvents.join(', ')}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              );
+            })
           )}
         </div>
       )}
