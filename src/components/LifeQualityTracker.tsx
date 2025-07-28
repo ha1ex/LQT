@@ -862,7 +862,7 @@ const LifeQualityTracker = () => {
       lifestyle: { name: 'Образ жизни', icon: '✈️', color: 'muted' }
     };
 
-    const latestWeek = mockData[mockData.length - 1];
+    const latestWeek = mockData.length > 0 ? mockData[mockData.length - 1] : {};
 
     return (
       <div className="card-premium p-6 animate-fade-in">
@@ -880,7 +880,7 @@ const LifeQualityTracker = () => {
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
           {Object.entries(categories).map(([key, category]) => {
             const categoryMetrics = allMetrics.filter(m => m.category === key);
-            const avgScore = categoryMetrics.length > 0 
+            const avgScore = categoryMetrics.length > 0 && latestWeek
               ? categoryMetrics.reduce((sum, m) => sum + (latestWeek[m.name] || 0), 0) / categoryMetrics.length 
               : 0;
 
