@@ -85,69 +85,70 @@ All colors MUST be HSL.
   }
 
   .dark {
-    --background: 222 84% 4.9%;
-    --foreground: 210 40% 98%;
+    /* Purple Dark Theme - как Tailwind UI */
+    --background: 256 100% 6%;       /* #0f0b1f - фиолетовый оттенок */
+    --foreground: 253 87% 96%;       /* #faf8ff - очень светлый фиолетовый */
 
-    --card: 222 84% 4.9%;
-    --card-foreground: 210 40% 98%;
+    --card: 256 100% 8%;             /* #151025 - карточки */
+    --card-foreground: 253 87% 96%;  /* #faf8ff */
 
-    --popover: 222 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 256 100% 8%;          /* #151025 */
+    --popover-foreground: 253 87% 96%; /* #faf8ff */
 
-    --primary: 217 91% 60%;
-    --primary-foreground: 222 84% 4.9%;
+    --primary: 262 83% 65%;          /* #8b5cf6 - яркий фиолетовый */
+    --primary-foreground: 256 100% 6%; /* #0f0b1f */
 
-    --success: 142 76% 36%;
-    --success-light: 142 76% 10%;
-    --success-foreground: 210 40% 98%;
-    
-    --warning: 38 92% 50%;
-    --warning-light: 38 92% 15%;
-    --warning-foreground: 222 84% 4.9%;
-    
-    --error: 0 84% 60%;
-    --error-light: 0 84% 15%;
-    --error-foreground: 210 40% 98%;
-    
-    --info: 217 91% 60%;
-    --info-light: 217 91% 15%;
-    --info-foreground: 222 84% 4.9%;
+    --success: 142 76% 50%;          /* #22c55e - зеленый */
+    --success-light: 142 76% 8%;     /* темно-зеленый фон */
+    --success-foreground: 253 87% 96%;
 
-    --secondary: 217 32% 17%;
-    --secondary-foreground: 210 40% 98%;
+    --warning: 43 96% 56%;           /* #facc15 - желтый */
+    --warning-light: 43 96% 10%;     /* темно-желтый фон */
+    --warning-foreground: 256 100% 6%;
 
-    --muted: 217 32% 17%;
-    --muted-foreground: 215 20% 65%;
+    --error: 0 84% 60%;              /* #ef4444 - красный */
+    --error-light: 0 84% 10%;        /* темно-красный фон */
+    --error-foreground: 253 87% 96%;
 
-    --accent: 217 32% 17%;
-    --accent-foreground: 210 40% 98%;
+    --info: 217 91% 60%;             /* #3b82f6 - синий */
+    --info-light: 217 91% 10%;       /* темно-синий фон */
+    --info-foreground: 253 87% 96%;
 
-    --destructive: 0 62% 30%;
-    --destructive-foreground: 210 40% 98%;
+    --secondary: 256 100% 12%;       /* #1f1729 - более светлый фиолетовый */
+    --secondary-foreground: 253 87% 96%;
 
-    --border: 217 32% 17%;
-    --input: 217 32% 17%;
-    --ring: 217 91% 60%;
+    --muted: 256 100% 10%;           /* #1a1426 - приглушенный */
+    --muted-foreground: 252 56% 75%; /* #a78bfa - светло-фиолетовый для текста */
 
-    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.3);
-    --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.2), 0 1px 2px -1px rgb(0 0 0 / 0.2);
-    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.2), 0 2px 4px -2px rgb(0 0 0 / 0.2);
-    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.2), 0 4px 6px -4px rgb(0 0 0 / 0.2);
+    --accent: 256 100% 12%;          /* #1f1729 */
+    --accent-foreground: 253 87% 96%;
 
-    --sidebar-background: 222 84% 4.9%;
-    --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 210 40% 98%;
-    --sidebar-primary-foreground: 222 84% 4.9%;
-    --sidebar-accent: 217 32% 17%;
-    --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 217 32% 17%;
-    --sidebar-ring: 217 91% 60%;
+    --destructive: 0 62% 30%;        /* темно-красный */
+    --destructive-foreground: 253 87% 96%;
 
-    /* Dark theme gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(217 91% 60%) 0%, hsl(217 91% 50%) 100%);
-    --gradient-secondary: linear-gradient(135deg, hsl(217 32% 17%) 0%, hsl(217 32% 12%) 100%);
-    --gradient-card: linear-gradient(135deg, hsl(222 84% 4.9%) 0%, hsl(217 32% 8%) 100%);
-    --gradient-hero: linear-gradient(135deg, hsl(222 84% 8%) 0%, hsl(217 32% 12%) 100%);
+    --border: 256 100% 12%;          /* #1f1729 - границы */
+    --input: 256 100% 12%;           /* #1f1729 */
+    --ring: 262 83% 65%;             /* #8b5cf6 - фиолетовое кольцо фокуса */
+
+    --shadow-sm: 0 1px 2px 0 rgb(15 11 31 / 0.5);
+    --shadow: 0 1px 3px 0 rgb(15 11 31 / 0.4), 0 1px 2px -1px rgb(15 11 31 / 0.4);
+    --shadow-md: 0 4px 6px -1px rgb(15 11 31 / 0.4), 0 2px 4px -2px rgb(15 11 31 / 0.4);
+    --shadow-lg: 0 10px 15px -3px rgb(15 11 31 / 0.4), 0 4px 6px -4px rgb(15 11 31 / 0.4);
+
+    --sidebar-background: 256 100% 6%;  /* #0f0b1f */
+    --sidebar-foreground: 253 87% 96%;  /* #faf8ff */
+    --sidebar-primary: 262 83% 65%;     /* #8b5cf6 */
+    --sidebar-primary-foreground: 256 100% 6%;
+    --sidebar-accent: 256 100% 12%;     /* #1f1729 */
+    --sidebar-accent-foreground: 253 87% 96%;
+    --sidebar-border: 256 100% 12%;     /* #1f1729 */
+    --sidebar-ring: 262 83% 65%;        /* #8b5cf6 */
+
+    /* Purple Dark theme gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(262 83% 65%) 0%, hsl(262 83% 55%) 100%);
+    --gradient-secondary: linear-gradient(135deg, hsl(256 100% 12%) 0%, hsl(256 100% 8%) 100%);
+    --gradient-card: linear-gradient(135deg, hsl(256 100% 8%) 0%, hsl(256 100% 6%) 100%);
+    --gradient-hero: linear-gradient(135deg, hsl(262 83% 65%) 0%, hsl(256 100% 12%) 100%);
   }
 }
 
