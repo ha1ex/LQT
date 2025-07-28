@@ -1,7 +1,10 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Lightbulb, TrendingDown, AlertTriangle, Target } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Lightbulb, TrendingDown, AlertTriangle, Target, Sparkles } from 'lucide-react';
+import { useAIInsights } from '@/hooks/useAIInsights';
+import { useDemoMode } from '@/hooks/useDemoMode';
 
 interface Metric {
   id: string;
@@ -21,7 +24,7 @@ interface Recommendation {
   currentValue: number;
   priority: 'high' | 'medium' | 'low';
   action: string;
-  type: 'low_metric' | 'trend_decline';
+  type: 'low_metric' | 'trend_decline' | 'ai_insight';
 }
 
 interface PersonalRecommendationsProps {
@@ -35,6 +38,19 @@ const PersonalRecommendations: React.FC<PersonalRecommendationsProps> = ({
   data,
   className = "" 
 }) => {
+  const { isDemoMode } = useDemoMode();
+  const { insights, loading: aiLoading, error: aiError, generateInsights, hasApiKey } = useAIInsights();
+  const [aiRecommendations, setAiRecommendations] = useState<Recommendation[]>([]);
+  const [showAI, setShowAI] = useState(false);
+  
+  console.log('🎯 PersonalRecommendations:', { 
+    isDemoMode, 
+    hasApiKey, 
+    aiLoading, 
+    aiError, 
+    insightsCount: insights.length,
+    showAI 
+  });
   // Словарь рекомендаций для каждой метрики
   const recommendationTemplates = {
     'Спокойствие ума': {
@@ -160,8 +176,44 @@ const PersonalRecommendations: React.FC<PersonalRecommendationsProps> = ({
     }
   };
 
-  // Генерация рекомендаций на основе данных
-  const recommendations = useMemo(() => {
+  // Преобразование AI инсайтов в рекомендации
+  useEffect(() => {
+    if (insights.length > 0) {
+      const aiRecs: Recommendation[] = insights.map(insight => ({
+        metric: insight.metricId ? insight.title : 'AI Инсайт',
+        icon: '🤖',
+        currentValue: 0, // AI инсайты не имеют текущего значения
+        priority: insight.confidence > 0.8 ? 'high' : insight.confidence > 0.6 ? 'medium' : 'low',
+        action: insight.description + (insight.action ? ` ${insight.action}` : ''),
+        type: 'ai_insight'
+      }));
+      setAiRecommendations(aiRecs);
+    }
+  }, [insights]);
+
+  // Генерация AI рекомендаций
+  const handleGenerateAI = async () => {
+    if (!hasApiKey && !isDemoMode) {
+      setShowAI(true);
+      return;
+    }
+
+    try {
+      console.log('🚀 Generating AI insights...');
+      await generateInsights('dashboard', {
+        weekData: data,
+        goals: [],
+        hypotheses: [],
+        correlations: []
+      });
+      setShowAI(true);
+    } catch (error) {
+      console.error('❌ Failed to generate AI insights:', error);
+    }
+  };
+
+  // Генерация статических рекомендаций (как fallback)
+  const staticRecommendations = useMemo(() => {
     if (!data || data.length === 0) return [];
 
     const lastWeek = data[data.length - 1];
@@ -206,16 +258,27 @@ const PersonalRecommendations: React.FC<PersonalRecommendationsProps> = ({
       }
     }
 
-    // Сортировка по приоритету и ограничение до 4 рекомендаций
     return generatedRecommendations
       .sort((a, b) => {
         const priorityOrder = { high: 3, medium: 2, low: 1 };
         return priorityOrder[b.priority] - priorityOrder[a.priority];
       })
-      .slice(0, 4);
+      .slice(0, 3); // Оставляем место для AI рекомендаций
   }, [metrics, data]);
 
-  const getPriorityColor = (priority: string) => {
+  // Объединяем статические и AI рекомендации
+  const allRecommendations = useMemo(() => {
+    const combined = [...staticRecommendations];
+    if (showAI) {
+      combined.push(...aiRecommendations);
+    }
+    return combined.slice(0, 4);
+  }, [staticRecommendations, aiRecommendations, showAI]);
+
+  const getPriorityColor = (priority: string, type?: string) => {
+    if (type === 'ai_insight') {
+      return 'bg-purple-50 text-purple-600 border-purple-200';
+    }
     switch (priority) {
       case 'high': return 'bg-red-50 text-red-600 border-red-200';
       case 'medium': return 'bg-yellow-50 text-yellow-600 border-yellow-200';
@@ -224,7 +287,10 @@ const PersonalRecommendations: React.FC<PersonalRecommendationsProps> = ({
     }
   };
 
-  const getPriorityIcon = (priority: string) => {
+  const getPriorityIcon = (priority: string, type?: string) => {
+    if (type === 'ai_insight') {
+      return <Sparkles className="w-4 h-4" />;
+    }
     switch (priority) {
       case 'high': return <AlertTriangle className="w-4 h-4" />;
       case 'medium': return <TrendingDown className="w-4 h-4" />;
@@ -233,7 +299,10 @@ const PersonalRecommendations: React.FC<PersonalRecommendationsProps> = ({
     }
   };
 
-  const getPriorityText = (priority: string) => {
+  const getPriorityText = (priority: string, type?: string) => {
+    if (type === 'ai_insight') {
+      return 'AI Инсайт';
+    }
     switch (priority) {
       case 'high': return 'Критично';
       case 'medium': return 'Важно';
@@ -242,21 +311,40 @@ const PersonalRecommendations: React.FC<PersonalRecommendationsProps> = ({
     }
   };
 
-  if (recommendations.length === 0) {
+  if (allRecommendations.length === 0 && !showAI) {
     return (
       <Card className={`card-modern animate-fade-in ${className}`}>
         <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2 text-lg">
-          <Lightbulb className="w-5 h-5 text-gray-600" />
-          Персональные рекомендации
-        </CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <Lightbulb className="w-5 h-5 text-gray-600" />
+              Персональные рекомендации
+            </CardTitle>
+            {(hasApiKey || isDemoMode) && (
+              <Button 
+                onClick={handleGenerateAI} 
+                size="sm" 
+                variant="outline"
+                disabled={aiLoading}
+                className="flex items-center gap-2"
+              >
+                <Sparkles className="w-4 h-4" />
+                {aiLoading ? 'Анализ...' : 'AI Анализ'}
+              </Button>
+            )}
+          </div>
         </CardHeader>
         <CardContent>
           <div className="text-center py-6">
             <div className="text-4xl mb-2">🎉</div>
-            <p className="text-muted-foreground">
+            <p className="text-muted-foreground mb-4">
               Отличная работа! У вас нет критичных областей для улучшения.
             </p>
+            {!hasApiKey && !isDemoMode && (
+              <p className="text-sm text-muted-foreground">
+                Настройте AI для получения персонализированных рекомендаций
+              </p>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -266,16 +354,41 @@ const PersonalRecommendations: React.FC<PersonalRecommendationsProps> = ({
   return (
     <Card className={`card-modern animate-fade-in ${className}`}>
       <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2 text-lg">
-          <Lightbulb className="w-5 h-5 text-gray-600" />
-          Персональные рекомендации
-        </CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <Lightbulb className="w-5 h-5 text-gray-600" />
+            Персональные рекомендации
+            {showAI && aiRecommendations.length > 0 && (
+              <Badge variant="outline" className="ml-2">
+                <Sparkles className="w-3 h-3 mr-1" />
+                AI
+              </Badge>
+            )}
+          </CardTitle>
+          {(hasApiKey || isDemoMode) && !showAI && (
+            <Button 
+              onClick={handleGenerateAI} 
+              size="sm" 
+              variant="outline"
+              disabled={aiLoading}
+              className="flex items-center gap-2"
+            >
+              <Sparkles className="w-4 h-4" />
+              {aiLoading ? 'Анализ...' : 'AI Анализ'}
+            </Button>
+          )}
+        </div>
+        {aiError && (
+          <p className="text-sm text-red-600 mt-2">
+            Ошибка AI: {aiError}
+          </p>
+        )}
       </CardHeader>
       <CardContent className="space-y-3">
-        {recommendations.map((rec, index) => (
+        {allRecommendations.map((rec, index) => (
           <div
-            key={`${rec.metric}-${index}`}
-            className={`p-4 rounded-lg border transition-all duration-200 hover:shadow-md ${getPriorityColor(rec.priority)}`}
+            key={`${rec.metric}-${rec.type}-${index}`}
+            className={`p-4 rounded-lg border transition-all duration-200 hover:shadow-md ${getPriorityColor(rec.priority, rec.type)}`}
             style={{ animationDelay: `${index * 100}ms` }}
           >
             <div className="flex items-start gap-3">
@@ -283,17 +396,19 @@ const PersonalRecommendations: React.FC<PersonalRecommendationsProps> = ({
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
                   <h4 className="font-medium text-sm">{rec.metric}</h4>
-                  <Badge variant="outline" className={`text-xs ${getPriorityColor(rec.priority)}`}>
-                    {getPriorityIcon(rec.priority)}
-                    <span className="ml-1">{getPriorityText(rec.priority)}</span>
+                  <Badge variant="outline" className={`text-xs ${getPriorityColor(rec.priority, rec.type)}`}>
+                    {getPriorityIcon(rec.priority, rec.type)}
+                    <span className="ml-1">{getPriorityText(rec.priority, rec.type)}</span>
                   </Badge>
                 </div>
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="text-xs text-muted-foreground">Текущее значение:</span>
-                  <span className="text-lg font-bold text-foreground">
-                    {rec.currentValue}/10
-                  </span>
-                </div>
+                {rec.type !== 'ai_insight' && (
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-xs text-muted-foreground">Текущее значение:</span>
+                    <span className="text-lg font-bold text-foreground">
+                      {rec.currentValue}/10
+                    </span>
+                  </div>
+                )}
                 <p className="text-sm text-foreground/80">{rec.action}</p>
               </div>
             </div>

@@ -1,12 +1,14 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { ChatMessage, ChatContext } from '@/types/ai';
 import { useDemoMode } from './useDemoMode';
 
 export const useAIChat = () => {
-  const { isDemoMode } = useDemoMode();
+  const { isDemoMode, isLoading: demoLoading } = useDemoMode();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  console.log('🔍 useAIChat - isDemoMode:', isDemoMode, 'demoLoading:', demoLoading);
 
   // Загружаем историю чата из localStorage
   const loadChatHistory = useCallback(() => {
@@ -36,7 +38,14 @@ export const useAIChat = () => {
 
   // Получаем API ключ
   const getApiKey = () => {
-    return localStorage.getItem('openai_api_key');
+    try {
+      const apiKey = localStorage.getItem('openai_api_key');
+      console.log('🔑 Chat API Key found:', !!apiKey);
+      return apiKey;
+    } catch (error) {
+      console.error('❌ Error getting chat API key:', error);
+      return null;
+    }
   };
 
   // Анализ намерений пользователя
@@ -150,50 +159,84 @@ export const useAIChat = () => {
 
   // Отправка сообщения в OpenAI
   const callOpenAI = async (prompt: string): Promise<string> => {
+    console.log('🚀 callOpenAI (chat) called - isDemoMode:', isDemoMode);
+    
     // В демо режиме возвращаем мок-ответ
     if (isDemoMode) {
+      console.log('📱 Chat demo mode: generating mock response');
+      await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 500));
       const intent = analyzeUserIntent(prompt);
-      return generateDemoResponse(prompt, intent);
+      const response = generateDemoResponse(prompt, intent);
+      console.log('✅ Chat demo response generated');
+      return response;
     }
 
     const apiKey = getApiKey();
     if (!apiKey) {
+      console.error('❌ No chat API key found');
       throw new Error('API ключ OpenAI не найден');
     }
 
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'gpt-4.1-2025-04-14',
-        messages: [
-          {
-            role: 'system',
-            content: 'Ты - AI Life Coach. Отвечай кратко, персонализированно и конструктивно на русском языке.'
-          },
-          {
-            role: 'user',
-            content: prompt
-          }
-        ],
-        temperature: 0.8,
-        max_tokens: 500,
-      }),
-    });
+    console.log('🌐 Making real chat API call to OpenAI');
 
-    if (!response.ok) {
-      throw new Error(`OpenAI API error: ${response.status}`);
+    try {
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'gpt-4o-mini',
+          messages: [
+            {
+              role: 'system',
+              content: 'Ты - AI Life Coach. Отвечай кратко, персонализированно и конструктивно на русском языке.'
+            },
+            {
+              role: 'user',
+              content: prompt
+            }
+          ],
+          temperature: 0.8,
+          max_tokens: 500,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('❌ Chat OpenAI API error:', response.status, errorText);
+        throw new Error(`OpenAI API error: ${response.status} - ${errorText}`);
+      }
+
+      const data = await response.json();
+      const content = data.choices[0]?.message?.content;
+      
+      if (!content) {
+        throw new Error('Пустой ответ от OpenAI API');
+      }
+
+      console.log('✅ Chat OpenAI response received');
+      return content;
+    } catch (error) {
+      console.error('❌ Chat network error:', error);
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        throw new Error('Ошибка сети. Проверьте подключение к интернету.');
+      }
+      throw error;
     }
-
-    const data = await response.json();
-    return data.choices[0]?.message?.content || 'Извините, не удалось получить ответ.';
   };
 
   // Отправка сообщения
   const sendMessage = useCallback(async (content: string, context: ChatContext) => {
+    console.log('💬 sendMessage called:', { content, isDemoMode, demoLoading });
+    
+    // Ждем загрузки демо режима
+    if (demoLoading) {
+      console.log('⏳ Waiting for demo mode to load...');
+      return;
+    }
+    
     try {
       setLoading(true);
       setError(null);
@@ -231,13 +274,14 @@ export const useAIChat = () => {
       saveChatHistory(finalMessages);
 
     } catch (err) {
+      console.error('❌ sendMessage error:', err);
       const errorMessage = err instanceof Error ? err.message : 'Ошибка отправки сообщения';
       setError(errorMessage);
       throw err;
     } finally {
       setLoading(false);
     }
-  }, [messages, saveChatHistory]);
+  }, [messages, saveChatHistory, isDemoMode, demoLoading]);
 
   // Очистка чата
   const clearChat = useCallback(() => {

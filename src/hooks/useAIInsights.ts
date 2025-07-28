@@ -1,16 +1,25 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { AIInsight, AIGoalSuggestion, AIHypothesisImprovement, AIAnalysisContext, AIResponse } from '@/types/ai';
 import { useDemoMode } from './useDemoMode';
 
 export const useAIInsights = () => {
-  const { isDemoMode } = useDemoMode();
+  const { isDemoMode, isLoading: demoLoading } = useDemoMode();
   const [insights, setInsights] = useState<AIInsight[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  console.log('🔍 useAIInsights - isDemoMode:', isDemoMode, 'demoLoading:', demoLoading);
+
   // Получаем API ключ из localStorage (временное решение)
   const getApiKey = () => {
-    return localStorage.getItem('openai_api_key');
+    try {
+      const apiKey = localStorage.getItem('openai_api_key');
+      console.log('🔑 API Key found:', !!apiKey);
+      return apiKey;
+    } catch (error) {
+      console.error('❌ Error getting API key:', error);
+      return null;
+    }
   };
 
   const generatePrompt = (context: 'dashboard' | 'goals' | 'hypothesis', data: AIAnalysisContext, hypothesisData?: any) => {
@@ -188,52 +197,77 @@ export const useAIInsights = () => {
   };
 
   const callOpenAI = async (prompt: string, context: 'dashboard' | 'goals' | 'hypothesis'): Promise<AIResponse> => {
+    console.log('🚀 callOpenAI called - isDemoMode:', isDemoMode, 'context:', context);
+    
     // В демо режиме возвращаем мок-ответ
     if (isDemoMode) {
+      console.log('📱 Demo mode: generating mock response');
       // Имитируем задержку API
-      await new Promise(resolve => setTimeout(resolve, 800));
-      return generateDemoResponse(context);
+      await new Promise(resolve => setTimeout(resolve, 800 + Math.random() * 400));
+      const response = generateDemoResponse(context);
+      console.log('✅ Demo response generated:', response);
+      return response;
     }
 
     const apiKey = getApiKey();
     if (!apiKey) {
+      console.error('❌ No API key found');
       throw new Error('API ключ OpenAI не найден. Пожалуйста, введите его в настройках.');
     }
 
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'gpt-4.1-2025-04-14',
-        messages: [
-          {
-            role: 'system',
-            content: 'Ты - AI Life Coach. Отвечай только валидным JSON без дополнительного текста.'
-          },
-          {
-            role: 'user',
-            content: prompt
-          }
-        ],
-        temperature: 0.7,
-        max_tokens: 2000,
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`OpenAI API error: ${response.status}`);
-    }
-
-    const data = await response.json();
-    const content = data.choices[0]?.message?.content;
+    console.log('🌐 Making real API call to OpenAI');
     
     try {
-      return JSON.parse(content);
-    } catch (e) {
-      throw new Error('Ошибка парсинга ответа AI');
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'gpt-4o-mini',
+          messages: [
+            {
+              role: 'system',
+              content: 'Ты - AI Life Coach. Отвечай только валидным JSON без дополнительного текста.'
+            },
+            {
+              role: 'user',
+              content: prompt
+            }
+          ],
+          temperature: 0.7,
+          max_tokens: 2000,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('❌ OpenAI API error:', response.status, errorText);
+        throw new Error(`OpenAI API error: ${response.status} - ${errorText}`);
+      }
+
+      const data = await response.json();
+      const content = data.choices[0]?.message?.content;
+      
+      if (!content) {
+        throw new Error('Пустой ответ от OpenAI API');
+      }
+      
+      try {
+        const parsedResponse = JSON.parse(content);
+        console.log('✅ OpenAI response parsed successfully');
+        return parsedResponse;
+      } catch (e) {
+        console.error('❌ JSON parsing error:', e, 'Content:', content);
+        throw new Error('Ошибка парсинга ответа AI');
+      }
+    } catch (error) {
+      console.error('❌ Network error:', error);
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        throw new Error('Ошибка сети. Проверьте подключение к интернету.');
+      }
+      throw error;
     }
   };
 
@@ -242,34 +276,54 @@ export const useAIInsights = () => {
     data: AIAnalysisContext,
     hypothesisData?: any
   ) => {
+    console.log('🎯 generateInsights called:', { context, isDemoMode, demoLoading });
+    
+    // Ждем загрузки демо режима
+    if (demoLoading) {
+      console.log('⏳ Waiting for demo mode to load...');
+      return;
+    }
+    
     try {
       setLoading(true);
       setError(null);
 
-      // В демо режиме сразу возвращаем демо ответ
+      // В демо режиме не используем кэш и сразу генерируем ответ
       if (isDemoMode) {
+        console.log('📱 Demo mode: generating insights directly');
         await new Promise(resolve => setTimeout(resolve, 800));
         const response = generateDemoResponse(context);
+        console.log('✅ Demo insights generated:', response.insights?.length);
         if (response.insights) {
           setInsights(response.insights);
         }
         return response;
       }
 
-      // Проверяем кэш (24 часа)
+      // Проверяем кэш только в реальном режиме (24 часа)
       const cacheKey = `ai_insights_${context}_${Date.now().toString().slice(0, -5)}`;
-      const cached = localStorage.getItem(cacheKey);
-      if (cached) {
-        const parsedCache = JSON.parse(cached);
-        setInsights(parsedCache.insights || []);
-        return parsedCache;
+      try {
+        const cached = localStorage.getItem(cacheKey);
+        if (cached) {
+          const parsedCache = JSON.parse(cached);
+          console.log('📦 Using cached insights');
+          setInsights(parsedCache.insights || []);
+          return parsedCache;
+        }
+      } catch (cacheError) {
+        console.warn('⚠️ Cache error:', cacheError);
       }
 
       const prompt = generatePrompt(context, data, hypothesisData);
       const response = await callOpenAI(prompt, context);
 
-      // Кэшируем результат
-      localStorage.setItem(cacheKey, JSON.stringify(response));
+      // Кэшируем результат только в реальном режиме
+      try {
+        localStorage.setItem(cacheKey, JSON.stringify(response));
+        console.log('💾 Response cached');
+      } catch (cacheError) {
+        console.warn('⚠️ Failed to cache response:', cacheError);
+      }
       
       if (response.insights) {
         setInsights(response.insights);
@@ -277,13 +331,14 @@ export const useAIInsights = () => {
 
       return response;
     } catch (err) {
+      console.error('❌ generateInsights error:', err);
       const errorMessage = err instanceof Error ? err.message : 'Произошла ошибка при генерации рекомендаций';
       setError(errorMessage);
       throw err;
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [isDemoMode, demoLoading]);
 
   const clearCache = useCallback(() => {
     const keys = Object.keys(localStorage);
