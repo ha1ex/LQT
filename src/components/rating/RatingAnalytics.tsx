@@ -47,11 +47,11 @@ const RatingAnalytics: React.FC<RatingAnalyticsProps> = ({ analytics, allMetrics
   }));
 
   const getScoreColor = (score: number) => {
-    if (score >= 8) return 'text-green-600 bg-green-50 border-green-200';
-    if (score >= 6.5) return 'text-green-500 bg-green-50 border-green-200';
-    if (score >= 4) return 'text-yellow-600 bg-yellow-50 border-yellow-200';
-    if (score >= 2.5) return 'text-orange-600 bg-orange-50 border-orange-200';
-    return 'text-red-600 bg-red-50 border-red-200';
+    if (score >= 8) return 'text-success bg-success-light border-success/20';
+    if (score >= 6.5) return 'text-success bg-success-light border-success/20';
+    if (score >= 4) return 'text-warning bg-warning-light border-warning/20';
+    if (score >= 2.5) return 'text-warning bg-warning-light border-warning/20';
+    return 'text-error bg-error-light border-error/20';
   };
 
   const getTrendIcon = (current: number, previous: number) => {
@@ -317,40 +317,40 @@ const RatingAnalytics: React.FC<RatingAnalyticsProps> = ({ analytics, allMetrics
         </CardHeader>
         <CardContent className="space-y-3">
           {trendsOverTime.length < 3 && (
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-              <p className="text-sm text-blue-800">
+            <div className="bg-info-light border border-info/20 rounded-lg p-3">
+              <p className="text-sm text-info">
                 📊 Продолжайте заполнять оценки для получения более точной аналитики
               </p>
             </div>
           )}
           
           {overallTrend > 0.5 && (
-            <div className="bg-green-50 border border-green-200 rounded-lg p-3">
-              <p className="text-sm text-green-800">
+            <div className="bg-success-light border border-success/20 rounded-lg p-3">
+              <p className="text-sm text-success">
                 📈 Отлично! Ваши показатели растут. Продолжайте в том же духе!
               </p>
             </div>
           )}
           
           {overallTrend < -0.5 && (
-            <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
-              <p className="text-sm text-orange-800">
+            <div className="bg-warning-light border border-warning/20 rounded-lg p-3">
+              <p className="text-sm text-warning">
                 📉 Заметен спад показателей. Возможно, стоит обратить внимание на проблемные области
               </p>
             </div>
           )}
 
           {Object.keys(averageByMetric).length > 0 && (
-            <div className="bg-purple-50 border border-purple-200 rounded-lg p-3">
-              <p className="text-sm text-purple-800">
+            <div className="bg-primary/5 border border-primary/20 rounded-lg p-3">
+              <p className="text-sm text-primary">
                 🎯 Самые сильные области: {metricsChartData.slice(0, 2).map(m => m.name).join(', ')}
               </p>
             </div>
           )}
 
           {metricsChartData.length > 2 && (
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
-              <p className="text-sm text-yellow-800">
+            <div className="bg-warning-light border border-warning/20 rounded-lg p-3">
+              <p className="text-sm text-warning">
                 🔍 Области для развития: {metricsChartData.slice(-2).map(m => m.name).join(', ')}
               </p>
             </div>

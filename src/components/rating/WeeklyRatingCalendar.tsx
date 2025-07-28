@@ -111,22 +111,22 @@ const WeeklyRatingCalendar: React.FC<WeeklyRatingCalendarProps> = ({
   // Get mood color
   const getMoodColor = (mood: WeeklyRating['mood']) => {
     switch (mood) {
-      case 'excellent': return 'bg-green-500';
-      case 'good': return 'bg-green-400';
-      case 'neutral': return 'bg-yellow-400';
-      case 'poor': return 'bg-orange-400';
-      case 'terrible': return 'bg-red-500';
-      default: return 'bg-gray-400';
+      case 'excellent': return 'bg-success';
+      case 'good': return 'bg-success/80';
+      case 'neutral': return 'bg-warning';
+      case 'poor': return 'bg-warning/80';
+      case 'terrible': return 'bg-error';
+      default: return 'bg-muted-foreground';
     }
   };
 
   // Get score color
   const getScoreColor = (score: number) => {
-    if (score >= 8) return 'text-green-600 bg-green-50';
-    if (score >= 6.5) return 'text-green-500 bg-green-50';
-    if (score >= 4) return 'text-yellow-600 bg-yellow-50';
-    if (score >= 2.5) return 'text-orange-600 bg-orange-50';
-    return 'text-red-600 bg-red-50';
+    if (score >= 8) return 'text-success bg-success-light';
+    if (score >= 6.5) return 'text-success bg-success-light';
+    if (score >= 4) return 'text-warning bg-warning-light';
+    if (score >= 2.5) return 'text-warning bg-warning-light';
+    return 'text-error bg-error-light';
   };
 
   // Prepare calendar data
@@ -270,23 +270,23 @@ const WeeklyRatingCalendar: React.FC<WeeklyRatingCalendarProps> = ({
                 {/* Legend */}
                 <div className="mt-4 flex flex-wrap gap-2">
                   <div className="flex items-center gap-1 text-sm">
-                    <div className="w-3 h-3 bg-green-500 rounded-full" />
+                    <div className="w-3 h-3 bg-success rounded-full" />
                     <span>Отлично</span>
                   </div>
                   <div className="flex items-center gap-1 text-sm">
-                    <div className="w-3 h-3 bg-green-400 rounded-full" />
+                    <div className="w-3 h-3 bg-success/80 rounded-full" />
                     <span>Хорошо</span>
                   </div>
                   <div className="flex items-center gap-1 text-sm">
-                    <div className="w-3 h-3 bg-yellow-400 rounded-full" />
+                    <div className="w-3 h-3 bg-warning rounded-full" />
                     <span>Нормально</span>
                   </div>
                   <div className="flex items-center gap-1 text-sm">
-                    <div className="w-3 h-3 bg-orange-400 rounded-full" />
+                    <div className="w-3 h-3 bg-warning/80 rounded-full" />
                     <span>Плохо</span>
                   </div>
                   <div className="flex items-center gap-1 text-sm">
-                    <div className="w-3 h-3 bg-red-500 rounded-full" />
+                    <div className="w-3 h-3 bg-error rounded-full" />
                     <span>Ужасно</span>
                   </div>
                 </div>

@@ -49,6 +49,11 @@ export default {
 					foreground: 'hsl(var(--error-foreground))',
 					light: 'hsl(var(--error-light))'
 				},
+				info: {
+					DEFAULT: 'hsl(var(--info))',
+					foreground: 'hsl(var(--info-foreground))',
+					light: 'hsl(var(--info-light))'
+				},
 				secondary: {
 					DEFAULT: 'hsl(var(--secondary))',
 					foreground: 'hsl(var(--secondary-foreground))'
