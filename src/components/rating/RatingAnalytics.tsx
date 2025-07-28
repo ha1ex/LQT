@@ -61,7 +61,7 @@ const RatingAnalytics: React.FC<RatingAnalyticsProps> = ({ analytics, allMetrics
   };
 
   const overallTrend = trendsOverTime.length >= 2 ? 
-    trendsOverTime[trendsOverTime.length - 1].averageScore - trendsOverTime[trendsOverTime.length - 2].averageScore : 0;
+    (trendsOverTime[trendsOverTime.length - 1]?.averageScore || 0) - (trendsOverTime[trendsOverTime.length - 2]?.averageScore || 0) : 0;
 
   return (
     <div className="space-y-6">
@@ -85,11 +85,16 @@ const RatingAnalytics: React.FC<RatingAnalyticsProps> = ({ analytics, allMetrics
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Средний балл</p>
                 <div className="flex items-center gap-2">
-                  <p className="text-2xl font-bold">
-                    {trendsOverTime.length > 0 
-                      ? (trendsOverTime.reduce((sum, week) => sum + week.averageScore, 0) / trendsOverTime.length).toFixed(1)
-                      : '0.0'
-                    }
+                <p className="text-2xl font-bold">
+                  {trendsOverTime.length > 0 
+                    ? (() => {
+                        const validScores = trendsOverTime.filter(week => typeof week.averageScore === 'number' && !isNaN(week.averageScore));
+                        return validScores.length > 0 
+                          ? (validScores.reduce((sum, week) => sum + week.averageScore, 0) / validScores.length).toFixed(1)
+                          : '0.0';
+                      })()
+                    : '0.0'
+                  }
                   </p>
                   {getTrendIcon(
                     trendsOverTime[trendsOverTime.length - 1]?.averageScore || 0,
@@ -141,12 +146,16 @@ const RatingAnalytics: React.FC<RatingAnalyticsProps> = ({ analytics, allMetrics
             <CardTitle>Динамика оценок по времени</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <RechartsLineChart data={trendsOverTime}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="date" />
-                  <YAxis domain={[0, 10]} />
+             <div className="h-64">
+               <ResponsiveContainer width="100%" height="100%">
+                 <RechartsLineChart data={trendsOverTime.filter(item => 
+                   typeof item.averageScore === 'number' && 
+                   !isNaN(item.averageScore) && 
+                   isFinite(item.averageScore)
+                 )}>
+                   <CartesianGrid strokeDasharray="3 3" />
+                   <XAxis dataKey="date" />
+                   <YAxis domain={[0, 10]} />
                   <Tooltip 
                     formatter={(value: any) => [`${value.toFixed(1)}`, 'Средний балл']}
                     labelFormatter={(label) => `Неделя: ${label}`}

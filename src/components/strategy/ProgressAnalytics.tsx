@@ -35,22 +35,22 @@ export const ProgressAnalytics: React.FC<ProgressAnalyticsProps> = ({
   const totalWeeks = weeklyProgress.length;
   const ratedWeeks = weeklyProgress.filter(w => w.rating > 0).length;
   const averageRating = ratedWeeks > 0 
-    ? weeklyProgress.filter(w => w.rating > 0).reduce((sum, w) => sum + w.rating, 0) / ratedWeeks 
+    ? weeklyProgress.filter(w => w.rating > 0 && !isNaN(w.rating) && isFinite(w.rating)).reduce((sum, w) => sum + w.rating, 0) / ratedWeeks 
     : 0;
   const completionRate = Math.round((ratedWeeks / totalWeeks) * 100);
   const weeksWithNotes = weeklyProgress.filter(w => w.note && w.note.trim()).length;
   const totalTags = weeklyProgress.reduce((sum, w) => sum + (w.tags?.length || 0), 0);
 
-  // Тренд (улучшение/ухудшение)
-  const recentWeeks = chartData.slice(-4);
-  const olderWeeks = chartData.slice(0, -4);
+  // Тренд (улучшение/ухудшение) с валидацией
+  const recentWeeks = chartData.slice(-4).filter(w => typeof w.rating === 'number' && !isNaN(w.rating));
+  const olderWeeks = chartData.slice(0, -4).filter(w => typeof w.rating === 'number' && !isNaN(w.rating));
   const recentAvg = recentWeeks.length > 0 
     ? recentWeeks.reduce((sum, w) => sum + (w.rating || 0), 0) / recentWeeks.length 
     : 0;
   const olderAvg = olderWeeks.length > 0 
     ? olderWeeks.reduce((sum, w) => sum + (w.rating || 0), 0) / olderWeeks.length 
     : 0;
-  const trend = recentAvg - olderAvg;
+  const trend = isFinite(recentAvg) && isFinite(olderAvg) ? recentAvg - olderAvg : 0;
 
   // Анализ паттернов
   const getConsistencyScore = () => {

@@ -69,11 +69,11 @@ export const useWeeklyRatings = () => {
       const existing = prev[weekId];
       const now = new Date();
       
-      // Calculate overall score from ratings
+      // Calculate overall score from ratings with enhanced validation
       const ratingsValues = Object.values(updates.ratings || existing?.ratings || {})
-        .filter(v => typeof v === 'number' && !isNaN(v));
+        .filter(v => typeof v === 'number' && !isNaN(v) && isFinite(v) && v >= 0);
       const overallScore = ratingsValues.length > 0 
-        ? ratingsValues.reduce((sum, rating) => sum + rating, 0) / ratingsValues.length
+        ? Math.round((ratingsValues.reduce((sum, rating) => sum + rating, 0) / ratingsValues.length) * 10) / 10
         : 0;
 
       const newRating: WeeklyRating = {
@@ -160,14 +160,15 @@ export const useWeeklyRatings = () => {
       averageByMetric[metricId] = averageByMetric[metricId] / metricCounts[metricId];
     });
 
-    // Trends over time
+    // Trends over time with data validation
     const trendsOverTime = allRatings
       .sort((a, b) => a.startDate.getTime() - b.startDate.getTime())
       .map(week => ({
         weekNumber: week.weekNumber,
-        averageScore: week.overallScore,
+        averageScore: typeof week.overallScore === 'number' && !isNaN(week.overallScore) ? week.overallScore : 0,
         date: format(week.startDate, 'dd.MM', { locale: ru })
-      }));
+      }))
+      .filter(week => typeof week.averageScore === 'number' && !isNaN(week.averageScore));
 
     // Best and worst weeks
     const sortedByScore = [...allRatings].sort((a, b) => b.overallScore - a.overallScore);
