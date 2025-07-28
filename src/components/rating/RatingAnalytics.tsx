@@ -216,7 +216,12 @@ const RatingAnalytics: React.FC<RatingAnalyticsProps> = ({ analytics, allMetrics
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
-                      data={moodChartData.filter(mood => mood.value > 0)}
+                      data={moodChartData.filter(mood => 
+                        mood.value > 0 && 
+                        typeof mood.value === 'number' && 
+                        !isNaN(mood.value) && 
+                        isFinite(mood.value)
+                      )}
                       cx="50%"
                       cy="50%"
                       outerRadius={80}

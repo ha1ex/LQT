@@ -798,7 +798,12 @@ const LifeQualityTracker = () => {
           </div>
           <div className="bg-gradient-to-br from-white to-slate-50 rounded-2xl p-6 shadow-inner">
             <ResponsiveContainer width="100%" height={350}>
-              <AreaChart data={filteredData}>
+              <AreaChart data={filteredData.filter(item => 
+                item && 
+                typeof item.overall === 'number' && 
+                !isNaN(item.overall) && 
+                isFinite(item.overall)
+              )}>
                 <defs>
                   <linearGradient id="overallGradient" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="hsl(217 91% 60%)" stopOpacity={0.3}/>
