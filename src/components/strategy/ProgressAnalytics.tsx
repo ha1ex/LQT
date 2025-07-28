@@ -18,10 +18,10 @@ export const ProgressAnalytics: React.FC<ProgressAnalyticsProps> = ({
   // Подготовка данных для графиков
   const chartData = weeklyProgress.map(week => ({
     week: `Н${week.week}`,
-    rating: week.rating > 0 ? week.rating : null,
+    rating: week.rating > 0 && !isNaN(week.rating) ? week.rating : null,
     hasNote: !!week.note,
     tags: week.tags?.length || 0
-  })).filter(item => item.rating !== null);
+  })).filter(item => item.rating !== null && typeof item.rating === 'number' && !isNaN(item.rating));
 
   // Статистика по рейтингам
   const ratingStats = [1, 2, 3, 4].map(rating => ({

@@ -40,7 +40,7 @@ export const adaptWeeklyRatingsToMockData = (
         Object.entries(rating.ratings).forEach(([metricId, value]) => {
           // Находим соответствующую метрику по ID
           const metric = BASE_METRICS.find(m => m.id === metricId);
-          if (metric && typeof value === 'number') {
+          if (metric && typeof value === 'number' && !isNaN(value)) {
             weekData[metric.name] = value;
           }
         });
@@ -48,11 +48,11 @@ export const adaptWeeklyRatingsToMockData = (
 
       // Рассчитываем общий индекс
       const values = rating.ratings 
-        ? Object.values(rating.ratings).filter(v => typeof v === 'number' && v !== null && v !== undefined) as number[]
+        ? Object.values(rating.ratings).filter(v => typeof v === 'number' && v !== null && v !== undefined && !isNaN(v)) as number[]
         : [];
       weekData.overall = values.length > 0 
         ? parseFloat((values.reduce((sum, val) => sum + val, 0) / values.length).toFixed(1))
-        : rating.overallScore || 0;
+        : (typeof rating.overallScore === 'number' && !isNaN(rating.overallScore) ? rating.overallScore : 0);
 
       return weekData;
     })

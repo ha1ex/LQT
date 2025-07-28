@@ -70,7 +70,8 @@ export const useWeeklyRatings = () => {
       const now = new Date();
       
       // Calculate overall score from ratings
-      const ratingsValues = Object.values(updates.ratings || existing?.ratings || {});
+      const ratingsValues = Object.values(updates.ratings || existing?.ratings || {})
+        .filter(v => typeof v === 'number' && !isNaN(v));
       const overallScore = ratingsValues.length > 0 
         ? ratingsValues.reduce((sum, rating) => sum + rating, 0) / ratingsValues.length
         : 0;

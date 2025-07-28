@@ -18,14 +18,16 @@ const RatingAnalytics: React.FC<RatingAnalyticsProps> = ({ analytics, allMetrics
 
   // Prepare metrics data for charts
   const metricsChartData = useMemo(() => {
-    return Object.entries(averageByMetric).map(([metricId, average]) => {
-      const metric = allMetrics.find(m => m.id === metricId);
-      return {
-        name: metric?.name || metricId,
-        value: average,
-        icon: metric?.icon || '📊'
-      };
-    }).sort((a, b) => b.value - a.value);
+    return Object.entries(averageByMetric)
+      .filter(([metricId, average]) => typeof average === 'number' && !isNaN(average))
+      .map(([metricId, average]) => {
+        const metric = allMetrics.find(m => m.id === metricId);
+        return {
+          name: metric?.name || metricId,
+          value: average,
+          icon: metric?.icon || '📊'
+        };
+      }).sort((a, b) => b.value - a.value);
   }, [averageByMetric, allMetrics]);
 
   // Mood colors
