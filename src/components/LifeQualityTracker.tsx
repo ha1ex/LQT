@@ -53,6 +53,7 @@ import { DemoModeToggle } from '@/components/ui/demo-mode-toggle';
 import { OnboardingWizard } from '@/components/onboarding/OnboardingWizard';
 import { EmptyStateView } from '@/components/ui/empty-state-view';
 import { adaptWeeklyRatingsToMockData, filterDataByPeriod, BASE_METRICS } from '@/utils/dataAdapter';
+import { logChartData, safeValidateChartData } from '@/utils/chartDebug';
 
 const LifeQualityTracker = () => {
   const [currentView, setCurrentView] = useState('dashboard');
@@ -243,21 +244,41 @@ const LifeQualityTracker = () => {
     ];
   };
 
-  // Функция для расчета корреляции Пирсона
+  // Функция для расчета корреляции Пирсона с защитой от NaN
   const calculatePearsonCorrelation = (x: number[], y: number[]): number => {
     if (x.length !== y.length || x.length === 0) return 0;
     
-    const n = x.length;
-    const sumX = x.reduce((a, b) => a + b, 0);
-    const sumY = y.reduce((a, b) => a + b, 0);
-    const sumXY = x.reduce((total, xi, i) => total + xi * y[i], 0);
-    const sumXX = x.reduce((total, xi) => total + xi * xi, 0);
-    const sumYY = y.reduce((total, yi) => total + yi * yi, 0);
+    // Фильтруем только валидные числа
+    const validPairs = x.map((xi, i) => [xi, y[i]])
+      .filter(([xi, yi]) => 
+        typeof xi === 'number' && typeof yi === 'number' && 
+        !isNaN(xi) && !isNaN(yi) && 
+        isFinite(xi) && isFinite(yi)
+      );
+    
+    if (validPairs.length < 2) return 0; // Нужно минимум 2 точки
+    
+    const validX = validPairs.map(pair => pair[0]);
+    const validY = validPairs.map(pair => pair[1]);
+    const n = validX.length;
+    
+    const sumX = validX.reduce((a, b) => a + b, 0);
+    const sumY = validY.reduce((a, b) => a + b, 0);
+    const sumXY = validX.reduce((total, xi, i) => total + xi * validY[i], 0);
+    const sumXX = validX.reduce((total, xi) => total + xi * xi, 0);
+    const sumYY = validY.reduce((total, yi) => total + yi * yi, 0);
     
     const numerator = n * sumXY - sumX * sumY;
     const denominator = Math.sqrt((n * sumXX - sumX * sumX) * (n * sumYY - sumY * sumY));
     
-    return denominator === 0 ? 0 : Math.max(-1, Math.min(1, numerator / denominator));
+    // Защита от деления на ноль и NaN
+    if (denominator === 0 || !isFinite(denominator)) return 0;
+    
+    const correlation = numerator / denominator;
+    
+    // Дополнительная защита от NaN и ограничение диапазона [-1, 1]
+    if (isNaN(correlation) || !isFinite(correlation)) return 0;
+    return Math.max(-1, Math.min(1, correlation));
   };
 
   // Функция для получения отфильтрованных данных с санитизацией
@@ -350,15 +371,19 @@ const LifeQualityTracker = () => {
           const metric1 = allMetrics[i];
           const metric2 = allMetrics[j];
           
-          const values1 = mockData.map(week => week && week[metric1.name] ? week[metric1.name] : 0);
-          const values2 = mockData.map(week => week && week[metric2.name] ? week[metric2.name] : 0);
+          const values1 = mockData
+            .map(week => week && week[metric1.name] ? week[metric1.name] : 0)
+            .filter(val => typeof val === 'number' && !isNaN(val) && isFinite(val));
+          const values2 = mockData
+            .map(week => week && week[metric2.name] ? week[metric2.name] : 0)
+            .filter(val => typeof val === 'number' && !isNaN(val) && isFinite(val));
           
           // Проверяем наличие достаточного количества данных
-          if (values1.length >= 3 && values2.length >= 3) {
+          if (values1.length >= 3 && values2.length >= 3 && values1.length === values2.length) {
             const correlation = calculatePearsonCorrelation(values1, values2);
             
-            // Добавляем только значимые корреляции (|r| > 0.4)
-            if (Math.abs(correlation) > 0.4) {
+            // Добавляем только значимые корреляции (|r| > 0.4) и валидные числа
+            if (typeof correlation === 'number' && !isNaN(correlation) && isFinite(correlation) && Math.abs(correlation) > 0.4) {
               correlations.push({
                 metric: `${metric1.name} ↔ ${metric2.name}`,
                 correlation: parseFloat(correlation.toFixed(2)),
@@ -377,27 +402,35 @@ const LifeQualityTracker = () => {
     }
     
     // Для отдельных метрик - исключаем целевую метрику из расчета общего индекса
-    const targetValues = mockData.map(week => week && week[targetMetric] ? week[targetMetric] : 0);
+    const targetValues = mockData
+      .map(week => week && week[targetMetric] ? week[targetMetric] : 0)
+      .filter(val => typeof val === 'number' && !isNaN(val) && isFinite(val));
+      
     const correlations = allMetrics
       .filter(metric => metric.name !== targetMetric)
       .map(metric => {
-        const metricValues = mockData.map(week => week && week[metric.name] ? week[metric.name] : 0);
+        const metricValues = mockData
+          .map(week => week && week[metric.name] ? week[metric.name] : 0)
+          .filter(val => typeof val === 'number' && !isNaN(val) && isFinite(val));
         
         // Проверяем наличие достаточного количества данных
-        if (metricValues.length >= 3 && targetValues.length >= 3) {
+        if (metricValues.length >= 3 && targetValues.length >= 3 && metricValues.length === targetValues.length) {
           const correlation = calculatePearsonCorrelation(targetValues, metricValues);
           
-          return {
-            metric: metric.name,
-            correlation: parseFloat(correlation.toFixed(2)),
-            strength: Math.abs(correlation) > 0.7 ? 'strong' as const : 
-                     Math.abs(correlation) > 0.4 ? 'moderate' as const : 'weak' as const
-          };
+          // Проверяем валидность корреляции
+          if (typeof correlation === 'number' && !isNaN(correlation) && isFinite(correlation)) {
+            return {
+              metric: metric.name,
+              correlation: parseFloat(correlation.toFixed(2)),
+              strength: Math.abs(correlation) > 0.7 ? 'strong' as const : 
+                       Math.abs(correlation) > 0.4 ? 'moderate' as const : 'weak' as const
+            };
+          }
         }
         
         return null;
       })
-      .filter(item => item !== null && Math.abs(item.correlation) > 0.3) // Фильтруем слабые корреляции
+      .filter(item => item !== null && typeof item.correlation === 'number' && !isNaN(item.correlation) && isFinite(item.correlation) && Math.abs(item.correlation) > 0.3) // Фильтруем слабые корреляции и NaN
       .sort((a, b) => Math.abs(b.correlation) - Math.abs(a.correlation)) // Сортируем по силе
       .slice(0, 5); // Берем топ-5
     
@@ -1427,7 +1460,7 @@ const LifeQualityTracker = () => {
 
         {/* Корреляции */}
         <CorrelationAnalysis 
-          data={generateCorrelations(metric.name)}
+          data={safeValidateChartData(generateCorrelations(metric.name))}
           targetMetric={metric.name}
         />
       </div>
@@ -1558,7 +1591,7 @@ const LifeQualityTracker = () => {
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
                 <WeeklyInsights insights={generateWeeklyInsights()} />
                 <CorrelationAnalysis 
-                  data={generateCorrelations('Общий индекс')}
+                  data={safeValidateChartData(generateCorrelations('Общий индекс'))}
                   targetMetric="Общий индекс"
                 />
               </div>
