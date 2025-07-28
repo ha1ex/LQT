@@ -37,8 +37,6 @@ export const ProgressAnalytics: React.FC<ProgressAnalyticsProps> = ({
   const averageRating = ratedWeeks > 0 
     ? weeklyProgress.filter(w => w.rating > 0).reduce((sum, w) => sum + w.rating, 0) / ratedWeeks 
     : 0;
-  const validAverageRating = isNaN(averageRating) ? 0 : averageRating;
-  console.log('Average rating calculation:', { ratedWeeks, averageRating, validAverageRating });
   const completionRate = Math.round((ratedWeeks / totalWeeks) * 100);
   const weeksWithNotes = weeklyProgress.filter(w => w.note && w.note.trim()).length;
   const totalTags = weeklyProgress.reduce((sum, w) => sum + (w.tags?.length || 0), 0);
@@ -72,7 +70,7 @@ export const ProgressAnalytics: React.FC<ProgressAnalyticsProps> = ({
         <Card>
           <CardContent className="p-4 text-center">
             <div className="text-2xl font-bold text-primary">
-              {validAverageRating.toFixed(1)}
+              {averageRating.toFixed(1)}
             </div>
             <div className="text-sm text-muted-foreground">Средняя оценка</div>
           </CardContent>

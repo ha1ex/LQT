@@ -19,17 +19,13 @@ export const useWeeklyRatings = () => {
         // Convert date strings back to Date objects
         const converted: WeeklyRatingData = {};
         Object.keys(parsed).forEach(key => {
-          const rating = parsed[key];
-          if (rating && rating.startDate && rating.endDate) {
-            converted[key] = {
-              ...rating,
-              startDate: new Date(rating.startDate),
-              endDate: new Date(rating.endDate),
-              createdAt: new Date(rating.createdAt || rating.startDate),
-              updatedAt: new Date(rating.updatedAt || rating.startDate),
-              overallScore: typeof rating.overallScore === 'number' && isFinite(rating.overallScore) ? rating.overallScore : 0
-            };
-          }
+          converted[key] = {
+            ...parsed[key],
+            startDate: parseISO(parsed[key].startDate),
+            endDate: parseISO(parsed[key].endDate),
+            createdAt: parseISO(parsed[key].createdAt),
+            updatedAt: parseISO(parsed[key].updatedAt),
+          };
         });
         setRatings(converted);
       }
@@ -43,22 +39,7 @@ export const useWeeklyRatings = () => {
   // Save to localStorage whenever ratings change
   const saveToStorage = useCallback((newRatings: WeeklyRatingData) => {
     try {
-      // Ensure all dates are properly serialized
-      const serializable = Object.entries(newRatings).reduce((acc, [key, rating]) => {
-        if (rating && rating.startDate && rating.endDate) {
-          acc[key] = {
-            ...rating,
-            startDate: rating.startDate.toISOString(),
-            endDate: rating.endDate.toISOString(),
-            createdAt: rating.createdAt.toISOString(),
-            updatedAt: rating.updatedAt.toISOString(),
-            overallScore: typeof rating.overallScore === 'number' && isFinite(rating.overallScore) ? rating.overallScore : 0
-          };
-        }
-        return acc;
-      }, {} as any);
-      
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(serializable));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(newRatings));
     } catch (error) {
       console.error('Error saving weekly ratings:', error);
     }
@@ -89,11 +70,8 @@ export const useWeeklyRatings = () => {
       const now = new Date();
       
       // Calculate overall score from ratings
-      const ratingsData = updates.ratings || existing?.ratings || {};
-      const ratingsValues = Object.values(ratingsData)
-        .map(v => typeof v === 'number' && isFinite(v) && !isNaN(v) ? v : 0)
-        .filter(v => v > 0);
-      
+      const ratingsValues = Object.values(updates.ratings || existing?.ratings || {})
+        .filter(v => typeof v === 'number' && !isNaN(v));
       const overallScore = ratingsValues.length > 0 
         ? ratingsValues.reduce((sum, rating) => sum + rating, 0) / ratingsValues.length
         : 0;
@@ -109,9 +87,9 @@ export const useWeeklyRatings = () => {
         keyEvents: [],
         createdAt: existing?.createdAt || now,
         updatedAt: now,
-        overallScore: isFinite(overallScore) && !isNaN(overallScore) ? overallScore : 0,
         ...existing,
-        ...updates
+        ...updates,
+        overallScore,
       };
 
       const newRatings = {
@@ -171,28 +149,19 @@ export const useWeeklyRatings = () => {
     const averageByMetric: Record<string, number> = {};
     const metricCounts: Record<string, number> = {};
     
-    
     allRatings.forEach(week => {
       Object.entries(week.ratings).forEach(([metricId, rating]) => {
-        if (typeof rating === 'number' && !isNaN(rating) && isFinite(rating)) {
-          averageByMetric[metricId] = (averageByMetric[metricId] || 0) + rating;
-          metricCounts[metricId] = (metricCounts[metricId] || 0) + 1;
-        }
+        averageByMetric[metricId] = (averageByMetric[metricId] || 0) + rating;
+        metricCounts[metricId] = (metricCounts[metricId] || 0) + 1;
       });
     });
 
     Object.keys(averageByMetric).forEach(metricId => {
-      if (metricCounts[metricId] > 0) {
-        const average = averageByMetric[metricId] / metricCounts[metricId];
-        averageByMetric[metricId] = isNaN(average) || !isFinite(average) ? 0 : average;
-      } else {
-        averageByMetric[metricId] = 0;
-      }
+      averageByMetric[metricId] = averageByMetric[metricId] / metricCounts[metricId];
     });
 
     // Trends over time
     const trendsOverTime = allRatings
-      .filter(week => typeof week.overallScore === 'number' && !isNaN(week.overallScore) && isFinite(week.overallScore))
       .sort((a, b) => a.startDate.getTime() - b.startDate.getTime())
       .map(week => ({
         weekNumber: week.weekNumber,

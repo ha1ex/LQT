@@ -1,4 +1,3 @@
-
 import { WeeklyRating } from '@/types/weeklyRating';
 import { AppDataState } from '@/types/app';
 
@@ -16,40 +15,6 @@ export const BASE_METRICS = [
   { id: 'mental_health', name: 'Ментальное здоровье', icon: '🧠', category: 'mental' }
 ];
 
-// Helper function to ensure valid numbers
-const ensureValidNumber = (value: any): number => {
-  if (typeof value === 'number' && isFinite(value) && !isNaN(value)) {
-    return value;
-  }
-  return 0;
-};
-
-// Helper function to safely format date range
-const formatWeekRange = (start: string | Date, end: string | Date): string => {
-  try {
-    const startDate = typeof start === 'string' ? new Date(start) : start;
-    const endDate = typeof end === 'string' ? new Date(end) : end;
-    
-    if (!startDate || !endDate || isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
-      return 'Invalid Date';
-    }
-    
-    const startDay = startDate.getDate();
-    const endDay = endDate.getDate();
-    const startMonth = startDate.toLocaleDateString('ru', { month: 'short' });
-    const endMonth = endDate.toLocaleDateString('ru', { month: 'short' });
-    
-    if (startMonth === endMonth) {
-      return `${startDay}-${endDay} ${startMonth}`;
-    } else {
-      return `${startDay} ${startMonth}-${endDay} ${endMonth}`;
-    }
-  } catch (error) {
-    console.error('Error formatting date range:', error);
-    return 'Invalid Date';
-  }
-};
-
 // Адаптер для преобразования данных из GlobalDataProvider в формат mockData
 export const adaptWeeklyRatingsToMockData = (
   weeklyRatings: Record<string, WeeklyRating>,
@@ -62,25 +27,12 @@ export const adaptWeeklyRatingsToMockData = (
 
   // Преобразуем недельные оценки в формат mockData
   return Object.values(weeklyRatings)
-    .filter(rating => {
-      // Фильтруем некорректные записи
-      if (!rating || !rating.startDate || !rating.endDate) return false;
-      
-      const startDate = typeof rating.startDate === 'string' ? new Date(rating.startDate) : rating.startDate;
-      const endDate = typeof rating.endDate === 'string' ? new Date(rating.endDate) : rating.endDate;
-      
-      return startDate instanceof Date && endDate instanceof Date && 
-             !isNaN(startDate.getTime()) && !isNaN(endDate.getTime());
-    })
-    .sort((a, b) => {
-      const dateA = typeof a.startDate === 'string' ? new Date(a.startDate) : a.startDate;
-      const dateB = typeof b.startDate === 'string' ? new Date(b.startDate) : b.startDate;
-      return dateA.getTime() - dateB.getTime();
-    })
+    .filter(rating => rating && rating.startDate && rating.endDate) // Фильтруем некорректные записи
+    .sort((a, b) => a.startDate.getTime() - b.startDate.getTime())
     .map(rating => {
       const weekData: any = {
         week: `W${rating.weekNumber || 0}`,
-        date: formatWeekRange(rating.startDate, rating.endDate),
+        date: formatWeekRange(rating.startDate.toISOString(), rating.endDate.toISOString()),
       };
 
       // Добавляем оценки по метрикам, используя правильные названия
@@ -88,37 +40,45 @@ export const adaptWeeklyRatingsToMockData = (
         Object.entries(rating.ratings).forEach(([metricId, value]) => {
           // Находим соответствующую метрику по ID
           const metric = BASE_METRICS.find(m => m.id === metricId);
-          if (metric) {
-            const validValue = ensureValidNumber(value);
-            weekData[metric.name] = validValue;
+          if (metric && typeof value === 'number' && !isNaN(value)) {
+            weekData[metric.name] = value;
           }
         });
       }
 
       // Рассчитываем общий индекс
       const values = rating.ratings 
-        ? Object.values(rating.ratings)
-            .map(v => ensureValidNumber(v))
-            .filter(v => v > 0) // Исключаем нулевые значения
+        ? Object.values(rating.ratings).filter(v => typeof v === 'number' && v !== null && v !== undefined && !isNaN(v)) as number[]
         : [];
-      
-      let overallScore = 0;
-      if (values.length > 0) {
-        overallScore = values.reduce((sum, val) => sum + val, 0) / values.length;
-      } else {
-        overallScore = ensureValidNumber(rating.overallScore);
-      }
-      
-      weekData.overall = ensureValidNumber(overallScore);
+      weekData.overall = values.length > 0 
+        ? parseFloat((values.reduce((sum, val) => sum + val, 0) / values.length).toFixed(1))
+        : (typeof rating.overallScore === 'number' && !isNaN(rating.overallScore) ? rating.overallScore : 0);
 
       return weekData;
     })
-    .filter(weekData => weekData !== null && weekData !== undefined);
+    .filter(weekData => weekData !== null && weekData !== undefined); // Дополнительная фильтрация
 };
 
 // Адаптер для создания пустой структуры данных
 export const createEmptyDataStructure = () => {
   return [];
+};
+
+// Форматирование диапазона недели
+const formatWeekRange = (start: string, end: string): string => {
+  const startDate = new Date(start);
+  const endDate = new Date(end);
+  
+  const startDay = startDate.getDate();
+  const endDay = endDate.getDate();
+  const startMonth = startDate.toLocaleDateString('ru', { month: 'short' });
+  const endMonth = endDate.toLocaleDateString('ru', { month: 'short' });
+  
+  if (startMonth === endMonth) {
+    return `${startDay}-${endDay} ${startMonth}`;
+  } else {
+    return `${startDay} ${startMonth}-${endDay} ${endMonth}`;
+  }
 };
 
 // Получение последних N недель данных
