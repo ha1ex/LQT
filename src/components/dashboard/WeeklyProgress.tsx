@@ -1,17 +1,25 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { TrendingUp, TrendingDown, Minus, BarChart3 } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { TrendingUp, TrendingDown, Minus, BarChart3, Target, Zap } from 'lucide-react';
+import { useIntegratedData } from '@/hooks/useIntegratedData';
 
 interface WeeklyProgressProps {
   mockData: any[];
   onViewHistory: () => void;
+  onCreateHypothesis?: (metricId?: string) => void;
+  onViewStrategy?: () => void;
 }
 
 const WeeklyProgress: React.FC<WeeklyProgressProps> = ({ 
   mockData, 
-  onViewHistory 
+  onViewHistory,
+  onCreateHypothesis,
+  onViewStrategy
 }) => {
+  // Get integrated strategy data
+  const { activeHypotheses, strategyMetrics, integratedMetrics } = useIntegratedData();
   // Берем последние 4 недели для анализа тренда
   const lastFourWeeks = mockData.slice(-4);
   const currentWeek = lastFourWeeks[lastFourWeeks.length - 1];
@@ -89,6 +97,30 @@ const WeeklyProgress: React.FC<WeeklyProgressProps> = ({
             change > 0 ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'
           }`}>
             {change > 0 ? '📈' : '📉'} {Math.abs(changePercent).toFixed(1)}% за неделю
+          </div>
+        )}
+
+        {/* Strategy integration */}
+        {activeHypotheses.length > 0 && (
+          <div className="flex items-center gap-2 pt-2 border-t border-border">
+            <Badge variant="outline" className="text-xs">
+              <Target className="w-3 h-3 mr-1" />
+              {activeHypotheses.length} активных
+            </Badge>
+            {onViewStrategy && (
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="text-xs"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onViewStrategy();
+                }}
+              >
+                <Zap className="w-3 h-3 mr-1" />
+                К стратегии
+              </Button>
+            )}
           </div>
         )}
 

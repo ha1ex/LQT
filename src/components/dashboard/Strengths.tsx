@@ -2,27 +2,28 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Star, Trophy, Sparkles } from 'lucide-react';
+import { Star, Trophy, Sparkles, Target, Zap } from 'lucide-react';
+import { useIntegratedData } from '@/hooks/useIntegratedData';
 
 interface StrengthsProps {
   allMetrics: any[];
   currentWeekData: any;
   onMetricClick: (metricId: string) => void;
+  onCreateHypothesis?: (metricId?: string) => void;
 }
 
 const Strengths: React.FC<StrengthsProps> = ({ 
   allMetrics, 
   currentWeekData, 
-  onMetricClick 
+  onMetricClick,
+  onCreateHypothesis
 }) => {
-  // Находим метрики с высокими оценками (8 и выше)
-  const strongMetrics = allMetrics
-    .map(metric => ({
-      ...metric,
-      value: currentWeekData?.[metric.name] || 0
-    }))
-    .filter(metric => metric.value >= 8)
-    .sort((a, b) => b.value - a.value)
+  // Get integrated data to show strategy context
+  const { integratedMetrics } = useIntegratedData();
+  // Находим метрики с высокими оценками (8 и выше) из интегрированных данных
+  const strongMetrics = integratedMetrics
+    .filter(metric => metric.currentValue >= 8)
+    .sort((a, b) => b.currentValue - a.currentValue)
     .slice(0, 3);
 
   if (strongMetrics.length === 0) {
@@ -76,18 +77,50 @@ const Strengths: React.FC<StrengthsProps> = ({
           {strongMetrics.map((metric) => (
             <div 
               key={metric.id}
-              className="flex items-center justify-between p-2 rounded-md bg-green-50 border border-green-200 cursor-pointer hover:bg-green-100 transition-colors"
-              onClick={() => onMetricClick(metric.id)}
+              className="p-2 rounded-md bg-green-50 border border-green-200 hover:bg-green-100 transition-colors"
             >
-              <div className="flex items-center gap-2">
-                <span className="text-sm">{metric.icon}</span>
-                <span className="text-sm font-medium text-green-800">
-                  {metric.name}
-                </span>
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm">{metric.icon}</span>
+                  <span className="text-sm font-medium text-green-800">
+                    {metric.name}
+                  </span>
+                  {metric.hasActiveExperiment && (
+                    <Badge variant="outline" className="text-xs">
+                      <Target className="w-2 h-2 mr-1" />
+                      {metric.relatedHypotheses.length}
+                    </Badge>
+                  )}
+                </div>
+                <Badge variant="secondary" className="bg-green-100 text-green-800 border-green-300">
+                  {metric.currentValue}/10
+                </Badge>
               </div>
-              <Badge variant="secondary" className="bg-green-100 text-green-800 border-green-300">
-                {metric.value}/10
-              </Badge>
+              
+              <div className="flex gap-1">
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  onClick={() => onMetricClick(metric.id)}
+                  className="h-6 px-2 text-xs"
+                >
+                  Посмотреть
+                </Button>
+                {onCreateHypothesis && (
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onCreateHypothesis(metric.id);
+                    }}
+                    className="h-6 px-2 text-xs"
+                  >
+                    <Zap className="w-3 h-3 mr-1" />
+                    Использовать
+                  </Button>
+                )}
+              </div>
             </div>
           ))}
         </div>

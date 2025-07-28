@@ -2,27 +2,29 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { AlertTriangle, ArrowRight, TrendingDown } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { AlertTriangle, ArrowRight, TrendingDown, Target, Plus } from 'lucide-react';
+import { useIntegratedData } from '@/hooks/useIntegratedData';
 
 interface ProblemAreasProps {
   allMetrics: any[];
   currentWeekData: any;
   onMetricClick: (metricId: string) => void;
+  onCreateHypothesis?: (metricId?: string) => void;
 }
 
 const ProblemAreas: React.FC<ProblemAreasProps> = ({ 
   allMetrics, 
   currentWeekData, 
-  onMetricClick 
+  onMetricClick,
+  onCreateHypothesis
 }) => {
-  // Находим метрики с низкими оценками (4 и ниже)
-  const problemMetrics = allMetrics
-    .map(metric => ({
-      ...metric,
-      value: currentWeekData?.[metric.name] || 0
-    }))
-    .filter(metric => metric.value > 0 && metric.value <= 4)
-    .sort((a, b) => a.value - b.value)
+  // Get integrated data to show strategy context
+  const { integratedMetrics, strategyDashboardLinks } = useIntegratedData();
+  // Находим метрики с низкими оценками (4 и ниже) из интегрированных данных
+  const problemMetrics = integratedMetrics
+    .filter(metric => metric.currentValue > 0 && metric.currentValue <= 4)
+    .sort((a, b) => a.currentValue - b.currentValue)
     .slice(0, 2);
 
   if (problemMetrics.length === 0) {
@@ -59,20 +61,49 @@ const ProblemAreas: React.FC<ProblemAreasProps> = ({
           <Alert key={metric.id} className="border-destructive/20 bg-destructive/10">
             <TrendingDown className="h-4 w-4 text-destructive" />
             <AlertDescription className="ml-2">
-              <div className="flex items-center justify-between">
-                <div>
-                  <span className="font-medium text-sm">{metric.name}</span>
-                  <span className="text-destructive font-bold ml-2">{metric.value}/10</span>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium text-sm">{metric.name}</span>
+                    <span className="text-destructive font-bold">{metric.currentValue}/10</span>
+                    {metric.hasActiveExperiment && (
+                      <Badge variant="outline" className="text-xs">
+                        <Target className="w-2 h-2 mr-1" />
+                        Активный
+                      </Badge>
+                    )}
+                  </div>
+                  <div className="flex gap-1">
+                    {!metric.hasActiveExperiment && onCreateHypothesis && (
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onCreateHypothesis(metric.id);
+                        }}
+                        className="h-6 px-2 text-xs"
+                      >
+                        <Plus className="w-3 h-3 mr-1" />
+                        Эксперимент
+                      </Button>
+                    )}
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => onMetricClick(metric.id)}
+                      className="h-6 px-2 text-xs"
+                    >
+                      Улучшить
+                      <ArrowRight className="w-3 h-3 ml-1" />
+                    </Button>
+                  </div>
                 </div>
-                <Button 
-                  variant="ghost" 
-                  size="sm"
-                  onClick={() => onMetricClick(metric.id)}
-                  className="h-6 px-2 text-xs"
-                >
-                  Улучшить
-                  <ArrowRight className="w-3 h-3 ml-1" />
-                </Button>
+                {metric.hasActiveExperiment && (
+                  <p className="text-xs text-muted-foreground">
+                    {metric.relatedHypotheses.length} активных эксперимента
+                  </p>
+                )}
               </div>
             </AlertDescription>
           </Alert>
