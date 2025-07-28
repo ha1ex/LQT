@@ -373,23 +373,53 @@ export const generateDemoSubjects = () => {
   return [
     {
       id: 'self',
-      name: 'Я',
+      name: 'Я сам',
       type: 'self',
-      description: 'Личные изменения и саморазвитие',
+      description: 'Моё собственное поведение и привычки',
       influenceLevel: 'high',
-      relationshipType: 'self',
-      motivationFactors: ['самореализация', 'здоровье', 'карьера'],
-      resistanceFactors: ['лень', 'страхи', 'старые привычки']
+      relationshipType: 'personal',
+      motivationFactors: ['личная выгода', 'самосовершенствование', 'достижение целей'],
+      resistanceFactors: ['лень', 'старые привычки', 'недостаток мотивации']
     },
     {
-      id: 'family',
-      name: 'Семья',
+      id: 'partner',
+      name: 'Партнер/Супруг',
       type: 'family',
-      description: 'Отношения с близкими родственниками',
+      description: 'Поведение близкого партнера',
       influenceLevel: 'high',
-      relationshipType: 'family',
-      motivationFactors: ['любовь', 'поддержка', 'общие цели'],
-      resistanceFactors: ['непонимание', 'разные взгляды']
+      relationshipType: 'intimate',
+      motivationFactors: ['забота о семье', 'взаимная поддержка', 'общие цели'],
+      resistanceFactors: ['разные приоритеты', 'недопонимание', 'занятость']
+    },
+    {
+      id: 'children',
+      name: 'Дети',
+      type: 'family',
+      description: 'Поведение детей в семье',
+      influenceLevel: 'medium',
+      relationshipType: 'parental',
+      motivationFactors: ['пример родителей', 'поощрения', 'интерес'],
+      resistanceFactors: ['возрастные особенности', 'внешние влияния', 'настроение']
+    },
+    {
+      id: 'colleagues',
+      name: 'Коллеги',
+      type: 'colleagues',
+      description: 'Рабочая команда и коллеги',
+      influenceLevel: 'medium',
+      relationshipType: 'professional',
+      motivationFactors: ['карьерный рост', 'признание', 'команда'],
+      resistanceFactors: ['корпоративная культура', 'конкуренция', 'стресс']
+    },
+    {
+      id: 'friends',
+      name: 'Друзья',
+      type: 'friends',
+      description: 'Круг близких друзей',
+      influenceLevel: 'medium',
+      relationshipType: 'friendship',
+      motivationFactors: ['социальная поддержка', 'общие интересы', 'веселье'],
+      resistanceFactors: ['разные взгляды', 'расстояние', 'занятость']
     }
   ];
 };

@@ -27,8 +27,11 @@ export const HypothesisWizard: React.FC<HypothesisWizardProps> = ({ onComplete, 
     risk: 3
   });
 
-  const { subjects } = useSubjects();
+  const { subjects, loading: subjectsLoading } = useSubjects();
   const { createHypothesis } = useEnhancedHypotheses();
+
+  // Debug logging
+  console.log('🔍 HypothesisWizard - subjects:', subjects.length, subjects);
 
   const steps = [
     { number: 1, title: 'Цель', icon: Target, description: 'Выберите цель для улучшения' },
@@ -130,8 +133,17 @@ export const HypothesisWizard: React.FC<HypothesisWizardProps> = ({ onComplete, 
         Кто будет влиять на достижение цели или чье поведение нужно изменить?
       </p>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {subjects.map(subject => (
+      {subjectsLoading ? (
+        <div className="text-center py-8">
+          <p className="text-muted-foreground">Загрузка участников...</p>
+        </div>
+      ) : subjects.length === 0 ? (
+        <div className="text-center py-8">
+          <p className="text-muted-foreground">Участники не найдены. Попробуйте обновить страницу.</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {subjects.map(subject => (
           <Card 
             key={subject.id}
             className={`cursor-pointer transition-all hover:shadow-md ${
@@ -154,9 +166,10 @@ export const HypothesisWizard: React.FC<HypothesisWizardProps> = ({ onComplete, 
               </div>
               <CardDescription className="text-sm">{subject.description}</CardDescription>
             </CardHeader>
-          </Card>
-        ))}
-      </div>
+            </Card>
+          ))}
+        </div>
+      )}
 
       {formData.subjects && formData.subjects.length > 0 && (
         <div className="p-4 bg-muted/50 rounded-lg">

@@ -67,20 +67,31 @@ export const useSubjects = () => {
       const stored = localStorage.getItem(STORAGE_KEY);
       const isDemoMode = localStorage.getItem('lqt_demo_mode') === 'true';
       
-      if (stored) {
+      console.log('🔍 useSubjects loading:', { 
+        storedExists: !!stored, 
+        isDemoMode, 
+        storedData: stored ? JSON.parse(stored) : null 
+      });
+      
+      if (stored && stored !== 'null' && stored !== '[]') {
         const parsed = JSON.parse(stored);
-        setSubjects(parsed);
-      } else if (isDemoMode) {
-        // Only initialize with defaults in demo mode
-        setSubjects(DEFAULT_SUBJECTS);
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(DEFAULT_SUBJECTS));
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          console.log('✅ Loaded subjects from storage:', parsed.length);
+          setSubjects(parsed);
+        } else {
+          console.log('⚠️ Empty subjects in storage, using defaults');
+          setSubjects(DEFAULT_SUBJECTS);
+        }
       } else {
-        // For new users, start with empty subjects
-        setSubjects([]);
+        console.log('📝 No subjects found, using defaults');
+        setSubjects(DEFAULT_SUBJECTS);
+        // Save defaults to localStorage for consistency
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(DEFAULT_SUBJECTS));
       }
     } catch (error) {
-      console.error('Error loading subjects:', error);
-      setSubjects([]);
+      console.error('❌ Error loading subjects:', error);
+      setSubjects(DEFAULT_SUBJECTS);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(DEFAULT_SUBJECTS));
     } finally {
       setLoading(false);
     }
