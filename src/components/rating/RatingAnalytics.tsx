@@ -1,3 +1,4 @@
+
 import React, { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -13,18 +14,37 @@ interface RatingAnalyticsProps {
   allMetrics: Array<{ id: string; name: string; icon: string; description: string; category: string }>;
 }
 
+// Helper function to ensure valid numeric values
+const ensureValidNumber = (value: number, defaultValue: number = 0): number => {
+  if (typeof value !== 'number' || isNaN(value) || !isFinite(value)) {
+    return defaultValue;
+  }
+  return value;
+};
+
+// Helper function to filter valid trend data
+const filterValidTrends = (trends: any[]): any[] => {
+  return trends.filter(trend => {
+    const score = trend.averageScore;
+    return typeof score === 'number' && !isNaN(score) && isFinite(score);
+  });
+};
+
 const RatingAnalytics: React.FC<RatingAnalyticsProps> = ({ analytics, allMetrics }) => {
   const { averageByMetric, trendsOverTime, bestWeek, worstWeek, moodDistribution, seasonalTrends } = analytics;
+
+  // Filter valid trends first
+  const validTrends = filterValidTrends(trendsOverTime);
 
   // Prepare metrics data for charts
   const metricsChartData = useMemo(() => {
     return Object.entries(averageByMetric)
-      .filter(([metricId, average]) => typeof average === 'number' && !isNaN(average))
+      .filter(([metricId, average]) => typeof average === 'number' && !isNaN(average) && isFinite(average))
       .map(([metricId, average]) => {
         const metric = allMetrics.find(m => m.id === metricId);
         return {
           name: metric?.name || metricId,
-          value: average,
+          value: ensureValidNumber(average, 0),
           icon: metric?.icon || '📊'
         };
       }).sort((a, b) => b.value - a.value);
@@ -55,13 +75,23 @@ const RatingAnalytics: React.FC<RatingAnalyticsProps> = ({ analytics, allMetrics
   };
 
   const getTrendIcon = (current: number, previous: number) => {
-    if (current > previous) return <TrendingUp className="w-4 h-4 text-green-500" />;
-    if (current < previous) return <TrendingDown className="w-4 h-4 text-red-500" />;
+    const validCurrent = ensureValidNumber(current, 0);
+    const validPrevious = ensureValidNumber(previous, 0);
+    
+    if (validCurrent > validPrevious) return <TrendingUp className="w-4 h-4 text-green-500" />;
+    if (validCurrent < validPrevious) return <TrendingDown className="w-4 h-4 text-red-500" />;
     return <div className="w-4 h-4" />;
   };
 
-  const overallTrend = trendsOverTime.length >= 2 ? 
-    trendsOverTime[trendsOverTime.length - 1].averageScore - trendsOverTime[trendsOverTime.length - 2].averageScore : 0;
+  const overallTrend = validTrends.length >= 2 ? 
+    ensureValidNumber(validTrends[validTrends.length - 1].averageScore, 0) - ensureValidNumber(validTrends[validTrends.length - 2].averageScore, 0) : 0;
+
+  // Calculate overall average from valid trends
+  const overallAverage = useMemo(() => {
+    if (validTrends.length === 0) return 0;
+    const sum = validTrends.reduce((acc, trend) => acc + ensureValidNumber(trend.averageScore, 0), 0);
+    return ensureValidNumber(sum / validTrends.length, 0);
+  }, [validTrends]);
 
   return (
     <div className="space-y-6">
@@ -72,7 +102,7 @@ const RatingAnalytics: React.FC<RatingAnalyticsProps> = ({ analytics, allMetrics
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Всего недель</p>
-                <p className="text-2xl font-bold">{trendsOverTime.length}</p>
+                <p className="text-2xl font-bold">{validTrends.length}</p>
               </div>
               <Calendar className="w-8 h-8 text-muted-foreground" />
             </div>
@@ -86,20 +116,11 @@ const RatingAnalytics: React.FC<RatingAnalyticsProps> = ({ analytics, allMetrics
                 <p className="text-sm font-medium text-muted-foreground">Средний балл</p>
                  <div className="flex items-center gap-2">
                    <p className="text-2xl font-bold">
-                     {trendsOverTime.length > 0 
-                       ? (() => {
-                           const validScores = trendsOverTime.filter(w => typeof w.averageScore === 'number' && !isNaN(w.averageScore));
-                           const average = validScores.length > 0 
-                             ? (validScores.reduce((sum, week) => sum + week.averageScore, 0) / validScores.length)
-                             : 0;
-                           return isNaN(average) ? '0.0' : average.toFixed(1);
-                         })()
-                       : '0.0'
-                     }
+                     {overallAverage.toFixed(1)}
                    </p>
-                  {getTrendIcon(
-                    trendsOverTime[trendsOverTime.length - 1]?.averageScore || 0,
-                    trendsOverTime[trendsOverTime.length - 2]?.averageScore || 0
+                  {validTrends.length >= 2 && getTrendIcon(
+                    validTrends[validTrends.length - 1]?.averageScore || 0,
+                    validTrends[validTrends.length - 2]?.averageScore || 0
                   )}
                 </div>
               </div>
@@ -114,7 +135,7 @@ const RatingAnalytics: React.FC<RatingAnalyticsProps> = ({ analytics, allMetrics
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Лучшая неделя</p>
                 <p className="text-2xl font-bold">
-                  {bestWeek ? bestWeek.overallScore.toFixed(1) : '—'}
+                  {bestWeek ? ensureValidNumber(bestWeek.overallScore, 0).toFixed(1) : '—'}
                 </p>
                 {bestWeek && (
                   <p className="text-xs text-muted-foreground">
@@ -141,7 +162,7 @@ const RatingAnalytics: React.FC<RatingAnalyticsProps> = ({ analytics, allMetrics
       </div>
 
       {/* Trends Chart */}
-      {trendsOverTime.length > 0 && (
+      {validTrends.length > 0 && (
         <Card>
           <CardHeader>
             <CardTitle>Динамика оценок по времени</CardTitle>
@@ -149,13 +170,13 @@ const RatingAnalytics: React.FC<RatingAnalyticsProps> = ({ analytics, allMetrics
           <CardContent>
              <div className="h-64">
                <ResponsiveContainer width="100%" height="100%">
-                 <RechartsLineChart data={trendsOverTime.filter(t => typeof t.averageScore === 'number' && !isNaN(t.averageScore))}>
+                 <RechartsLineChart data={validTrends}>
                    <CartesianGrid strokeDasharray="3 3" />
                    <XAxis dataKey="date" />
                    <YAxis domain={[0, 10]} />
                    <Tooltip 
                      formatter={(value: any) => {
-                       const numValue = typeof value === 'number' && !isNaN(value) ? value : 0;
+                       const numValue = ensureValidNumber(value, 0);
                        return [`${numValue.toFixed(1)}`, 'Средний балл'];
                      }}
                      labelFormatter={(label) => `Неделя: ${label}`}
@@ -250,14 +271,14 @@ const RatingAnalytics: React.FC<RatingAnalyticsProps> = ({ analytics, allMetrics
               <CardContent className="space-y-3">
                 <div className="flex items-center justify-between">
                   <span>Неделя {bestWeek.weekNumber}</span>
-                  <Badge className={cn("px-2 py-1", getScoreColor(bestWeek.overallScore))}>
-                    {bestWeek.overallScore.toFixed(1)}
+                  <Badge className={cn("px-2 py-1", getScoreColor(ensureValidNumber(bestWeek.overallScore, 0)))}>
+                    {ensureValidNumber(bestWeek.overallScore, 0).toFixed(1)}
                   </Badge>
                 </div>
                 <p className="text-sm text-muted-foreground">
                   {format(bestWeek.startDate, 'dd MMMM', { locale: ru })} - {format(bestWeek.endDate, 'dd MMMM yyyy', { locale: ru })}
                 </p>
-                {bestWeek.keyEvents.length > 0 && (
+                {bestWeek.keyEvents && bestWeek.keyEvents.length > 0 && (
                   <div>
                     <p className="text-sm font-medium mb-1">Ключевые события:</p>
                     <ul className="text-sm text-muted-foreground">
@@ -282,14 +303,14 @@ const RatingAnalytics: React.FC<RatingAnalyticsProps> = ({ analytics, allMetrics
               <CardContent className="space-y-3">
                 <div className="flex items-center justify-between">
                   <span>Неделя {worstWeek.weekNumber}</span>
-                  <Badge className={cn("px-2 py-1", getScoreColor(worstWeek.overallScore))}>
-                    {worstWeek.overallScore.toFixed(1)}
+                  <Badge className={cn("px-2 py-1", getScoreColor(ensureValidNumber(worstWeek.overallScore, 0)))}>
+                    {ensureValidNumber(worstWeek.overallScore, 0).toFixed(1)}
                   </Badge>
                 </div>
                 <p className="text-sm text-muted-foreground">
                   {format(worstWeek.startDate, 'dd MMMM', { locale: ru })} - {format(worstWeek.endDate, 'dd MMMM yyyy', { locale: ru })}
                 </p>
-                {worstWeek.keyEvents.length > 0 && (
+                {worstWeek.keyEvents && worstWeek.keyEvents.length > 0 && (
                   <div>
                     <p className="text-sm font-medium mb-1">Ключевые события:</p>
                     <ul className="text-sm text-muted-foreground">
@@ -311,7 +332,7 @@ const RatingAnalytics: React.FC<RatingAnalyticsProps> = ({ analytics, allMetrics
           <CardTitle>Рекомендации на основе данных</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          {trendsOverTime.length < 3 && (
+          {validTrends.length < 3 && (
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
               <p className="text-sm text-blue-800">
                 📊 Продолжайте заполнять оценки для получения более точной аналитики

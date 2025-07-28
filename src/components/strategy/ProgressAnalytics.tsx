@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -11,35 +12,56 @@ interface ProgressAnalyticsProps {
   hypothesisTitle: string;
 }
 
+// Helper function to ensure valid numeric values
+const ensureValidNumber = (value: number, defaultValue: number = 0): number => {
+  if (typeof value !== 'number' || isNaN(value) || !isFinite(value)) {
+    return defaultValue;
+  }
+  return value;
+};
+
+// Helper function to filter out invalid ratings
+const getValidRatings = (weeklyProgress: WeeklyProgress[]): WeeklyProgress[] => {
+  return weeklyProgress.filter(week => {
+    const rating = week.rating;
+    return typeof rating === 'number' && !isNaN(rating) && isFinite(rating) && rating > 0;
+  });
+};
+
 export const ProgressAnalytics: React.FC<ProgressAnalyticsProps> = ({ 
   weeklyProgress, 
   hypothesisTitle 
 }) => {
+  // Filter out invalid data first
+  const validProgress = getValidRatings(weeklyProgress);
+  
   // Подготовка данных для графиков
-  const chartData = weeklyProgress.map(week => ({
+  const chartData = validProgress.map(week => ({
     week: `Н${week.week}`,
-    rating: week.rating > 0 && !isNaN(week.rating) ? week.rating : null,
+    rating: ensureValidNumber(week.rating, 0),
     hasNote: !!week.note,
     tags: week.tags?.length || 0
-  })).filter(item => item.rating !== null && typeof item.rating === 'number' && !isNaN(item.rating));
+  }));
 
   // Статистика по рейтингам
   const ratingStats = [1, 2, 3, 4].map(rating => ({
     rating,
     label: getRatingLabel(rating),
-    count: weeklyProgress.filter(w => w.rating === rating).length,
+    count: validProgress.filter(w => w.rating === rating).length,
     color: getRatingColor(rating)
   }));
 
   // Общая статистика
   const totalWeeks = weeklyProgress.length;
-  const ratedWeeks = weeklyProgress.filter(w => w.rating > 0).length;
+  const ratedWeeks = validProgress.length;
   const averageRating = ratedWeeks > 0 
-    ? weeklyProgress.filter(w => w.rating > 0).reduce((sum, w) => sum + w.rating, 0) / ratedWeeks 
+    ? validProgress.reduce((sum, w) => sum + ensureValidNumber(w.rating, 0), 0) / ratedWeeks 
     : 0;
-  const validAverageRating = isNaN(averageRating) ? 0 : averageRating;
+  const validAverageRating = ensureValidNumber(averageRating, 0);
+  
   console.log('Average rating calculation:', { ratedWeeks, averageRating, validAverageRating });
-  const completionRate = Math.round((ratedWeeks / totalWeeks) * 100);
+  
+  const completionRate = totalWeeks > 0 ? Math.round((ratedWeeks / totalWeeks) * 100) : 0;
   const weeksWithNotes = weeklyProgress.filter(w => w.note && w.note.trim()).length;
   const totalTags = weeklyProgress.reduce((sum, w) => sum + (w.tags?.length || 0), 0);
 
@@ -47,20 +69,20 @@ export const ProgressAnalytics: React.FC<ProgressAnalyticsProps> = ({
   const recentWeeks = chartData.slice(-4);
   const olderWeeks = chartData.slice(0, -4);
   const recentAvg = recentWeeks.length > 0 
-    ? recentWeeks.reduce((sum, w) => sum + (w.rating || 0), 0) / recentWeeks.length 
+    ? recentWeeks.reduce((sum, w) => sum + ensureValidNumber(w.rating, 0), 0) / recentWeeks.length 
     : 0;
   const olderAvg = olderWeeks.length > 0 
-    ? olderWeeks.reduce((sum, w) => sum + (w.rating || 0), 0) / olderWeeks.length 
+    ? olderWeeks.reduce((sum, w) => sum + ensureValidNumber(w.rating, 0), 0) / olderWeeks.length 
     : 0;
-  const trend = recentAvg - olderAvg;
+  const trend = ensureValidNumber(recentAvg - olderAvg, 0);
 
   // Анализ паттернов
   const getConsistencyScore = () => {
     if (chartData.length < 3) return 0;
-    const ratings = chartData.map(w => w.rating || 0);
+    const ratings = chartData.map(w => ensureValidNumber(w.rating, 0));
     const avg = ratings.reduce((sum, r) => sum + r, 0) / ratings.length;
     const variance = ratings.reduce((sum, r) => sum + Math.pow(r - avg, 2), 0) / ratings.length;
-    return Math.max(0, 100 - variance * 25); // Нормализация в процентах
+    return ensureValidNumber(Math.max(0, 100 - variance * 25), 0); // Нормализация в процентах
   };
 
   const consistencyScore = Math.round(getConsistencyScore());
@@ -123,7 +145,10 @@ export const ProgressAnalytics: React.FC<ProgressAnalyticsProps> = ({
                 <YAxis domain={[0, 4]} ticks={[1, 2, 3, 4]} />
                 <Tooltip 
                   labelFormatter={(value) => `Неделя ${value}`}
-                  formatter={(value: number) => [getRatingLabel(value), 'Оценка']}
+                  formatter={(value: number) => {
+                    const safeValue = ensureValidNumber(value, 0);
+                    return [getRatingLabel(safeValue), 'Оценка'];
+                  }}
                 />
                 <Line 
                   type="monotone" 
@@ -203,8 +228,8 @@ export const ProgressAnalytics: React.FC<ProgressAnalyticsProps> = ({
             </div>
             <div className="flex justify-between items-center">
               <span className="text-sm text-muted-foreground">Активность записей</span>
-              <Badge variant={weeksWithNotes / totalWeeks > 0.7 ? "default" : weeksWithNotes / totalWeeks > 0.4 ? "secondary" : "outline"}>
-                {weeksWithNotes / totalWeeks > 0.7 ? 'Высокая' : weeksWithNotes / totalWeeks > 0.4 ? 'Средняя' : 'Низкая'}
+              <Badge variant={totalWeeks > 0 && weeksWithNotes / totalWeeks > 0.7 ? "default" : totalWeeks > 0 && weeksWithNotes / totalWeeks > 0.4 ? "secondary" : "outline"}>
+                {totalWeeks > 0 && weeksWithNotes / totalWeeks > 0.7 ? 'Высокая' : totalWeeks > 0 && weeksWithNotes / totalWeeks > 0.4 ? 'Средняя' : 'Низкая'}
               </Badge>
             </div>
             {trend !== 0 && (
@@ -229,18 +254,18 @@ export const ProgressAnalytics: React.FC<ProgressAnalyticsProps> = ({
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-            {averageRating >= 3.5 && (
+            {validAverageRating >= 3.5 && (
               <div className="p-3 bg-success/10 rounded-lg border border-success/20">
                 <p className="text-sm text-success-foreground">
-                  <strong>Отличные результаты!</strong> Ваша средняя оценка {averageRating.toFixed(1)} показывает, что гипотеза работает эффективно.
+                  <strong>Отличные результаты!</strong> Ваша средняя оценка {validAverageRating.toFixed(1)} показывает, что гипотеза работает эффективно.
                 </p>
               </div>
             )}
             
-            {averageRating < 2.5 && ratedWeeks >= 3 && (
+            {validAverageRating < 2.5 && ratedWeeks >= 3 && (
               <div className="p-3 bg-warning/10 rounded-lg border border-warning/20">
                 <p className="text-sm text-warning-foreground">
-                  <strong>Стоит пересмотреть подход.</strong> Низкая средняя оценка {averageRating.toFixed(1)} может указывать на необходимость корректировки гипотезы.
+                  <strong>Стоит пересмотреть подход.</strong> Низкая средняя оценка {validAverageRating.toFixed(1)} может указывать на необходимость корректировки гипотезы.
                 </p>
               </div>
             )}
@@ -261,7 +286,7 @@ export const ProgressAnalytics: React.FC<ProgressAnalyticsProps> = ({
               </div>
             )}
 
-            {weeksWithNotes / totalWeeks < 0.5 && (
+            {totalWeeks > 0 && weeksWithNotes / totalWeeks < 0.5 && (
               <div className="p-3 bg-muted/50 rounded-lg border border-border">
                 <p className="text-sm text-muted-foreground">
                   <strong>Больше деталей.</strong> Попробуйте добавлять заметки к оценкам для лучшего анализа в будущем.
