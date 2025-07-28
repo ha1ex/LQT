@@ -5,10 +5,12 @@ import Strengths from './dashboard/Strengths';
 import ProblemAreas from './dashboard/ProblemAreas';
 import AIRecommendations from './dashboard/AIRecommendations';
 import { useGlobalData } from '@/contexts/GlobalDataProvider';
+import { useWeeklyRatings } from '@/hooks/useWeeklyRatings';
 import { EmptyStateView } from './ui/empty-state-view';
 
 export const LifeQualityTracker: React.FC = () => {
   const { appState } = useGlobalData();
+  const weeklyRatings = useWeeklyRatings();
 
   const handleGetStarted = () => {
     // Navigate to ratings page or show onboarding
@@ -20,6 +22,18 @@ export const LifeQualityTracker: React.FC = () => {
     window.location.reload();
   };
 
+  const handleViewHistory = () => {
+    window.location.href = '/analytics';
+  };
+
+  const handleMetricClick = (metricId: string) => {
+    window.location.href = '/ratings';
+  };
+
+  const handleOpenAIChat = () => {
+    window.location.href = '/ai-coach';
+  };
+
   if (appState.userState === 'empty') {
     return (
       <EmptyStateView 
@@ -29,16 +43,37 @@ export const LifeQualityTracker: React.FC = () => {
     );
   }
 
+  // Get mock data for dashboard components
+  const mockData = Object.values(weeklyRatings.ratings);
+  const allMetrics = [
+    { id: 'sleep', name: 'Sleep Quality' },
+    { id: 'stress', name: 'Stress Level' },
+    { id: 'exercise', name: 'Exercise' },
+    { id: 'mood', name: 'Mood' },
+    { id: 'productivity', name: 'Productivity' },
+    { id: 'social', name: 'Social Life' }
+  ];
+  
+  // Get current week's data safely
+  const getCurrentWeekData = () => {
+    if (!weeklyRatings.currentWeek) return {};
+    const weekId = weeklyRatings.getWeekId(weeklyRatings.currentWeek);
+    const currentWeekRating = weeklyRatings.ratings[weekId];
+    return currentWeekRating?.ratings || {};
+  };
+  
+  const currentWeekData = getCurrentWeekData();
+
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <WeeklyProgress />
-        <Strengths />
+        <WeeklyProgress mockData={mockData} onViewHistory={handleViewHistory} />
+        <Strengths allMetrics={allMetrics} currentWeekData={currentWeekData} onMetricClick={handleMetricClick} />
       </div>
       
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <ProblemAreas />
-        <AIRecommendations />
+        <ProblemAreas allMetrics={allMetrics} currentWeekData={currentWeekData} onMetricClick={handleMetricClick} />
+        <AIRecommendations allMetrics={allMetrics} currentWeekData={currentWeekData} onOpenAIChat={handleOpenAIChat} />
       </div>
     </div>
   );
