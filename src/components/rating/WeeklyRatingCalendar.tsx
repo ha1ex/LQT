@@ -36,16 +36,72 @@ const WeeklyRatingCalendar: React.FC<WeeklyRatingCalendarProps> = ({
   const [showBulkWizard, setShowBulkWizard] = useState(false);
   const [selectedWeekForEdit, setSelectedWeekForEdit] = useState<Date | null>(null);
 
+  // Handle historical week save
+  const handleHistoricalWeekSave = (date: Date, data: Partial<WeeklyRating>) => {
+    onUpdateWeek(date, data);
+    setShowHistoricalEntry(false);
+    setSelectedWeekForEdit(null);
+  };
+
+  // Handle bulk save from wizard
+  const handleBulkSave = (weeks: Array<{ date: Date; data: Partial<WeeklyRating> }>) => {
+    onBulkUpdateWeeks(weeks);
+    setShowBulkWizard(false);
+  };
+
   // Show empty state for new users
   if (isNewUser || Object.keys(ratings).length === 0) {
     return (
-      <div className="p-6">
+      <div className="p-6 space-y-6">
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-bold">Календарь оценок</h2>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowBulkWizard(true)}
+            >
+              <History className="w-4 h-4 mr-2" />
+              Заполнить историю
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setSelectedWeekForEdit(new Date());
+                setShowHistoricalEntry(true);
+              }}
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Добавить неделю
+            </Button>
+          </div>
+        </div>
+        
         <EmptyStateCard
           icon={CalendarIcon}
           title="Еженедельные оценки"
           description="Здесь будет отображаться календарь с вашими еженедельными оценками качества жизни"
           actionLabel="Создать первую оценку"
           onAction={() => onDateSelect(new Date())}
+        />
+        
+        {/* Modals */}
+        <HistoricalWeekEntry
+          isOpen={showHistoricalEntry}
+          onClose={() => {
+            setShowHistoricalEntry(false);
+            setSelectedWeekForEdit(null);
+          }}
+          onSave={handleHistoricalWeekSave}
+          selectedDate={selectedWeekForEdit}
+        />
+        
+        <HistoricalDataWizard
+          isOpen={showBulkWizard}
+          onClose={() => setShowBulkWizard(false)}
+          onBulkSave={handleBulkSave}
+          existingRatings={ratings}
         />
       </div>
     );
@@ -143,18 +199,6 @@ const WeeklyRatingCalendar: React.FC<WeeklyRatingCalendarProps> = ({
     return Object.values(ratings).sort((a, b) => b.startDate.getTime() - a.startDate.getTime());
   }, [ratings]);
 
-  // Handle historical week save
-  const handleHistoricalWeekSave = (date: Date, data: Partial<WeeklyRating>) => {
-    onUpdateWeek(date, data);
-    setShowHistoricalEntry(false);
-    setSelectedWeekForEdit(null);
-  };
-
-  // Handle bulk save from wizard
-  const handleBulkSave = (weeks: Array<{ date: Date; data: Partial<WeeklyRating> }>) => {
-    onBulkUpdateWeeks(weeks);
-    setShowBulkWizard(false);
-  };
 
   return (
     <div className="space-y-6">
