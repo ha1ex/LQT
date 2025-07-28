@@ -115,12 +115,31 @@ export const HypothesisCard: React.FC<HypothesisCardProps> = ({
           </div>
         )}
 
-        {/* Hypothesis Preview */}
-        <div className="mb-4">
-          <p className="text-sm text-muted-foreground mb-1">ЕСЛИ:</p>
-          <p className="text-sm text-foreground line-clamp-2">
-            {hypothesis.conditions}
-          </p>
+        {/* Full Hypothesis Structure */}
+        <div className="mb-4 space-y-3">
+          {/* ЕСЛИ (Условия) */}
+          <div className="bg-muted/30 rounded-lg p-3 border-l-2 border-l-blue-500">
+            <p className="text-xs font-semibold text-blue-600 dark:text-blue-400 mb-1">ЕСЛИ (условия):</p>
+            <p className="text-sm text-foreground line-clamp-2">
+              {hypothesis.conditions}
+            </p>
+          </div>
+
+          {/* ТО (Ожидаемый результат) */}
+          <div className="bg-muted/30 rounded-lg p-3 border-l-2 border-l-emerald-500">
+            <p className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 mb-1">ТО (ожидаемый результат):</p>
+            <p className="text-sm text-foreground line-clamp-2">
+              {hypothesis.expectedOutcome}
+            </p>
+          </div>
+
+          {/* ПОТОМУ ЧТО (Обоснование) */}
+          <div className="bg-muted/30 rounded-lg p-3 border-l-2 border-l-amber-500">
+            <p className="text-xs font-semibold text-amber-600 dark:text-amber-400 mb-1">ПОТОМУ ЧТО (обоснование):</p>
+            <p className="text-sm text-foreground line-clamp-2">
+              {hypothesis.reasoning}
+            </p>
+          </div>
         </div>
 
         {/* Progress Bar */}
