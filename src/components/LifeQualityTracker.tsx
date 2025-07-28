@@ -587,11 +587,12 @@ const LifeQualityTracker = () => {
       { id: 'ai', label: 'AI Coach', icon: Brain },
       { id: 'analytics', label: 'Аналитика', icon: BarChart3 },
       { id: 'insights', label: 'Инсайты', icon: Activity },
-      { id: 'settings', label: 'Настройки', icon: SettingsIcon },
     ];
 
+    const settingsItem = { id: 'settings', label: 'Настройки', icon: SettingsIcon };
+
     return (
-      <div className={`bg-card border-r border-border h-screen sticky top-0 transition-all duration-300 ${
+      <div className={`bg-card border-r border-border h-screen sticky top-0 transition-all duration-300 flex flex-col ${
         isSidebarCollapsed ? 'w-16' : 'w-64'
       } ${isMobile ? 'w-full' : ''}`}>
         {/* Логотип и кнопка сворачивания */}
@@ -618,8 +619,8 @@ const LifeQualityTracker = () => {
           </div>
         </div>
 
-        {/* Навигация */}
-        <nav className="p-4 space-y-2">
+        {/* Основная навигация */}
+        <nav className="p-4 space-y-2 flex-1">
           {navigationItems.map((item) => (
             <button
               key={item.id}
@@ -646,7 +647,7 @@ const LifeQualityTracker = () => {
 
         {/* Статистика */}
         {!isSidebarCollapsed && (
-          <div className="p-4 mt-6 space-y-4">
+          <div className="p-4 space-y-4">
             {/* Текущий стрик */}
             <div className="bg-gradient-to-br from-primary/5 to-secondary/5 rounded-lg p-4 border border-primary/10">
               <div className="flex items-center gap-2 mb-2">
@@ -670,6 +671,26 @@ const LifeQualityTracker = () => {
             </div>
           </div>
         )}
+
+        {/* Настройки в нижнем углу */}
+        <div className="p-4 border-t border-border">
+          <button
+            onClick={() => {
+              setCurrentView('settings');
+              setSelectedMetric(null);
+            }}
+            className={`w-full flex items-center gap-3 p-3 rounded-lg transition-all duration-200 ${
+              currentView === 'settings'
+                ? 'bg-primary text-primary-foreground shadow-sm'
+                : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+            }`}
+          >
+            <settingsItem.icon className="w-5 h-5 flex-shrink-0" />
+            {!isSidebarCollapsed && (
+              <span className="font-medium">{settingsItem.label}</span>
+            )}
+          </button>
+        </div>
       </div>
     );
   };
