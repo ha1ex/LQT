@@ -367,22 +367,55 @@ export const generateDemoAIInsights = (): AIInsight[] => {
 };
 
 // Main function to create all demo data
+// Generate demo subjects
+export const generateDemoSubjects = () => {
+  return [
+    {
+      id: 'self',
+      name: 'Я',
+      type: 'self',
+      description: 'Личные изменения и саморазвитие',
+      influenceLevel: 'high',
+      relationshipType: 'self',
+      motivationFactors: ['самореализация', 'здоровье', 'карьера'],
+      resistanceFactors: ['лень', 'страхи', 'старые привычки']
+    },
+    {
+      id: 'family',
+      name: 'Семья',
+      type: 'family',
+      description: 'Отношения с близкими родственниками',
+      influenceLevel: 'high',
+      relationshipType: 'family',
+      motivationFactors: ['любовь', 'поддержка', 'общие цели'],
+      resistanceFactors: ['непонимание', 'разные взгляды']
+    }
+  ];
+};
+
 export const createComprehensiveDemoData = async (): Promise<void> => {
   try {
-    // Generate and save demo data for all sections
+    // Generate all types of demo data
     const ratingData = generateComprehensiveRatingData();
     const hypothesesData = generateComprehensiveHypotheses();
     const aiInsights = generateDemoAIInsights();
+    const subjects = generateDemoSubjects();
 
-    // Save to localStorage with proper keys
+    // Save to localStorage with all sections
     localStorage.setItem('lqt_weekly_ratings', JSON.stringify(ratingData));
     localStorage.setItem('lqt_hypotheses', JSON.stringify(hypothesesData));
     localStorage.setItem('lqt_ai_insights', JSON.stringify(aiInsights));
+    localStorage.setItem('lqt_subjects', JSON.stringify(subjects));
     localStorage.setItem('lqt_demo_mode', 'true');
 
-    console.log('Comprehensive demo data generated and saved');
+    console.log('✅ Comprehensive demo data created with all sections:', {
+      weeklyRatings: Object.keys(ratingData).length,
+      hypotheses: hypothesesData.length,
+      aiInsights: aiInsights.length,
+      subjects: subjects.length
+    });
   } catch (error) {
-    console.error('Error generating comprehensive demo data:', error);
+    console.error('❌ Error creating comprehensive demo data:', error);
     throw error;
   }
 };

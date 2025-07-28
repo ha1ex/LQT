@@ -8,6 +8,8 @@ import { ru } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { CalendarDayData, WeeklyRating } from '@/types/weeklyRating';
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon } from 'lucide-react';
+import { EmptyStateCard } from '@/components/ui/empty-state-card';
+import { useGlobalData } from '@/contexts/GlobalDataProvider';
 
 interface WeeklyRatingCalendarProps {
   ratings: Record<string, WeeklyRating>;
@@ -22,7 +24,23 @@ const WeeklyRatingCalendar: React.FC<WeeklyRatingCalendarProps> = ({
   onDateSelect,
   onWeekSelect
 }) => {
+  const { isNewUser } = useGlobalData();
   const [calendarMode, setCalendarMode] = useState<'calendar' | 'list'>('calendar');
+
+  // Show empty state for new users
+  if (isNewUser || Object.keys(ratings).length === 0) {
+    return (
+      <div className="p-6">
+        <EmptyStateCard
+          icon={CalendarIcon}
+          title="Еженедельные оценки"
+          description="Здесь будет отображаться календарь с вашими еженедельными оценками качества жизни"
+          actionLabel="Создать первую оценку"
+          onAction={() => onDateSelect(new Date())}
+        />
+      </div>
+    );
+  }
 
   // Get mood color
   const getMoodColor = (mood: WeeklyRating['mood']) => {

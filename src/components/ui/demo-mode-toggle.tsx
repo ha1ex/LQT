@@ -11,15 +11,7 @@ export const DemoModeToggle: React.FC = () => {
 
   return (
     <div className="flex items-center gap-4">
-      {/* Demo Mode Status Badge */}
-      {appState.isDemoMode && (
-        <Badge variant="secondary" className="bg-amber-500/10 text-amber-600 border-amber-500/20">
-          <Database className="w-3 h-3 mr-1" />
-          Демо режим
-        </Badge>
-      )}
-
-      {/* User State Badge */}
+      {/* Single State Badge */}
       <Badge 
         variant={appState.userState === 'real_data' ? 'default' : 'outline'}
         className={
@@ -28,8 +20,9 @@ export const DemoModeToggle: React.FC = () => {
           'bg-green-500/10 text-green-600 border-green-500/20'
         }
       >
+        <Database className="w-3 h-3 mr-1" />
         {appState.userState === 'empty' ? 'Новый пользователь' :
-         appState.userState === 'demo' ? 'Демо данные' :
+         appState.userState === 'demo' ? 'Демо данные (20 недель)' :
          'Реальные данные'}
       </Badge>
 

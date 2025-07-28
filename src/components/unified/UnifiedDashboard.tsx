@@ -22,6 +22,8 @@ import {
 import { SystemConnectionsView } from './SystemConnectionsView';
 import { NetworkVisualization } from './NetworkVisualization';
 import { useUnifiedSystem } from '@/hooks/useUnifiedSystem';
+import { EmptyStateCard } from '@/components/ui/empty-state-card';
+import { useGlobalData } from '@/contexts/GlobalDataProvider';
 
 interface UnifiedDashboardProps {
   onNavigateToSection?: (section: string, id?: string) => void;
@@ -30,6 +32,7 @@ interface UnifiedDashboardProps {
 export const UnifiedDashboard: React.FC<UnifiedDashboardProps> = ({
   onNavigateToSection
 }) => {
+  const { isNewUser, appState } = useGlobalData();
   const { 
     unifiedMetrics, 
     systemHealth, 
@@ -39,6 +42,44 @@ export const UnifiedDashboard: React.FC<UnifiedDashboardProps> = ({
   } = useUnifiedSystem();
 
   const [selectedTab, setSelectedTab] = useState('overview');
+
+  // Show empty state for new users
+  if (isNewUser) {
+    return (
+      <div className="p-6 space-y-6">
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold mb-2">Добро пожаловать в Dashboard</h1>
+          <p className="text-muted-foreground">
+            Здесь будет отображаться сводная информация о всех ваших данных
+          </p>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <EmptyStateCard
+            icon={BarChart3}
+            title="Метрики и аналитика"
+            description="Анализ ваших еженедельных оценок и трендов"
+            actionLabel="Создать первую оценку"
+            onAction={() => onNavigateToSection?.('rating')}
+          />
+          <EmptyStateCard
+            icon={Target}
+            title="Стратегические гипотезы"
+            description="Научные эксперименты для улучшения жизни"
+            actionLabel="Создать гипотезу"
+            onAction={() => onNavigateToSection?.('strategy')}
+          />
+          <EmptyStateCard
+            icon={Brain}
+            title="AI-инсайты"
+            description="Персональные рекомендации на основе ваших данных"
+            actionLabel="Открыть AI Coach"
+            onAction={() => onNavigateToSection?.('ai')}
+          />
+        </div>
+      </div>
+    );
+  }
 
   // Группировка метрик по категориям
   const metricsByCategory = unifiedMetrics.reduce((acc, metric) => {

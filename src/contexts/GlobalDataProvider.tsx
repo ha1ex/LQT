@@ -89,42 +89,58 @@ export const GlobalDataProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     }));
   }, [hypotheses, ratings, subjects, determineUserState]);
 
-  const toggleDemoMode = useCallback(() => {
+  const toggleDemoMode = useCallback(async () => {
     const currentDemoMode = localStorage.getItem('lqt_demo_mode') === 'true';
     
-    if (currentDemoMode) {
-      // Turning off demo mode - clear demo data
-      localStorage.removeItem('lqt_demo_mode');
-      clearAllData();
-    } else {
-      // Turning on demo mode - generate demo data
-      localStorage.setItem('lqt_demo_mode', 'true');
-      generateDemoData();
+    setSyncStatus(prev => ({ ...prev, isLoading: true }));
+
+    try {
+      if (currentDemoMode) {
+        // Turning off demo mode - clear all data
+        localStorage.removeItem('lqt_demo_mode');
+        await clearAllData();
+      } else {
+        // Turning on demo mode - generate comprehensive demo data
+        localStorage.setItem('lqt_demo_mode', 'true');
+        await generateDemoData();
+      }
+    } catch (error) {
+      console.error('Error toggling demo mode:', error);
     }
+
+    setSyncStatus(prev => ({ ...prev, isLoading: false }));
   }, []);
 
-  const clearAllData = useCallback(() => {
-    localStorage.removeItem('lqt_hypotheses');
-    localStorage.removeItem('lqt_weekly_ratings');
-    localStorage.removeItem('lqt_subjects');
-    localStorage.removeItem('lqt_ai_insights');
-    localStorage.removeItem('lqt_ai_chat_history');
-    localStorage.removeItem('lqt_demo_mode');
+  const clearAllData = useCallback(async () => {
+    // Clear all localStorage items
+    const itemsToRemove = [
+      'lqt_hypotheses',
+      'lqt_weekly_ratings', 
+      'lqt_subjects',
+      'lqt_ai_insights',
+      'lqt_ai_chat_history',
+      'lqt_demo_mode'
+    ];
+    
+    itemsToRemove.forEach(item => localStorage.removeItem(item));
     
     setSyncStatus(prev => ({
       ...prev,
       isLoading: true,
     }));
     
-    // Trigger data refresh
-    setTimeout(() => {
-      setSyncStatus(prev => ({
-        ...prev,
-        isLoading: false,
-        lastSync: new Date(),
-      }));
-      window.location.reload(); // Force component re-initialization
-    }, 500);
+    // Wait a bit for cleanup
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        setSyncStatus(prev => ({
+          ...prev,
+          isLoading: false,
+          lastSync: new Date(),
+        }));
+        window.location.reload(); // Force component re-initialization
+        resolve(undefined);
+      }, 500);
+    });
   }, []);
 
   const generateDemoData = useCallback(async () => {

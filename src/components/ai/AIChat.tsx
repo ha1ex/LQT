@@ -8,16 +8,34 @@ import { ChatContext } from '@/types/ai';
 import { MessageCircle, Send, Trash2, Bot, User, Sparkles } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
+import { EmptyStateCard } from '@/components/ui/empty-state-card';
+import { useGlobalData } from '@/contexts/GlobalDataProvider';
 
 interface AIChatProps {
   context: ChatContext;
 }
 
 export const AIChat: React.FC<AIChatProps> = ({ context }) => {
+  const { isNewUser } = useGlobalData();
   const { messages, loading, error, sendMessage, clearChat, loadChatHistory, getQuickActions, hasApiKey } = useAIChat();
   const [inputValue, setInputValue] = useState('');
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
+
+  // Show empty state for new users
+  if (isNewUser) {
+    return (
+      <div className="p-6">
+        <EmptyStateCard
+          icon={MessageCircle}
+          title="AI Coach"
+          description="Когда у вас появятся данные, AI сможет анализировать их и давать персональные рекомендации"
+          actionLabel="Начать заполнение данных"
+          onAction={() => window.location.hash = '#rating'}
+        />
+      </div>
+    );
+  }
 
   // Загружаем историю при монтировании
   useEffect(() => {
