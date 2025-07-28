@@ -147,28 +147,34 @@ const RatingAnalytics: React.FC<RatingAnalyticsProps> = ({ analytics, allMetrics
           </CardHeader>
           <CardContent>
              <div className="h-64">
-               <ResponsiveContainer width="100%" height="100%">
-                 <RechartsLineChart data={trendsOverTime.filter(item => 
-                   typeof item.averageScore === 'number' && 
-                   !isNaN(item.averageScore) && 
-                   isFinite(item.averageScore)
-                 )}>
-                   <CartesianGrid strokeDasharray="3 3" />
-                   <XAxis dataKey="date" />
-                   <YAxis domain={[0, 10]} />
-                  <Tooltip 
-                    formatter={(value: any) => [`${value.toFixed(1)}`, 'Средний балл']}
-                    labelFormatter={(label) => `Неделя: ${label}`}
-                  />
-                  <Line 
-                    type="monotone" 
-                    dataKey="averageScore" 
-                    stroke="hsl(var(--primary))" 
-                    strokeWidth={2}
-                    dot={{ fill: 'hsl(var(--primary))', strokeWidth: 2, r: 4 }}
-                  />
-                </RechartsLineChart>
-              </ResponsiveContainer>
+                <ResponsiveContainer width="100%" height="100%">
+                  <RechartsLineChart data={trendsOverTime.filter(item => 
+                    typeof item.averageScore === 'number' && 
+                    !isNaN(item.averageScore) && 
+                    isFinite(item.averageScore)
+                  )}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                    <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" />
+                    <YAxis domain={[0, 10]} stroke="hsl(var(--muted-foreground))" />
+                   <Tooltip 
+                     formatter={(value: any) => [`${value.toFixed(1)}`, 'Средний балл']}
+                     labelFormatter={(label) => `Неделя: ${label}`}
+                     contentStyle={{
+                       backgroundColor: 'hsl(var(--card))',
+                       border: '1px solid hsl(var(--border))',
+                       borderRadius: '8px',
+                       color: 'hsl(var(--card-foreground))'
+                     }}
+                   />
+                   <Line 
+                     type="monotone" 
+                     dataKey="averageScore" 
+                     stroke="hsl(var(--primary))" 
+                     strokeWidth={2}
+                     dot={{ fill: 'hsl(var(--primary))', strokeWidth: 2, r: 4 }}
+                   />
+                 </RechartsLineChart>
+               </ResponsiveContainer>
             </div>
           </CardContent>
         </Card>
@@ -231,9 +237,16 @@ const RatingAnalytics: React.FC<RatingAnalyticsProps> = ({ analytics, allMetrics
                       {moodChartData.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={entry.color} />
                       ))}
-                    </Pie>
-                    <Tooltip />
-                  </PieChart>
+                     </Pie>
+                     <Tooltip 
+                       contentStyle={{
+                         backgroundColor: 'hsl(var(--card))',
+                         border: '1px solid hsl(var(--border))',
+                         borderRadius: '8px',
+                         color: 'hsl(var(--card-foreground))'
+                       }}
+                     />
+                   </PieChart>
                 </ResponsiveContainer>
               </div>
             </CardContent>

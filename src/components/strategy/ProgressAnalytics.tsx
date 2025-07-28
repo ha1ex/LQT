@@ -116,12 +116,18 @@ export const ProgressAnalytics: React.FC<ProgressAnalyticsProps> = ({
           {chartData.length > 0 ? (
             <ResponsiveContainer width="100%" height={300}>
               <LineChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="week" />
-                <YAxis domain={[0, 4]} ticks={[1, 2, 3, 4]} />
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                <XAxis dataKey="week" stroke="hsl(var(--muted-foreground))" />
+                <YAxis domain={[0, 4]} ticks={[1, 2, 3, 4]} stroke="hsl(var(--muted-foreground))" />
                 <Tooltip 
                   labelFormatter={(value) => `Неделя ${value}`}
                   formatter={(value: number) => [getRatingLabel(value), 'Оценка']}
+                  contentStyle={{
+                    backgroundColor: 'hsl(var(--card))',
+                    border: '1px solid hsl(var(--border))',
+                    borderRadius: '8px',
+                    color: 'hsl(var(--card-foreground))'
+                  }}
                 />
                 <Line 
                   type="monotone" 
@@ -129,7 +135,7 @@ export const ProgressAnalytics: React.FC<ProgressAnalyticsProps> = ({
                   stroke="hsl(var(--primary))" 
                   strokeWidth={3}
                   dot={{ fill: 'hsl(var(--primary))', strokeWidth: 2, r: 6 }}
-                  activeDot={{ r: 8 }}
+                  activeDot={{ r: 8, fill: 'hsl(var(--primary))' }}
                 />
               </LineChart>
             </ResponsiveContainer>

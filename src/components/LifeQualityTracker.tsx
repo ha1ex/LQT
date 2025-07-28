@@ -452,14 +452,14 @@ const LifeQualityTracker = () => {
   const getScoreColor = (value) => {
     if (value >= 8) return 'text-green-600';
     if (value >= 6) return 'text-yellow-600';
-    if (value >= 4) return 'text-gray-600';
+    if (value >= 4) return 'text-muted-foreground';
     return 'text-red-600';
   };
 
   const getScoreBgColor = (value) => {
     if (value >= 8) return 'bg-green-50 border-green-200';
     if (value >= 6) return 'bg-yellow-50 border-yellow-200';
-    if (value >= 4) return 'bg-gray-50 border-gray-200';
+    if (value >= 4) return 'bg-muted border-border';
     return 'bg-red-50 border-red-200';
   };
 
@@ -560,7 +560,7 @@ const LifeQualityTracker = () => {
               >
                 <span className="relative z-10">{num}</span>
                 {value === num && (
-                  <div className="absolute inset-0 bg-white/20 rounded-xl animate-pulse" />
+                  <div className="absolute inset-0 bg-primary/20 rounded-xl animate-pulse" />
                 )}
               </button>
             ))}
@@ -1215,7 +1215,7 @@ const LifeQualityTracker = () => {
               useQuickRating ? 'bg-primary' : 'bg-muted'
             }`}
           >
-            <div className={`w-5 h-5 bg-white rounded-full absolute top-0.5 transition-transform ${
+            <div className={`w-5 h-5 bg-background rounded-full absolute top-0.5 transition-transform border border-border ${
               useQuickRating ? 'translate-x-6' : 'translate-x-0.5'
             }`} />
           </button>

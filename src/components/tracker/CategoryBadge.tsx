@@ -2,14 +2,14 @@ import React from 'react';
 import { Heart, Brain, TrendingUp, Users, Target, Sparkles } from 'lucide-react';
 
 const categoryConfig = {
-  health: { icon: Heart, color: 'text-gray-600', bg: 'bg-gray-50 border-gray-200', name: 'Здоровье' },
-  mental: { icon: Brain, color: 'text-gray-600', bg: 'bg-gray-50 border-gray-200', name: 'Ментальное' },
-  finance: { icon: TrendingUp, color: 'text-gray-600', bg: 'bg-gray-50 border-gray-200', name: 'Финансы' },
-  relationships: { icon: Heart, color: 'text-gray-600', bg: 'bg-gray-50 border-gray-200', name: 'Отношения' },
-  social: { icon: Users, color: 'text-gray-600', bg: 'bg-gray-50 border-gray-200', name: 'Социальное' },
-  personal: { icon: Target, color: 'text-gray-600', bg: 'bg-gray-50 border-gray-200', name: 'Развитие' },
-  lifestyle: { icon: Sparkles, color: 'text-gray-600', bg: 'bg-gray-50 border-gray-200', name: 'Lifestyle' },
-  custom: { icon: Target, color: 'text-gray-600', bg: 'bg-gray-50 border-gray-200', name: 'Пользовательское' }
+  health: { icon: Heart, color: 'text-muted-foreground', bg: 'bg-muted border-border', name: 'Здоровье' },
+  mental: { icon: Brain, color: 'text-muted-foreground', bg: 'bg-muted border-border', name: 'Ментальное' },
+  finance: { icon: TrendingUp, color: 'text-muted-foreground', bg: 'bg-muted border-border', name: 'Финансы' },
+  relationships: { icon: Heart, color: 'text-muted-foreground', bg: 'bg-muted border-border', name: 'Отношения' },
+  social: { icon: Users, color: 'text-muted-foreground', bg: 'bg-muted border-border', name: 'Социальное' },
+  personal: { icon: Target, color: 'text-muted-foreground', bg: 'bg-muted border-border', name: 'Развитие' },
+  lifestyle: { icon: Sparkles, color: 'text-muted-foreground', bg: 'bg-muted border-border', name: 'Lifestyle' },
+  custom: { icon: Target, color: 'text-muted-foreground', bg: 'bg-muted border-border', name: 'Пользовательское' }
 };
 
 interface CategoryBadgeProps {

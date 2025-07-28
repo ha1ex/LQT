@@ -103,10 +103,10 @@ const MetricsOverview: React.FC<{ metrics: any }> = ({ metrics }) => (
         <div className="flex items-center justify-between">
           <div className="space-y-2">
             <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Субъекты</p>
-            <p className="text-3xl font-bold text-blue-600">{metrics.totalSubjects}</p>
+            <p className="text-3xl font-bold text-primary">{metrics.totalSubjects}</p>
           </div>
-          <div className="w-12 h-12 bg-info/10 rounded-xl flex items-center justify-center">
-            <Users className="h-6 w-6 text-blue-600" />
+          <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
+            <Users className="h-6 w-6 text-primary" />
           </div>
         </div>
       </CardContent>
