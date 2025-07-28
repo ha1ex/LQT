@@ -54,6 +54,7 @@ import { OnboardingWizard } from '@/components/onboarding/OnboardingWizard';
 import { EmptyStateView } from '@/components/ui/empty-state-view';
 import { adaptWeeklyRatingsToMockData, filterDataByPeriod, BASE_METRICS } from '@/utils/dataAdapter';
 import { logChartData, safeValidateChartData } from '@/utils/chartDebug';
+import { SafeChartProvider } from '@/components/ui/safe-chart-provider';
 
 const LifeQualityTracker = () => {
   const [currentView, setCurrentView] = useState('dashboard');
@@ -830,13 +831,24 @@ const LifeQualityTracker = () => {
             </div>
           </div>
           <div className="bg-gradient-to-br from-white to-slate-50 rounded-2xl p-6 shadow-inner">
-            <ResponsiveContainer width="100%" height={350}>
-              <AreaChart data={filteredData.filter(item => 
-                item && 
-                typeof item.overall === 'number' && 
-                !isNaN(item.overall) && 
-                isFinite(item.overall)
-              )}>
+            <SafeChartProvider>
+              <ResponsiveContainer width="100%" height={350}>
+                <AreaChart data={(() => {
+                const filteredData = getFilteredData(timeFilter);
+                const validData = filteredData.filter(item => 
+                  item && 
+                  typeof item.overall === 'number' && 
+                  !isNaN(item.overall) && 
+                  isFinite(item.overall)
+                );
+                console.log('🔍 AreaChart Debug:', {
+                  raw: filteredData,
+                  valid: validData,
+                  hasNaN: filteredData.some(item => item && isNaN(item.overall))
+                });
+                logChartData('AreaChart', validData, 'overall');
+                return validData;
+              })()}>
                 <defs>
                   <linearGradient id="overallGradient" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="hsl(217 91% 60%)" stopOpacity={0.3}/>
@@ -862,8 +874,9 @@ const LifeQualityTracker = () => {
                   fill="url(#overallGradient)"
                   strokeWidth={3}
                 />
-              </AreaChart>
-            </ResponsiveContainer>
+                </AreaChart>
+              </ResponsiveContainer>
+            </SafeChartProvider>
           </div>
         </div>
 
@@ -1106,13 +1119,24 @@ const LifeQualityTracker = () => {
                   </button>
                 </div>
                 
-                <ResponsiveContainer width="100%" height={200}>
-                  <RechartsLineChart data={filteredData.filter(item => 
-                    item && 
-                    typeof item.overall === 'number' && 
-                    !isNaN(item.overall) && 
-                    isFinite(item.overall)
-                  )}>
+                <SafeChartProvider>
+                  <ResponsiveContainer width="100%" height={200}>
+                    <RechartsLineChart data={(() => {
+                    const filteredData = getFilteredData(timeFilter);
+                    const validData = filteredData.filter(item => 
+                      item && 
+                      typeof item.overall === 'number' && 
+                      !isNaN(item.overall) && 
+                      isFinite(item.overall)
+                    );
+                    console.log('🔍 LineChart Analytics Debug:', {
+                      raw: filteredData,
+                      valid: validData,
+                      hasNaN: filteredData.some(item => item && isNaN(item.overall))
+                    });
+                    logChartData('LineChart Analytics', validData, 'overall');
+                    return validData;
+                  })()}>
                     <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
                     <XAxis dataKey="week" className="text-muted-foreground" />
                     <YAxis domain={[0, 10]} className="text-muted-foreground" />
@@ -1130,8 +1154,9 @@ const LifeQualityTracker = () => {
                       strokeWidth={2}
                       dot={{ fill: 'hsl(var(--primary))', strokeWidth: 2 }}
                     />
-               </RechartsLineChart>
-                </ResponsiveContainer>
+                    </RechartsLineChart>
+                  </ResponsiveContainer>
+                </SafeChartProvider>
               </div>
             ))}
         </div>
@@ -1429,13 +1454,23 @@ const LifeQualityTracker = () => {
         {/* График метрики */}
         <div className="bg-card rounded-xl p-6 border border-border">
           <h3 className="text-lg font-semibold mb-4">Динамика за период</h3>
+          <SafeChartProvider>
             <ResponsiveContainer width="100%" height={400}>
-              <RechartsLineChart data={metricData.filter(item => 
-                item && 
-                typeof item.value === 'number' && 
-                !isNaN(item.value) && 
-                isFinite(item.value)
-              )}>
+              <RechartsLineChart data={(() => {
+                const validData = metricData.filter(item => 
+                  item && 
+                  typeof item.value === 'number' && 
+                  !isNaN(item.value) && 
+                  isFinite(item.value)
+                );
+                console.log('🔍 MetricDetail LineChart Debug:', {
+                  raw: metricData,
+                  valid: validData,
+                  hasNaN: metricData.some(item => item && isNaN(item.value))
+                });
+                logChartData('MetricDetail LineChart', validData, 'value');
+                return validData;
+              })()}>
               <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
               <XAxis dataKey="week" className="text-muted-foreground" />
               <YAxis domain={[0, 10]} className="text-muted-foreground" />
@@ -1454,8 +1489,9 @@ const LifeQualityTracker = () => {
                 dot={{ fill: 'hsl(var(--primary))', strokeWidth: 2, r: 6 }}
                 activeDot={{ r: 8, fill: 'hsl(var(--primary))' }}
               />
-             </RechartsLineChart>
-          </ResponsiveContainer>
+              </RechartsLineChart>
+            </ResponsiveContainer>
+          </SafeChartProvider>
         </div>
 
         {/* Корреляции */}
