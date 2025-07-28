@@ -7,25 +7,34 @@ import { format, isSameDay, startOfWeek, endOfWeek, eachDayOfInterval } from 'da
 import { ru } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { CalendarDayData, WeeklyRating } from '@/types/weeklyRating';
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Plus, History } from 'lucide-react';
 import { EmptyStateCard } from '@/components/ui/empty-state-card';
 import { useGlobalData } from '@/contexts/GlobalDataProvider';
+import { HistoricalWeekEntry } from './HistoricalWeekEntry';
+import { HistoricalDataWizard } from './HistoricalDataWizard';
 
 interface WeeklyRatingCalendarProps {
   ratings: Record<string, WeeklyRating>;
   selectedDate: Date;
   onDateSelect: (date: Date) => void;
   onWeekSelect: (rating: WeeklyRating) => void;
+  onUpdateWeek: (date: Date, data: Partial<WeeklyRating>) => void;
+  onBulkUpdateWeeks: (weeks: Array<{ date: Date; data: Partial<WeeklyRating> }>) => void;
 }
 
 const WeeklyRatingCalendar: React.FC<WeeklyRatingCalendarProps> = ({
   ratings,
   selectedDate,
   onDateSelect,
-  onWeekSelect
+  onWeekSelect,
+  onUpdateWeek,
+  onBulkUpdateWeeks
 }) => {
   const { isNewUser } = useGlobalData();
   const [calendarMode, setCalendarMode] = useState<'calendar' | 'list'>('calendar');
+  const [showHistoricalEntry, setShowHistoricalEntry] = useState(false);
+  const [showBulkWizard, setShowBulkWizard] = useState(false);
+  const [selectedWeekForEdit, setSelectedWeekForEdit] = useState<Date | null>(null);
 
   // Show empty state for new users
   if (isNewUser || Object.keys(ratings).length === 0) {
@@ -87,23 +96,43 @@ const WeeklyRatingCalendar: React.FC<WeeklyRatingCalendarProps> = ({
     return data;
   }, [ratings]);
 
+  // Check if a week has rating data
+  const getWeekRating = (date: Date): WeeklyRating | null => {
+    const weekStart = startOfWeek(date, { locale: ru });
+    const weekKey = format(weekStart, 'yyyy-MM-dd');
+    return ratings[weekKey] || null;
+  };
+
   // Custom day cell component
   const DayCell = ({ date }: { date: Date }) => {
     const dayKey = format(date, 'yyyy-MM-dd');
     const dayData = calendarData[dayKey];
     const isSelected = isSameDay(date, selectedDate);
+    const weekRating = getWeekRating(date);
+    const isWeekEmpty = !weekRating;
     
     return (
-      <div className={cn(
-        "relative w-full h-full flex items-center justify-center",
-        isSelected && "bg-primary text-primary-foreground rounded-md"
-      )}>
+      <div 
+        className={cn(
+          "relative w-full h-full flex items-center justify-center cursor-pointer",
+          isSelected && "bg-primary text-primary-foreground rounded-md",
+          isWeekEmpty && "hover:bg-muted/50 border border-dashed border-muted-foreground/30"
+        )}
+        onClick={() => {
+          if (isWeekEmpty) {
+            setSelectedWeekForEdit(date);
+            setShowHistoricalEntry(true);
+          }
+        }}
+      >
         <span className="text-sm">{format(date, 'd')}</span>
-        {dayData?.hasRating && (
+        {dayData?.hasRating ? (
           <div className={cn(
             "absolute bottom-0 left-1/2 transform -translate-x-1/2 w-2 h-2 rounded-full",
             getMoodColor(dayData.mood!)
           )} />
+        ) : isWeekEmpty && (
+          <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-muted-foreground/30 rounded-full" />
         )}
       </div>
     );
@@ -114,12 +143,44 @@ const WeeklyRatingCalendar: React.FC<WeeklyRatingCalendarProps> = ({
     return Object.values(ratings).sort((a, b) => b.startDate.getTime() - a.startDate.getTime());
   }, [ratings]);
 
+  // Handle historical week save
+  const handleHistoricalWeekSave = (date: Date, data: Partial<WeeklyRating>) => {
+    onUpdateWeek(date, data);
+    setShowHistoricalEntry(false);
+    setSelectedWeekForEdit(null);
+  };
+
+  // Handle bulk save from wizard
+  const handleBulkSave = (weeks: Array<{ date: Date; data: Partial<WeeklyRating> }>) => {
+    onBulkUpdateWeeks(weeks);
+    setShowBulkWizard(false);
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold">Календарь оценок</h2>
         <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowBulkWizard(true)}
+          >
+            <History className="w-4 h-4 mr-2" />
+            Заполнить историю
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              setSelectedWeekForEdit(new Date());
+              setShowHistoricalEntry(true);
+            }}
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Добавить неделю
+          </Button>
           <Button
             variant={calendarMode === 'calendar' ? 'default' : 'outline'}
             size="sm"
@@ -197,14 +258,22 @@ const WeeklyRatingCalendar: React.FC<WeeklyRatingCalendarProps> = ({
 
               if (!weekRating) {
                 return (
-                  <Card>
+                  <Card className="cursor-pointer hover:shadow-md transition-shadow border-dashed"
+                        onClick={() => {
+                          setSelectedWeekForEdit(selectedDate);
+                          setShowHistoricalEntry(true);
+                        }}>
                     <CardContent className="pt-6">
                       <div className="text-center text-muted-foreground">
-                        <CalendarIcon className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                        <p>Нет данных для этой недели</p>
+                        <Plus className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                        <p>Добавить данные для этой недели</p>
                         <p className="text-sm mt-1">
                           {format(weekStart, 'dd.MM', { locale: ru })} - {format(weekEnd, 'dd.MM', { locale: ru })}
                         </p>
+                        <Button variant="outline" size="sm" className="mt-2">
+                          <Plus className="w-4 h-4 mr-2" />
+                          Добавить оценки
+                        </Button>
                       </div>
                     </CardContent>
                   </Card>
@@ -305,6 +374,25 @@ const WeeklyRatingCalendar: React.FC<WeeklyRatingCalendarProps> = ({
           )}
         </div>
       )}
+
+      {/* Modals */}
+      <HistoricalWeekEntry
+        isOpen={showHistoricalEntry}
+        onClose={() => {
+          setShowHistoricalEntry(false);
+          setSelectedWeekForEdit(null);
+        }}
+        onSave={handleHistoricalWeekSave}
+        selectedDate={selectedWeekForEdit || undefined}
+        existingRating={selectedWeekForEdit ? getWeekRating(selectedWeekForEdit) : null}
+      />
+
+      <HistoricalDataWizard
+        isOpen={showBulkWizard}
+        onClose={() => setShowBulkWizard(false)}
+        onBulkSave={handleBulkSave}
+        existingRatings={ratings}
+      />
     </div>
   );
 };

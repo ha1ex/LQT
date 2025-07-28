@@ -102,6 +102,7 @@ const LifeQualityTracker = () => {
     ratings: weeklyRatings,
     currentWeek,
     getCurrentWeekRating,
+    updateWeekRating,
     updateMetricRating,
     getAnalytics,
     goToWeek,
@@ -1342,6 +1343,12 @@ const LifeQualityTracker = () => {
               selectedDate={currentWeek}
               onDateSelect={goToWeek}
               onWeekSelect={handleWeekSelect}
+              onUpdateWeek={updateWeekRating}
+              onBulkUpdateWeeks={(weeks) => {
+                weeks.forEach(({ date, data }) => {
+                  updateWeekRating(date, data);
+                });
+              }}
             />
           </TabsContent>
 
