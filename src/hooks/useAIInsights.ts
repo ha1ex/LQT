@@ -246,6 +246,16 @@ export const useAIInsights = () => {
       setLoading(true);
       setError(null);
 
+      // В демо режиме сразу возвращаем демо ответ
+      if (isDemoMode) {
+        await new Promise(resolve => setTimeout(resolve, 800));
+        const response = generateDemoResponse(context);
+        if (response.insights) {
+          setInsights(response.insights);
+        }
+        return response;
+      }
+
       // Проверяем кэш (24 часа)
       const cacheKey = `ai_insights_${context}_${Date.now().toString().slice(0, -5)}`;
       const cached = localStorage.getItem(cacheKey);
