@@ -3,7 +3,8 @@ import { EnhancedHypothesis, ValidationStatus, ExperimentStatus, WeeklyProgress 
 import { AIInsight } from '@/types/ai';
 import { generateId, calculatePriority, calculateHypothesisProgress } from '@/utils/strategy';
 
-// Generate 20 weeks of historical rating data
+// Re-export BASE_METRICS from dataAdapter for backward compatibility
+export { BASE_METRICS } from '@/utils/dataAdapter';
 export const generateComprehensiveRatingData = (): WeeklyRatingData => {
   const ratings: WeeklyRatingData = {};
   const startDate = new Date();
