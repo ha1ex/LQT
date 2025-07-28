@@ -12,19 +12,23 @@ export const DataClear: React.FC = () => {
 
   const clearAllData = () => {
     try {
-      clearAllDemoData();
-      
-      toast({
-        title: "Данные очищены",
-        description: "Все данные успешно удалены. Перезагрузите страницу для применения изменений.",
-      });
-      
-      setIsOpen(false);
-      
-      // Перезагружаем страницу через небольшую задержку
-      setTimeout(() => {
-        window.location.reload();
-      }, 2000);
+      if (typeof window !== 'undefined' && window.localStorage) {
+        clearAllDemoData();
+        
+        toast({
+          title: "Данные очищены",
+          description: "Все данные успешно удалены. Перезагрузите страницу для применения изменений.",
+        });
+        
+        setIsOpen(false);
+        
+        // Перезагружаем страницу через небольшую задержку
+        setTimeout(() => {
+          window.location.reload();
+        }, 2000);
+      } else {
+        throw new Error('LocalStorage недоступен');
+      }
     } catch (error) {
       toast({
         title: "Ошибка очистки",

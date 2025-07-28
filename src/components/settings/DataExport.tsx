@@ -9,6 +9,15 @@ export const DataExport: React.FC = () => {
 
   const exportData = () => {
     try {
+      if (typeof window === 'undefined' || !window.localStorage) {
+        toast({
+          title: "Ошибка экспорта",
+          description: "Локальное хранилище недоступно",
+          variant: "destructive",
+        });
+        return;
+      }
+
       // Собираем все данные из localStorage
       const exportData = {
         weekly_ratings: localStorage.getItem('lqt_weekly_ratings'),
