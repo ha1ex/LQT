@@ -59,7 +59,53 @@ export const AIFloatingAssistant: React.FC<AIFloatingAssistantProps> = ({
     });
   };
 
-  if (!hasApiKey) return null;
+  // Показываем всегда, но с указанием что ключ не настроен
+  if (!hasApiKey) {
+    if (!isVisible) {
+      return (
+        <Button
+          onClick={onToggle}
+          className="fixed bottom-6 right-6 w-14 h-14 rounded-full shadow-lg bg-muted hover:bg-muted/80 border-2 border-background z-50"
+          size="icon"
+          variant="outline"
+        >
+          <Brain className="h-6 w-6 text-muted-foreground" />
+          <div className="absolute -top-1 -right-1 w-4 h-4 bg-amber-500 rounded-full flex items-center justify-center">
+            <span className="text-xs text-white font-bold">!</span>
+          </div>
+        </Button>
+      );
+    }
+
+    return (
+      <Card className="fixed bottom-6 right-6 w-96 h-[200px] shadow-2xl z-50 flex flex-col bg-background/95 backdrop-blur-sm border-2">
+        <div className="flex items-center justify-between p-4 border-b bg-gradient-to-r from-primary/10 to-secondary/10">
+          <div className="flex items-center gap-2">
+            <Brain className="h-5 w-5 text-primary" />
+            <span className="font-semibold">AI Assistant</span>
+          </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onToggle}
+            className="h-8 w-8"
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+        <div className="flex-1 flex items-center justify-center p-6 text-center">
+          <div>
+            <p className="text-muted-foreground mb-4">
+              API ключ не настроен
+            </p>
+            <p className="text-sm text-muted-foreground">
+              Перейдите в Настройки для подключения AI помощника
+            </p>
+          </div>
+        </div>
+      </Card>
+    );
+  }
 
   if (!isVisible) {
     return (

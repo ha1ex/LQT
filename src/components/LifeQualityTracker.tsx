@@ -14,7 +14,7 @@ import { BottomNavigation } from '@/components/ui/bottom-navigation';
 import { MobileHeader } from '@/components/ui/mobile-header';
 import { useMobile } from '@/hooks/use-mobile';
 import { 
-  Home, BarChart3, Target, TrendingUp, Search, Bell, Settings, 
+  Home, BarChart3, Target, TrendingUp, Search, Bell, Settings as SettingsIcon, 
   Heart, Dumbbell, Brain, Users, DollarSign, Briefcase, 
   Star, ChevronRight, Plus, Minus, Calendar, Clock,
   Activity, Zap, Sun, Moon, Coffee, Book, Music, Camera,
@@ -56,6 +56,7 @@ import { AdaptiveDashboard, AIWelcomeWizard } from './ai';
 import { WeeklyRatingCalendar, WeekDetailModal, RatingAnalytics } from './rating';
 import { ProblemAreas, WeeklyProgress, Strengths, AIRecommendations } from './dashboard';
 import { UnifiedDashboard } from './unified/UnifiedDashboard';
+import { Settings } from '@/pages/Settings';
 import { useIntegratedData } from '@/hooks/useIntegratedData';
 import { useWeeklyRatings } from '@/hooks/useWeeklyRatings';
 import { useGlobalData } from '@/contexts/GlobalDataProvider';
@@ -585,6 +586,7 @@ const LifeQualityTracker = () => {
       { id: 'analytics', label: 'Аналитика', icon: BarChart3 },
       { id: 'rate', label: 'Оценка', icon: Calendar },
       { id: 'insights', label: 'Инсайты', icon: Activity },
+      { id: 'settings', label: 'Настройки', icon: SettingsIcon },
     ];
 
     return (
@@ -1631,6 +1633,11 @@ const LifeQualityTracker = () => {
                   }
                 }}
               />
+            </div>
+          )}
+          {currentView === 'settings' && (
+            <div className="p-3 md:p-4 lg:p-6">
+              <Settings />
             </div>
           )}
           {selectedMetric && (

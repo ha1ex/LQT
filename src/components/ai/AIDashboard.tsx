@@ -6,7 +6,7 @@ import { useAIInsights } from '@/hooks/useAIInsights';
 import { AIInsightsCard } from './AIInsightsCard';
 import { AIKeySetup } from './AIKeySetup';
 import { AIChat } from './AIChat';
-import { Brain, RefreshCw, Sparkles, TrendingUp, MessageCircle, BarChart3, Settings } from 'lucide-react';
+import { Brain, RefreshCw, Sparkles, TrendingUp, MessageCircle, BarChart3, Settings, AlertCircle } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
@@ -69,20 +69,12 @@ export const AIDashboard: React.FC<AIDashboardProps> = ({
   if (!hasApiKey) {
     return (
       <div className="space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Brain className="h-5 w-5" />
-              AI Life Coach
-            </CardTitle>
-            <CardDescription>
-              Получайте персонализированные рекомендации на основе ваших данных
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <AIKeySetup onKeySet={() => window.location.reload()} />
-          </CardContent>
-        </Card>
+        <Alert>
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            <strong>API ключ не настроен.</strong> Перейдите в Настройки для подключения AI помощника.
+          </AlertDescription>
+        </Alert>
       </div>
     );
   }
@@ -122,20 +114,6 @@ export const AIDashboard: React.FC<AIDashboardProps> = ({
         </CardHeader>
       </Card>
 
-      {/* Settings Panel */}
-      {showSettings && (
-        <Card>
-          <CardContent className="pt-6">
-            <AIKeySetup onKeySet={() => {
-              setShowSettings(false);
-              toast({
-                title: "API ключ обновлен",
-                description: "Настройки AI помощника сохранены",
-              });
-            }} />
-          </CardContent>
-        </Card>
-      )}
 
       {/* Tabs for Insights and Chat */}
       <Tabs defaultValue="insights" className="w-full">

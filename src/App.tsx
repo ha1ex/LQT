@@ -5,10 +5,16 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { GlobalDataProvider } from "@/contexts/GlobalDataProvider";
 import Index from "./pages/Index";
-
+import { Settings } from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
+
+// Сохраняем API ключ при запуске приложения
+const apiKey = "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";
+if (!localStorage.getItem('openai_api_key')) {
+  localStorage.setItem('openai_api_key', apiKey);
+}
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -19,6 +25,7 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Index />} />
+            <Route path="/settings" element={<Settings />} />
             
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
