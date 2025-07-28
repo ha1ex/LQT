@@ -3,6 +3,7 @@ import { UserState, AppDataState, DataSyncStatus } from '@/types/app';
 import { useEnhancedHypotheses } from '@/hooks/strategy';
 import { useWeeklyRatings } from '@/hooks/useWeeklyRatings';
 import { useSubjects } from '@/hooks/strategy/useSubjects';
+import { clearAllDemoData, logCurrentLocalStorageState } from '@/utils/clearDemoData';
 
 interface GlobalDataContextType {
   appState: AppDataState;
@@ -25,6 +26,11 @@ export const useGlobalData = () => {
 };
 
 export const GlobalDataProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  // Log current state on mount for debugging
+  useEffect(() => {
+    logCurrentLocalStorageState();
+  }, []);
+
   const [appState, setAppState] = useState<AppDataState>({
     userState: 'empty',
     isDemoMode: false,
@@ -101,21 +107,17 @@ export const GlobalDataProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       if (currentDemoMode) {
         // Turning off demo mode - clear demo data and return to empty state
         console.log('📤 Exiting demo mode, clearing demo data...');
-        localStorage.removeItem('lqt_demo_mode');
-        localStorage.removeItem('lqt_weekly_ratings');
-        localStorage.removeItem('lqt_hypotheses');
-        localStorage.removeItem('lqt_subjects');
-        localStorage.removeItem('lqt_ai_insights');
-        localStorage.removeItem('lqt_ai_chat_history');
+        clearAllDemoData();
+        window.location.reload();
       } else {
-        // Turning on demo mode - generate comprehensive demo data
+        // Turning on demo mode - clear existing data first, then generate demo data
         console.log('📥 Entering demo mode, generating comprehensive demo data...');
+        clearAllDemoData(); // Clear any existing data first
         localStorage.setItem('lqt_demo_mode', 'true');
-        await generateDemoData();
+        const { createComprehensiveDemoData } = await import('@/utils/comprehensiveDemoData');
+        await createComprehensiveDemoData();
+        window.location.reload();
       }
-      
-      // Force re-render
-      window.location.reload();
     } catch (error) {
       console.error('❌ Error toggling demo mode:', error);
       setSyncStatus(prev => ({ ...prev, isLoading: false }));
@@ -126,19 +128,8 @@ export const GlobalDataProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     setSyncStatus(prev => ({ ...prev, isLoading: true }));
     
     try {
-      // Clear all data items except demo mode flag
-      const itemsToRemove = [
-        'lqt_hypotheses',
-        'lqt_weekly_ratings', 
-        'lqt_subjects',
-        'lqt_ai_insights',
-        'lqt_ai_chat_history'
-      ];
-      
-      itemsToRemove.forEach(item => localStorage.removeItem(item));
-      
-      // Also clear demo mode flag
-      localStorage.removeItem('lqt_demo_mode');
+      console.log('🧹 Clearing all data...');
+      clearAllDemoData();
       
       setSyncStatus(prev => ({
         ...prev,
@@ -146,22 +137,19 @@ export const GlobalDataProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         lastSync: new Date(),
       }));
       
-      // Force re-render without page reload
+      console.log('✅ All data cleared, reloading page...');
+      // Force re-render
       window.location.reload();
     } catch (error) {
-      console.error('Error clearing data:', error);
+      console.error('❌ Error clearing data:', error);
       setSyncStatus(prev => ({ ...prev, isLoading: false }));
     }
   }, []);
 
   const generateDemoData = useCallback(async () => {
-    setSyncStatus(prev => ({
-      ...prev,
-      isLoading: true,
-    }));
+    setSyncStatus(prev => ({ ...prev, isLoading: true }));
 
     try {
-      // Import demo data generation functions
       const { createComprehensiveDemoData } = await import('@/utils/comprehensiveDemoData');
       await createComprehensiveDemoData();
       
@@ -175,10 +163,7 @@ export const GlobalDataProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       window.location.reload();
     } catch (error) {
       console.error('Failed to generate demo data:', error);
-      setSyncStatus(prev => ({
-        ...prev,
-        isLoading: false,
-      }));
+      setSyncStatus(prev => ({ ...prev, isLoading: false }));
     }
   }, []);
 

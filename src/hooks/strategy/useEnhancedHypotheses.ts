@@ -25,11 +25,16 @@ export const useEnhancedHypotheses = () => {
   useEffect(() => {
     console.log('useEnhancedHypotheses: Starting to load from localStorage');
     try {
+      const isDemoMode = localStorage.getItem('lqt_demo_mode') === 'true';
+      console.log('useEnhancedHypotheses: Demo mode active:', isDemoMode);
+      
       const stored = localStorage.getItem(STORAGE_KEY);
-      console.log('useEnhancedHypotheses: Stored data:', stored);
-      if (stored) {
+      console.log('useEnhancedHypotheses: Stored data:', stored ? 'exists' : 'none');
+      
+      if (stored && (isDemoMode || stored !== 'null')) {
         const parsed = JSON.parse(stored);
-        console.log('useEnhancedHypotheses: Parsed data:', parsed);
+        console.log('useEnhancedHypotheses: Parsed data length:', parsed.length);
+        
         // Convert date strings back to Date objects and migrate old data
         const converted = parsed.map((h: any) => {
           // Migration: convert old tasks to weeklyProgress if needed
@@ -53,9 +58,9 @@ export const useEnhancedHypotheses = () => {
           };
         });
         setHypotheses(converted);
-        console.log('useEnhancedHypotheses: Set hypotheses:', converted);
+        console.log('useEnhancedHypotheses: Set hypotheses:', converted.length + ' items');
       } else {
-        console.log('useEnhancedHypotheses: No stored data, setting empty array');
+        console.log('useEnhancedHypotheses: No stored data or not in demo mode, setting empty array');
         setHypotheses([]);
       }
     } catch (error) {
