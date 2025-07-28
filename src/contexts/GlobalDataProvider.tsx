@@ -20,6 +20,9 @@ const GlobalDataContext = createContext<GlobalDataContextType | undefined>(undef
 export const useGlobalData = () => {
   const context = useContext(GlobalDataContext);
   if (!context) {
+    // More detailed error with component stack trace
+    console.error('useGlobalData called outside of GlobalDataProvider context');
+    console.error('Component stack:', new Error().stack);
     throw new Error('useGlobalData must be used within GlobalDataProvider');
   }
   return context;

@@ -79,8 +79,9 @@ const LifeQualityTracker = () => {
   const [showAIWelcome, setShowAIWelcome] = useState(false);
   const isMobile = useMobile();
   
-  // Global data management
-  const { appState, syncStatus, generateDemoData, toggleDemoMode } = useGlobalData();
+  // Global data management with error boundary
+  const globalData = useGlobalData();
+  const { appState, syncStatus, generateDemoData, toggleDemoMode } = globalData || {};
   
   // Integrated dashboard-strategy data
   const { integratedMetrics, smartRecommendations } = useIntegratedData();
@@ -1068,7 +1069,12 @@ const LifeQualityTracker = () => {
                 </div>
                 
                 <ResponsiveContainer width="100%" height={200}>
-                  <RechartsLineChart data={filteredData}>
+                  <RechartsLineChart data={filteredData.filter(item => 
+                    item && 
+                    typeof item.overall === 'number' && 
+                    !isNaN(item.overall) && 
+                    isFinite(item.overall)
+                  )}>
                     <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
                     <XAxis dataKey="week" className="text-muted-foreground" />
                     <YAxis domain={[0, 10]} className="text-muted-foreground" />
@@ -1327,10 +1333,17 @@ const LifeQualityTracker = () => {
     const metric = allMetrics.find(m => m.name === selectedMetric);
     if (!metric) return null;
 
-    const metricData = mockData.map(week => ({
-      ...week,
-      value: typeof week[metric.name] === 'number' && !isNaN(week[metric.name]) ? week[metric.name] : 0
-    }));
+    const metricData = mockData
+      .map(week => ({
+        ...week,
+        value: typeof week[metric.name] === 'number' && !isNaN(week[metric.name]) ? week[metric.name] : 0
+      }))
+      .filter(week => 
+        week && 
+        typeof week.value === 'number' && 
+        !isNaN(week.value) && 
+        isFinite(week.value)
+      );
 
     const latestValue = metricData.length > 0 && typeof metricData[metricData.length - 1].value === 'number' 
       ? metricData[metricData.length - 1].value : 0;
@@ -1378,8 +1391,13 @@ const LifeQualityTracker = () => {
         {/* График метрики */}
         <div className="bg-card rounded-xl p-6 border border-border">
           <h3 className="text-lg font-semibold mb-4">Динамика за период</h3>
-          <ResponsiveContainer width="100%" height={400}>
-            <RechartsLineChart data={metricData}>
+            <ResponsiveContainer width="100%" height={400}>
+              <RechartsLineChart data={metricData.filter(item => 
+                item && 
+                typeof item.value === 'number' && 
+                !isNaN(item.value) && 
+                isFinite(item.value)
+              )}>
               <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
               <XAxis dataKey="week" className="text-muted-foreground" />
               <YAxis domain={[0, 10]} className="text-muted-foreground" />

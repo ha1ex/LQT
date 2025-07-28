@@ -85,7 +85,12 @@ const CorrelationAnalysis: React.FC<CorrelationAnalysisProps> = ({ data, targetM
       
           <div className="h-64 mb-4">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={data} layout="horizontal">
+              <BarChart data={data.filter(item => 
+                item && 
+                typeof item.correlation === 'number' && 
+                !isNaN(item.correlation) && 
+                isFinite(item.correlation)
+              )} layout="horizontal">
                 <XAxis 
                   type="number" 
                   domain={[-1, 1]} 
