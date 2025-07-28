@@ -50,15 +50,17 @@ export const GlobalDataProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
   // Determine user state based on available data
   const determineUserState = useCallback((): UserState => {
-    const hasHypotheses = hypotheses && hypotheses.length > 0;
-    const hasRatings = ratings && Object.keys(ratings).length > 0;
-    const hasCustomSubjects = subjects && subjects.some(s => s.type === 'custom');
-    
     const demoModeFlag = localStorage.getItem('lqt_demo_mode');
     const isDemoActive = demoModeFlag === 'true';
     
     if (isDemoActive) return 'demo';
-    if (hasHypotheses || hasRatings || hasCustomSubjects) return 'real_data';
+    
+    // Check for real user data (not default system data)
+    const hasRealHypotheses = hypotheses && hypotheses.length > 0;
+    const hasRealRatings = ratings && Object.keys(ratings).length > 0;
+    const hasUserSubjects = subjects && subjects.some(s => s.type === 'custom');
+    
+    if (hasRealHypotheses || hasRealRatings || hasUserSubjects) return 'real_data';
     return 'empty';
   }, [hypotheses, ratings, subjects]);
 
@@ -93,54 +95,63 @@ export const GlobalDataProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     const currentDemoMode = localStorage.getItem('lqt_demo_mode') === 'true';
     
     setSyncStatus(prev => ({ ...prev, isLoading: true }));
+    console.log(`🔄 Toggling demo mode from ${currentDemoMode} to ${!currentDemoMode}`);
 
     try {
       if (currentDemoMode) {
-        // Turning off demo mode - clear all data
+        // Turning off demo mode - clear demo data and return to empty state
+        console.log('📤 Exiting demo mode, clearing demo data...');
         localStorage.removeItem('lqt_demo_mode');
-        await clearAllData();
+        localStorage.removeItem('lqt_weekly_ratings');
+        localStorage.removeItem('lqt_hypotheses');
+        localStorage.removeItem('lqt_subjects');
+        localStorage.removeItem('lqt_ai_insights');
+        localStorage.removeItem('lqt_ai_chat_history');
       } else {
         // Turning on demo mode - generate comprehensive demo data
+        console.log('📥 Entering demo mode, generating comprehensive demo data...');
         localStorage.setItem('lqt_demo_mode', 'true');
         await generateDemoData();
       }
+      
+      // Force re-render
+      window.location.reload();
     } catch (error) {
-      console.error('Error toggling demo mode:', error);
+      console.error('❌ Error toggling demo mode:', error);
+      setSyncStatus(prev => ({ ...prev, isLoading: false }));
     }
-
-    setSyncStatus(prev => ({ ...prev, isLoading: false }));
   }, []);
 
   const clearAllData = useCallback(async () => {
-    // Clear all localStorage items
-    const itemsToRemove = [
-      'lqt_hypotheses',
-      'lqt_weekly_ratings', 
-      'lqt_subjects',
-      'lqt_ai_insights',
-      'lqt_ai_chat_history',
-      'lqt_demo_mode'
-    ];
+    setSyncStatus(prev => ({ ...prev, isLoading: true }));
     
-    itemsToRemove.forEach(item => localStorage.removeItem(item));
-    
-    setSyncStatus(prev => ({
-      ...prev,
-      isLoading: true,
-    }));
-    
-    // Wait a bit for cleanup
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        setSyncStatus(prev => ({
-          ...prev,
-          isLoading: false,
-          lastSync: new Date(),
-        }));
-        window.location.reload(); // Force component re-initialization
-        resolve(undefined);
-      }, 500);
-    });
+    try {
+      // Clear all data items except demo mode flag
+      const itemsToRemove = [
+        'lqt_hypotheses',
+        'lqt_weekly_ratings', 
+        'lqt_subjects',
+        'lqt_ai_insights',
+        'lqt_ai_chat_history'
+      ];
+      
+      itemsToRemove.forEach(item => localStorage.removeItem(item));
+      
+      // Also clear demo mode flag
+      localStorage.removeItem('lqt_demo_mode');
+      
+      setSyncStatus(prev => ({
+        ...prev,
+        isLoading: false,
+        lastSync: new Date(),
+      }));
+      
+      // Force re-render without page reload
+      window.location.reload();
+    } catch (error) {
+      console.error('Error clearing data:', error);
+      setSyncStatus(prev => ({ ...prev, isLoading: false }));
+    }
   }, []);
 
   const generateDemoData = useCallback(async () => {

@@ -395,24 +395,47 @@ export const generateDemoSubjects = () => {
 
 export const createComprehensiveDemoData = async (): Promise<void> => {
   try {
-    // Generate all types of demo data
+    console.log('🔄 Generating comprehensive demo data with 20 weeks of interconnected data...');
+    
+    // Generate comprehensive data
     const ratingData = generateComprehensiveRatingData();
     const hypothesesData = generateComprehensiveHypotheses();
     const aiInsights = generateDemoAIInsights();
     const subjects = generateDemoSubjects();
 
-    // Save to localStorage with all sections
+    // Save all demo data with comprehensive chat history
     localStorage.setItem('lqt_weekly_ratings', JSON.stringify(ratingData));
     localStorage.setItem('lqt_hypotheses', JSON.stringify(hypothesesData));
     localStorage.setItem('lqt_ai_insights', JSON.stringify(aiInsights));
     localStorage.setItem('lqt_subjects', JSON.stringify(subjects));
+    localStorage.setItem('lqt_ai_chat_history', JSON.stringify([
+      {
+        id: 'demo-1',
+        message: 'Привет! Я анализирую твои данные за 20 недель. Вижу хорошую динамику в физическом здоровье!',
+        sender: 'ai',
+        timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000)
+      },
+      {
+        id: 'demo-2', 
+        message: 'Спасибо! Да, регулярные тренировки действительно помогают.',
+        sender: 'user',
+        timestamp: new Date(Date.now() - 23 * 60 * 60 * 1000)
+      },
+      {
+        id: 'demo-3',
+        message: 'Рекомендую обратить внимание на связь между физическими упражнениями и качеством общения с семьей - данные показывают положительную корреляцию!',
+        sender: 'ai',
+        timestamp: new Date(Date.now() - 22 * 60 * 60 * 1000)
+      }
+    ]));
     localStorage.setItem('lqt_demo_mode', 'true');
 
-    console.log('✅ Comprehensive demo data created with all sections:', {
-      weeklyRatings: Object.keys(ratingData).length,
-      hypotheses: hypothesesData.length,
-      aiInsights: aiInsights.length,
-      subjects: subjects.length
+    console.log('✅ Comprehensive demo data created successfully:', {
+      weeklyRatings: Object.keys(ratingData).length + ' weeks',
+      hypotheses: hypothesesData.length + ' active experiments',
+      aiInsights: aiInsights.length + ' insights',
+      subjects: subjects.length + ' subjects',
+      chatHistory: '3 demo messages'
     });
   } catch (error) {
     console.error('❌ Error creating comprehensive demo data:', error);

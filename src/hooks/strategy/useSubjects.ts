@@ -65,17 +65,22 @@ export const useSubjects = () => {
   useEffect(() => {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
+      const isDemoMode = localStorage.getItem('lqt_demo_mode') === 'true';
+      
       if (stored) {
         const parsed = JSON.parse(stored);
         setSubjects(parsed);
-      } else {
-        // Initialize with default subjects
+      } else if (isDemoMode) {
+        // Only initialize with defaults in demo mode
         setSubjects(DEFAULT_SUBJECTS);
         localStorage.setItem(STORAGE_KEY, JSON.stringify(DEFAULT_SUBJECTS));
+      } else {
+        // For new users, start with empty subjects
+        setSubjects([]);
       }
     } catch (error) {
       console.error('Error loading subjects:', error);
-      setSubjects(DEFAULT_SUBJECTS);
+      setSubjects([]);
     } finally {
       setLoading(false);
     }
