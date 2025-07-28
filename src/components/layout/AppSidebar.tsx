@@ -85,8 +85,10 @@ export function AppSidebar() {
                       end 
                       className={getNavClass(isActive(item.url))}
                     >
-                      <item.icon className="w-4 h-4 mr-2 flex-shrink-0" />
-                      <span>{!collapsed ? item.title : ''}</span>
+                      <div className="flex items-center">
+                        <item.icon className="w-4 h-4 mr-2 flex-shrink-0" />
+                        <span>{!collapsed ? item.title : ''}</span>
+                      </div>
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -118,8 +120,10 @@ export function AppSidebar() {
                           end 
                           className={getNavClass(isActive(item.url))}
                         >
-                          <item.icon className="w-4 h-4 mr-2 flex-shrink-0" />
-                          <span>{!collapsed ? item.title : ''}</span>
+                          <div className="flex items-center">
+                            <item.icon className="w-4 h-4 mr-2 flex-shrink-0" />
+                            <span>{!collapsed ? item.title : ''}</span>
+                          </div>
                         </NavLink>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
