@@ -265,14 +265,27 @@ const LifeQualityTracker = () => {
     
     const values = metrics
       .map(metric => weekData[metric.name])
-      .filter(value => typeof value === 'number' && value !== null && value !== undefined);
+      .filter(value => typeof value === 'number' && value !== null && value !== undefined && !isNaN(value));
     
-    return values.length > 0 ? values.reduce((sum, val) => sum + val, 0) / values.length : 0;
+    const result = values.length > 0 ? values.reduce((sum, val) => sum + val, 0) / values.length : 0;
+    console.log('Overall score calculation:', { values, result, weekData });
+    return isNaN(result) ? 0 : result;
   };
 
   // Адаптированные данные из GlobalDataProvider
   const mockData = useMemo(() => {
-    return adaptWeeklyRatingsToMockData(weeklyRatings, appState);
+    const data = adaptWeeklyRatingsToMockData(weeklyRatings, appState);
+    console.log('Mock data generated:', data);
+    // Filter out any invalid data entries
+    return data.filter(week => {
+      if (!week || typeof week !== 'object') return false;
+      const hasValidOverall = typeof week.overall === 'number' && !isNaN(week.overall);
+      if (!hasValidOverall) {
+        console.warn('Filtering out week with invalid overall score:', week);
+        return false;
+      }
+      return true;
+    });
   }, [weeklyRatings, appState]);
 
   // Мемоизированная функция для генерации корреляций с кэшированием

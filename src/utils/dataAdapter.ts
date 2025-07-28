@@ -50,9 +50,22 @@ export const adaptWeeklyRatingsToMockData = (
       const values = rating.ratings 
         ? Object.values(rating.ratings).filter(v => typeof v === 'number' && v !== null && v !== undefined && !isNaN(v)) as number[]
         : [];
-      weekData.overall = values.length > 0 
-        ? parseFloat((values.reduce((sum, val) => sum + val, 0) / values.length).toFixed(1))
-        : (typeof rating.overallScore === 'number' && !isNaN(rating.overallScore) ? rating.overallScore : 0);
+      
+      let overallScore = 0;
+      if (values.length > 0) {
+        overallScore = parseFloat((values.reduce((sum, val) => sum + val, 0) / values.length).toFixed(1));
+      } else if (typeof rating.overallScore === 'number' && !isNaN(rating.overallScore)) {
+        overallScore = rating.overallScore;
+      }
+      
+      console.log('Week data calculation:', { 
+        weekNumber: rating.weekNumber, 
+        values, 
+        overallScore, 
+        originalOverallScore: rating.overallScore 
+      });
+      
+      weekData.overall = isNaN(overallScore) ? 0 : overallScore;
 
       return weekData;
     })

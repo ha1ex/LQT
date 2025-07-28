@@ -149,19 +149,28 @@ export const useWeeklyRatings = () => {
     const averageByMetric: Record<string, number> = {};
     const metricCounts: Record<string, number> = {};
     
+    
     allRatings.forEach(week => {
       Object.entries(week.ratings).forEach(([metricId, rating]) => {
-        averageByMetric[metricId] = (averageByMetric[metricId] || 0) + rating;
-        metricCounts[metricId] = (metricCounts[metricId] || 0) + 1;
+        if (typeof rating === 'number' && !isNaN(rating) && isFinite(rating)) {
+          averageByMetric[metricId] = (averageByMetric[metricId] || 0) + rating;
+          metricCounts[metricId] = (metricCounts[metricId] || 0) + 1;
+        }
       });
     });
 
     Object.keys(averageByMetric).forEach(metricId => {
-      averageByMetric[metricId] = averageByMetric[metricId] / metricCounts[metricId];
+      if (metricCounts[metricId] > 0) {
+        const average = averageByMetric[metricId] / metricCounts[metricId];
+        averageByMetric[metricId] = isNaN(average) || !isFinite(average) ? 0 : average;
+      } else {
+        averageByMetric[metricId] = 0;
+      }
     });
 
     // Trends over time
     const trendsOverTime = allRatings
+      .filter(week => typeof week.overallScore === 'number' && !isNaN(week.overallScore) && isFinite(week.overallScore))
       .sort((a, b) => a.startDate.getTime() - b.startDate.getTime())
       .map(week => ({
         weekNumber: week.weekNumber,
