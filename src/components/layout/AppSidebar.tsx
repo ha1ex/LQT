@@ -55,7 +55,7 @@ export function AppSidebar() {
   const getNavClass = (active: boolean) =>
     active 
       ? "bg-primary text-primary-foreground font-medium" 
-      : "hover:bg-accent hover:text-accent-foreground";
+      : "hover:bg-accent hover:text-accent-foreground text-muted-foreground";
 
   return (
     <Sidebar
@@ -79,18 +79,16 @@ export function AppSidebar() {
             <SidebarMenu>
               {mainItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                    <NavLink 
-                      to={item.url} 
-                      end 
-                      className={getNavClass(isActive(item.url))}
-                    >
-                      <div className="flex items-center">
-                        <item.icon className="w-4 h-4 mr-2 flex-shrink-0" />
-                        <span>{!collapsed ? item.title : ''}</span>
-                      </div>
-                    </NavLink>
-                  </SidebarMenuButton>
+                  <NavLink 
+                    to={item.url} 
+                    end 
+                    className={({ isActive }) => 
+                      `${getNavClass(isActive)} w-full flex items-center p-2 rounded-md transition-colors`
+                    }
+                  >
+                    <item.icon className="w-4 h-4 mr-2 flex-shrink-0" />
+                    {!collapsed && <span>{item.title}</span>}
+                  </NavLink>
                 </SidebarMenuItem>
               ))}
             </SidebarMenu>
@@ -114,18 +112,16 @@ export function AppSidebar() {
                 <SidebarMenu>
                   {otherItems.map((item) => (
                     <SidebarMenuItem key={item.title}>
-                      <SidebarMenuButton asChild>
-                        <NavLink 
-                          to={item.url} 
-                          end 
-                          className={getNavClass(isActive(item.url))}
-                        >
-                          <div className="flex items-center">
-                            <item.icon className="w-4 h-4 mr-2 flex-shrink-0" />
-                            <span>{!collapsed ? item.title : ''}</span>
-                          </div>
-                        </NavLink>
-                      </SidebarMenuButton>
+                      <NavLink 
+                        to={item.url} 
+                        end 
+                        className={({ isActive }) => 
+                          `${getNavClass(isActive)} w-full flex items-center p-2 rounded-md transition-colors`
+                        }
+                      >
+                        <item.icon className="w-4 h-4 mr-2 flex-shrink-0" />
+                        {!collapsed && <span>{item.title}</span>}
+                      </NavLink>
                     </SidebarMenuItem>
                   ))}
                 </SidebarMenu>
