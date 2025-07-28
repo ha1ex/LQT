@@ -22,6 +22,7 @@ export const adaptWeeklyRatingsToMockData = (
 ): any[] => {
   // Если нет данных или это пустое состояние, возвращаем пустой массив
   if (appState.userState === 'empty' || Object.keys(weeklyRatings).length === 0) {
+    console.log('dataAdapter: No data available, returning empty array');
     return [];
   }
 

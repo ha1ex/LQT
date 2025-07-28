@@ -254,9 +254,32 @@ const LifeQualityTracker = () => {
     return denominator === 0 ? 0 : Math.max(-1, Math.min(1, numerator / denominator));
   };
 
-  // Функция для получения отфильтрованных данных
+  // Функция для получения отфильтрованных данных с санитизацией
   const getFilteredData = (filter: string) => {
-    return filterDataByPeriod(mockData, filter);
+    const rawData = filterDataByPeriod(mockData, filter);
+    console.log('Raw filtered data:', rawData);
+    
+    // Санитизируем данные для предотвращения NaN
+    const sanitizedData = rawData.map(week => {
+      if (!week || typeof week !== 'object') return null;
+      
+      const sanitizedWeek = { ...week };
+      
+      // Проверяем и исправляем все числовые значения
+      Object.keys(sanitizedWeek).forEach(key => {
+        if (key !== 'week' && key !== 'date') {
+          const value = sanitizedWeek[key];
+          if (typeof value !== 'number' || isNaN(value) || !isFinite(value)) {
+            sanitizedWeek[key] = 0;
+          }
+        }
+      });
+      
+      return sanitizedWeek;
+    }).filter(week => week !== null);
+    
+    console.log('Sanitized filtered data:', sanitizedData);
+    return sanitizedData;
   };
 
   // Функция для динамического расчета общего индекса
@@ -270,9 +293,43 @@ const LifeQualityTracker = () => {
     return values.length > 0 ? parseFloat((values.reduce((sum, val) => sum + val, 0) / values.length).toFixed(1)) : 0;
   };
 
-  // Адаптированные данные из GlobalDataProvider
+  // Адаптированные данные из GlobalDataProvider с полной санитизацией
   const mockData = useMemo(() => {
-    return adaptWeeklyRatingsToMockData(weeklyRatings, appState);
+    const adaptedData = adaptWeeklyRatingsToMockData(weeklyRatings, appState);
+    console.log('Adapted mock data:', adaptedData);
+    
+    // Если данных нет, создаем пустую структуру с безопасными значениями
+    if (!adaptedData || adaptedData.length === 0) {
+      console.log('No data available, creating safe fallback');
+      return [];
+    }
+    
+    // Дополнительная санитизация на уровне mockData
+    const sanitizedData = adaptedData.map((week, index) => {
+      if (!week || typeof week !== 'object') {
+        console.warn(`Invalid week data at index ${index}:`, week);
+        return null;
+      }
+      
+      const sanitizedWeek = { 
+        week: week.week || `W${index + 1}`,
+        date: week.date || 'Unknown',
+        overall: typeof week.overall === 'number' && !isNaN(week.overall) && isFinite(week.overall) ? week.overall : 0
+      };
+      
+      // Санитизируем все остальные числовые поля
+      Object.keys(week).forEach(key => {
+        if (key !== 'week' && key !== 'date' && key !== 'overall') {
+          const value = week[key];
+          sanitizedWeek[key] = typeof value === 'number' && !isNaN(value) && isFinite(value) ? value : 0;
+        }
+      });
+      
+      return sanitizedWeek;
+    }).filter(week => week !== null);
+    
+    console.log('Final sanitized mock data:', sanitizedData);
+    return sanitizedData;
   }, [weeklyRatings, appState]);
 
   // Мемоизированная функция для генерации корреляций с кэшированием
@@ -660,6 +717,17 @@ const LifeQualityTracker = () => {
       }))
       .sort((a, b) => b.value - a.value)
       .slice(0, 6) : [];
+    
+    // Safety check for empty data
+    if (!mockData || mockData.length === 0) {
+      return (
+        <div className="p-4 lg:p-6 space-y-6">
+          <div className="text-center py-12">
+            <p className="text-muted-foreground">Нет данных для отображения. Добавьте первую оценку недели.</p>
+          </div>
+        </div>
+      );
+    }
 
     return (
       <div className="p-4 lg:p-6 space-y-6">
