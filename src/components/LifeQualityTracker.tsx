@@ -581,11 +581,11 @@ const LifeQualityTracker = () => {
   // Sidebar компонент для веб интерфейса
   const Sidebar = () => {
     const navigationItems = [
-      { id: 'dashboard', label: 'Dashboard', icon: Home },
+      { id: 'dashboard', label: 'Главная', icon: Home },
+      { id: 'rate', label: 'Оценка', icon: Calendar },
       { id: 'strategy', label: 'Стратегия', icon: Lightbulb },
       { id: 'ai', label: 'AI Coach', icon: Brain },
       { id: 'analytics', label: 'Аналитика', icon: BarChart3 },
-      { id: 'rate', label: 'Оценка', icon: Calendar },
       { id: 'insights', label: 'Инсайты', icon: Activity },
       { id: 'settings', label: 'Настройки', icon: SettingsIcon },
     ];
@@ -700,7 +700,7 @@ const LifeQualityTracker = () => {
       <div className="bg-card border-b border-border p-4 lg:p-6">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-2xl font-bold">Dashboard</h2>
+            <h2 className="text-2xl font-bold">Главная</h2>
             <p className="text-muted-foreground">
               {latestWeek ? latestWeek.date : 'Данные отсутствуют'}
             </p>
@@ -1552,11 +1552,11 @@ const LifeQualityTracker = () => {
 
   // Оптимизированная навигация для мобильных (5 основных разделов)
   const navigationItems = [
-    { id: 'dashboard', label: 'Обзор', icon: Home },
+    { id: 'dashboard', label: 'Главная', icon: Home },
     { id: 'rate', label: 'Оценка', icon: Sparkles },
-    { id: 'settings', label: 'Настройки', icon: SettingsIcon },
     { id: 'strategy', label: 'Стратегия', icon: Lightbulb },
     { id: 'ai', label: 'AI Coach', icon: Brain },
+    { id: 'settings', label: 'Настройки', icon: SettingsIcon },
   ];
 
   if (showOnboarding) {
