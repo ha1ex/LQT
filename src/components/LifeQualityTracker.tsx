@@ -1543,7 +1543,7 @@ const LifeQualityTracker = () => {
   const navigationItems = [
     { id: 'dashboard', label: 'Обзор', icon: Home },
     { id: 'rate', label: 'Оценка', icon: Sparkles },
-    { id: 'analytics', label: 'Аналитика', icon: TrendingUp },
+    { id: 'settings', label: 'Настройки', icon: SettingsIcon },
     { id: 'strategy', label: 'Стратегия', icon: Lightbulb },
     { id: 'ai', label: 'AI Coach', icon: Brain },
   ];

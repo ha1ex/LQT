@@ -2,7 +2,8 @@ import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { AIKeySetup } from '@/components/ai/AIKeySetup';
-import { Settings as SettingsIcon, Brain, Key } from 'lucide-react';
+import { ThemeToggle, DataExport, DataClear } from '@/components/settings';
+import { Settings as SettingsIcon, Brain, Key, Palette, Database } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 export const Settings: React.FC = () => {
@@ -30,6 +31,10 @@ export const Settings: React.FC = () => {
       <Separator />
 
       <div className="space-y-6">
+        {/* Тема оформления */}
+        <ThemeToggle />
+
+        {/* AI Помощник */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -44,6 +49,18 @@ export const Settings: React.FC = () => {
             <AIKeySetup onKeySet={handleKeyUpdate} />
           </CardContent>
         </Card>
+
+        {/* Управление данными */}
+        <div>
+          <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+            <Database className="h-5 w-5" />
+            Управление данными
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <DataExport />
+            <DataClear />
+          </div>
+        </div>
       </div>
     </div>
   );
