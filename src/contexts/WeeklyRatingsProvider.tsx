@@ -1,8 +1,9 @@
-import React, { createContext, useState, useEffect, useCallback, useMemo } from 'react';
+import React, { createContext, useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { WeeklyRating, WeeklyRatingData, WeeklyRatingAnalytics } from '@/types/weeklyRating';
 import { startOfWeek, endOfWeek, format, addWeeks, subWeeks, parseISO } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { loadAllUserData } from '@/utils/realUserData';
+import { pushToServer, collectLocalData, fetchFromServer, applyServerData } from '@/services/syncService';
 
 const STORAGE_KEY = 'lqt_weekly_ratings';
 
@@ -32,45 +33,121 @@ export const WeeklyRatingsProvider: React.FC<{ children: React.ReactNode }> = ({
   const [ratings, setRatings] = useState<WeeklyRatingData>({});
   const [currentWeek, setCurrentWeek] = useState<Date>(new Date());
   const [isLoading, setIsLoading] = useState(true);
+  const syncTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Load data from localStorage on mount (once)
-  useEffect(() => {
-    try {
-      // Seed data only on first launch (idempotent)
-      loadAllUserData();
+  // Helper to parse stored data
+  const parseStoredRatings = (stored: Record<string, unknown>): WeeklyRatingData => {
+    const converted: WeeklyRatingData = {};
+    Object.keys(stored).forEach(key => {
+      const item = stored[key] as Record<string, unknown>;
+      converted[key] = {
+        ...item,
+        startDate: parseISO(item.startDate as string),
+        endDate: parseISO(item.endDate as string),
+        createdAt: parseISO(item.createdAt as string),
+        updatedAt: parseISO(item.updatedAt as string),
+      } as WeeklyRating;
+    });
+    return converted;
+  };
 
-      // Read data from localStorage
-      const rawStored = localStorage.getItem(STORAGE_KEY);
-      if (rawStored) {
-        const stored = JSON.parse(rawStored);
-        const converted: WeeklyRatingData = {};
-        Object.keys(stored).forEach(key => {
-          converted[key] = {
-            ...stored[key],
-            startDate: parseISO(stored[key].startDate),
-            endDate: parseISO(stored[key].endDate),
-            createdAt: parseISO(stored[key].createdAt),
-            updatedAt: parseISO(stored[key].updatedAt),
-          };
-        });
-        setRatings(converted);
-      }
-    } catch (error) {
-      if (import.meta.env.DEV) console.error('Error loading weekly ratings:', error);
-      setRatings({});
-    } finally {
-      setIsLoading(false);
+  // Sync with server (debounced)
+  const syncToServer = useCallback(() => {
+    if (syncTimeoutRef.current) {
+      clearTimeout(syncTimeoutRef.current);
     }
+
+    syncTimeoutRef.current = setTimeout(async () => {
+      const isAuthenticated = localStorage.getItem('lqt_authenticated') === 'true';
+      if (!isAuthenticated) return;
+
+      try {
+        const localData = collectLocalData();
+        await pushToServer(localData);
+        console.log('Data synced to server');
+      } catch (error) {
+        console.error('Sync to server failed:', error);
+      }
+    }, 3000); // 3 second debounce
   }, []);
 
-  // Save to localStorage
+  // Load data from localStorage and server on mount
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        // Seed data only on first launch (idempotent)
+        loadAllUserData();
+
+        // Read data from localStorage first
+        const rawStored = localStorage.getItem(STORAGE_KEY);
+        let localRatings: WeeklyRatingData = {};
+
+        if (rawStored) {
+          const stored = JSON.parse(rawStored);
+          localRatings = parseStoredRatings(stored);
+        }
+
+        // Try to fetch from server and merge
+        const isAuthenticated = localStorage.getItem('lqt_authenticated') === 'true';
+        if (isAuthenticated) {
+          try {
+            const serverData = await fetchFromServer();
+            if (serverData?.ratings) {
+              const serverRatings = parseStoredRatings(serverData.ratings as Record<string, unknown>);
+
+              // Merge: local takes priority for same keys, but include server-only data
+              const mergedRatings = { ...serverRatings, ...localRatings };
+
+              // If we got new data from server, update localStorage
+              if (Object.keys(serverRatings).length > Object.keys(localRatings).length) {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(mergedRatings));
+                applyServerData(serverData);
+              }
+
+              setRatings(mergedRatings);
+            } else {
+              setRatings(localRatings);
+              // Push local data to server if server is empty
+              if (Object.keys(localRatings).length > 0) {
+                const localData = collectLocalData();
+                await pushToServer(localData);
+              }
+            }
+          } catch {
+            // Server unavailable, use local data
+            setRatings(localRatings);
+          }
+        } else {
+          setRatings(localRatings);
+        }
+      } catch (error) {
+        if (import.meta.env.DEV) console.error('Error loading weekly ratings:', error);
+        setRatings({});
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadData();
+
+    // Cleanup sync timeout on unmount
+    return () => {
+      if (syncTimeoutRef.current) {
+        clearTimeout(syncTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  // Save to localStorage and sync to server
   const saveToStorage = useCallback((newRatings: WeeklyRatingData) => {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(newRatings));
+      // Trigger server sync with debounce
+      syncToServer();
     } catch (error) {
       if (import.meta.env.DEV) console.error('Error saving weekly ratings:', error);
     }
-  }, []);
+  }, [syncToServer]);
 
   // Get week ID from date
   const getWeekId = useCallback((date: Date): string => {
