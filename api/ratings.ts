@@ -1,13 +1,7 @@
-import { Redis } from '@upstash/redis';
+import { put, head, del } from '@vercel/blob';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
-// Создаём клиент Redis из переменных окружения
-const redis = new Redis({
-  url: process.env.UPSTASH_REDIS_REST_URL!,
-  token: process.env.UPSTASH_REDIS_REST_TOKEN!,
-});
-
-const RATINGS_KEY = 'lqt_weekly_ratings';
+const RATINGS_FILE = 'lqt-data/ratings.json';
 const AUTH_PASSWORD = 'qwerty87';
 
 // Простая проверка авторизации
@@ -18,6 +12,36 @@ const isAuthorized = (req: VercelRequest): boolean => {
   }
   const token = authHeader.substring(7);
   return token === AUTH_PASSWORD;
+};
+
+// Получить данные из Blob
+const getRatings = async (): Promise<Record<string, unknown>> => {
+  try {
+    const blob = await head(RATINGS_FILE);
+    if (blob) {
+      const response = await fetch(blob.url);
+      return await response.json();
+    }
+  } catch {
+    // Файл не существует
+  }
+  return {};
+};
+
+// Сохранить данные в Blob
+const saveRatings = async (data: Record<string, unknown>): Promise<void> => {
+  // Удаляем старый файл если есть
+  try {
+    await del(RATINGS_FILE);
+  } catch {
+    // Игнорируем если файла нет
+  }
+
+  // Создаём новый
+  await put(RATINGS_FILE, JSON.stringify(data), {
+    access: 'public',
+    addRandomSuffix: false,
+  });
 };
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -40,27 +64,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     switch (req.method) {
       case 'GET': {
-        // Получить все оценки
-        const ratings = await redis.get(RATINGS_KEY);
-        return res.status(200).json(ratings || {});
+        const ratings = await getRatings();
+        return res.status(200).json(ratings);
       }
 
       case 'POST': {
-        // Сохранить/обновить оценки
         const { ratings } = req.body;
 
         if (!ratings || typeof ratings !== 'object') {
           return res.status(400).json({ error: 'Invalid ratings data' });
         }
 
-        // Получаем текущие данные
-        const existingRatings = (await redis.get(RATINGS_KEY)) || {};
-
-        // Мержим с новыми данными
-        const mergedRatings = { ...existingRatings as object, ...ratings };
+        // Получаем текущие данные и мержим
+        const existingRatings = await getRatings();
+        const mergedRatings = { ...existingRatings, ...ratings };
 
         // Сохраняем
-        await redis.set(RATINGS_KEY, mergedRatings);
+        await saveRatings(mergedRatings);
 
         return res.status(200).json({
           success: true,
@@ -70,18 +90,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
 
       case 'DELETE': {
-        // Удалить конкретную оценку по ID
         const { id } = req.query;
 
         if (!id || typeof id !== 'string') {
           return res.status(400).json({ error: 'Rating ID required' });
         }
 
-        const existingRatings = (await redis.get(RATINGS_KEY) || {}) as Record<string, unknown>;
+        const existingRatings = await getRatings();
 
         if (existingRatings[id]) {
           delete existingRatings[id];
-          await redis.set(RATINGS_KEY, existingRatings);
+          await saveRatings(existingRatings);
           return res.status(200).json({ success: true, message: 'Rating deleted' });
         }
 

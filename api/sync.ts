@@ -1,22 +1,8 @@
-import { Redis } from '@upstash/redis';
+import { put, head, del } from '@vercel/blob';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
-const redis = new Redis({
-  url: process.env.UPSTASH_REDIS_REST_URL!,
-  token: process.env.UPSTASH_REDIS_REST_TOKEN!,
-});
-
+const DATA_FILE = 'lqt-data/all-data.json';
 const AUTH_PASSWORD = 'qwerty87';
-
-// Ключи для всех данных
-const STORAGE_KEYS = {
-  ratings: 'lqt_weekly_ratings',
-  hypotheses: 'lqt_hypotheses',
-  subjects: 'lqt_subjects',
-  goals: 'lqt_goals',
-  chat_history: 'lqt_ai_chat_history',
-  preferences: 'lqt_user_preferences'
-};
 
 const isAuthorized = (req: VercelRequest): boolean => {
   const authHeader = req.headers.authorization;
@@ -25,6 +11,34 @@ const isAuthorized = (req: VercelRequest): boolean => {
   }
   const token = authHeader.substring(7);
   return token === AUTH_PASSWORD;
+};
+
+// Получить все данные из Blob
+const getAllData = async (): Promise<Record<string, unknown>> => {
+  try {
+    const blob = await head(DATA_FILE);
+    if (blob) {
+      const response = await fetch(blob.url);
+      return await response.json();
+    }
+  } catch {
+    // Файл не существует
+  }
+  return {};
+};
+
+// Сохранить все данные в Blob
+const saveAllData = async (data: Record<string, unknown>): Promise<void> => {
+  try {
+    await del(DATA_FILE);
+  } catch {
+    // Игнорируем
+  }
+
+  await put(DATA_FILE, JSON.stringify(data), {
+    access: 'public',
+    addRandomSuffix: false,
+  });
 };
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -45,14 +59,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     switch (req.method) {
       case 'GET': {
-        // Получить все данные для синхронизации
-        const allData: Record<string, unknown> = {};
-
-        for (const [key, redisKey] of Object.entries(STORAGE_KEYS)) {
-          const data = await redis.get(redisKey);
-          allData[key] = data || null;
-        }
-
+        const allData = await getAllData();
         return res.status(200).json({
           success: true,
           data: allData,
@@ -61,26 +68,29 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
 
       case 'POST': {
-        // Синхронизировать все данные с клиента
         const { data } = req.body;
 
         if (!data || typeof data !== 'object') {
           return res.status(400).json({ error: 'Invalid sync data' });
         }
 
-        const results: Record<string, boolean> = {};
+        // Получаем существующие данные и мержим
+        const existingData = await getAllData();
+        const mergedData = { ...existingData, ...data };
 
-        for (const [key, redisKey] of Object.entries(STORAGE_KEYS)) {
-          if (data[key] !== undefined && data[key] !== null) {
-            await redis.set(redisKey, data[key]);
-            results[key] = true;
-          }
+        // Для ratings делаем глубокий мерж
+        if (existingData.ratings && data.ratings) {
+          mergedData.ratings = {
+            ...(existingData.ratings as object),
+            ...(data.ratings as object)
+          };
         }
+
+        await saveAllData(mergedData);
 
         return res.status(200).json({
           success: true,
           message: 'Data synced',
-          synced: results,
           timestamp: Date.now()
         });
       }
