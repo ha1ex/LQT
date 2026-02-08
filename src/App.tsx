@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -7,6 +8,7 @@ import { ThemeProvider } from "next-themes";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { GlobalDataProvider } from "@/contexts/GlobalDataProvider";
 import { WeeklyRatingsProvider } from "@/contexts/WeeklyRatingsProvider";
+import { LoginScreen } from "@/components/auth/LoginScreen";
 import Index from "./pages/Index";
 import { Settings } from "./pages/Settings";
 import NotFound from "./pages/NotFound";
@@ -19,7 +21,34 @@ if (!localStorage.getItem('openai_api_key')) {
   localStorage.setItem('openai_api_key', apiKey);
 }
 
-const App = () => (
+const App = () => {
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    const auth = localStorage.getItem('lqt_authenticated');
+    setIsAuthenticated(auth === 'true');
+  }, []);
+
+  // Показываем пустой экран пока проверяем авторизацию
+  if (isAuthenticated === null) {
+    return null;
+  }
+
+  // Показываем экран входа если не авторизован
+  if (!isAuthenticated) {
+    return (
+      <ThemeProvider
+        attribute="class"
+        defaultTheme="system"
+        enableSystem
+        disableTransitionOnChange
+      >
+        <LoginScreen onLogin={() => setIsAuthenticated(true)} />
+      </ThemeProvider>
+    );
+  }
+
+  return (
   <ErrorBoundary>
     <QueryClientProvider client={queryClient}>
       <ThemeProvider
@@ -47,6 +76,7 @@ const App = () => (
       </ThemeProvider>
     </QueryClientProvider>
   </ErrorBoundary>
-);
+  );
+};
 
 export default App;
