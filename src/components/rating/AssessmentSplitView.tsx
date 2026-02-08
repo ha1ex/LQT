@@ -83,10 +83,10 @@ const AddMissingWeekDialog: React.FC<{
         <Button
           variant="outline"
           size="sm"
-          className="shrink-0 gap-1.5 h-9 px-3 border-dashed"
+          className="shrink-0 gap-1.5 h-9 px-3 border-dashed w-full md:w-auto"
         >
           <Plus className="h-4 w-4" />
-          <span className="hidden sm:inline">Добавить неделю</span>
+          <span>Добавить неделю</span>
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-md max-h-[80vh]">
@@ -350,7 +350,11 @@ const AssessmentSplitView: React.FC<AssessmentSplitViewProps> = ({ allMetrics })
       />
 
       {/* Desktop: Left Week Navigator (280px) */}
-      <div className="hidden md:block">
+      <div className="hidden md:flex md:flex-col gap-3">
+        <AddMissingWeekDialog
+          existingWeekIds={Object.keys(weeklyRatings)}
+          onWeekSelect={handleWeekSelect}
+        />
         <WeekNavigator
           ratings={weeklyRatings}
           selectedWeekId={selectedWeekId}
