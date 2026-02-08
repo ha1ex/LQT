@@ -1,12 +1,20 @@
 import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react';
-import { startOfWeek, format, getWeek, parseISO } from 'date-fns';
+import { startOfWeek, format, getWeek, parseISO, subWeeks, addWeeks } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { useWeeklyRatings } from '@/hooks/useWeeklyRatings';
 import { useMobile } from '@/hooks/use-mobile';
 import WeekNavigator from './WeekNavigator';
 import AssessmentPanel from './AssessmentPanel';
 import type { WeeklyRating } from '@/types/weeklyRating';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, X, Calendar } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 
 // ---------------------------------------------------------------------------
 // Props
@@ -31,6 +39,99 @@ const getWeekId = (date: Date): string =>
   format(startOfWeek(date, { locale: ru }), 'yyyy-MM-dd');
 
 // ---------------------------------------------------------------------------
+// Add Missing Week Dialog
+// ---------------------------------------------------------------------------
+
+const AddMissingWeekDialog: React.FC<{
+  existingWeekIds: string[];
+  onWeekSelect: (weekId: string) => void;
+}> = ({ existingWeekIds, onWeekSelect }) => {
+  const [open, setOpen] = useState(false);
+
+  // Generate list of weeks for last 52 weeks
+  const availableWeeks = useMemo(() => {
+    const weeks: Array<{ weekId: string; weekNum: number; date: Date; hasData: boolean }> = [];
+    const today = new Date();
+
+    for (let i = 0; i < 52; i++) {
+      const weekDate = subWeeks(today, i);
+      const weekId = getWeekId(weekDate);
+      const weekNum = getWeek(weekDate, { locale: ru });
+      const hasData = existingWeekIds.includes(weekId);
+
+      weeks.push({
+        weekId,
+        weekNum,
+        date: startOfWeek(weekDate, { locale: ru }),
+        hasData,
+      });
+    }
+
+    return weeks;
+  }, [existingWeekIds]);
+
+  const missingWeeks = availableWeeks.filter(w => !w.hasData);
+
+  const handleSelect = (weekId: string) => {
+    onWeekSelect(weekId);
+    setOpen(false);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button
+          variant="outline"
+          size="sm"
+          className="shrink-0 gap-1.5 h-9 px-3 border-dashed"
+        >
+          <Plus className="h-4 w-4" />
+          <span className="hidden sm:inline">Добавить неделю</span>
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-md max-h-[80vh]">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Calendar className="h-5 w-5" />
+            Добавить пропущенную неделю
+          </DialogTitle>
+        </DialogHeader>
+        <div className="mt-2">
+          <p className="text-sm text-muted-foreground mb-4">
+            Выберите неделю, за которую хотите добавить оценки:
+          </p>
+          <div className="max-h-[50vh] overflow-y-auto space-y-1 pr-2">
+            {missingWeeks.length === 0 ? (
+              <p className="text-center text-muted-foreground py-8">
+                Все недели за последний год уже оценены!
+              </p>
+            ) : (
+              missingWeeks.map(week => (
+                <button
+                  key={week.weekId}
+                  onClick={() => handleSelect(week.weekId)}
+                  className="w-full flex items-center justify-between p-3 rounded-lg border border-border hover:bg-secondary/50 transition-colors text-left"
+                >
+                  <div>
+                    <p className="font-medium">Неделя {week.weekNum}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {format(week.date, 'dd MMMM yyyy', { locale: ru })}
+                    </p>
+                  </div>
+                  <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded">
+                    Нет данных
+                  </span>
+                </button>
+              ))
+            )}
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+// ---------------------------------------------------------------------------
 // Mobile Week Selector — horizontal scrollable chips
 // ---------------------------------------------------------------------------
 
@@ -39,7 +140,8 @@ const MobileWeekSelector: React.FC<{
   selectedWeekId: string | null;
   currentWeekId: string;
   onWeekSelect: (weekId: string) => void;
-}> = ({ ratings, selectedWeekId, currentWeekId, onWeekSelect }) => {
+  existingWeekIds: string[];
+}> = ({ ratings, selectedWeekId, currentWeekId, onWeekSelect, existingWeekIds }) => {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const sortedWeekIds = useMemo(() => {
@@ -63,6 +165,12 @@ const MobileWeekSelector: React.FC<{
 
   return (
     <div className="md:hidden mb-3">
+      <div className="flex items-center gap-2 mb-2">
+        <AddMissingWeekDialog
+          existingWeekIds={existingWeekIds}
+          onWeekSelect={onWeekSelect}
+        />
+      </div>
       <div
         ref={scrollRef}
         className="flex gap-2 overflow-x-auto pb-2 px-1 scrollbar-hide"
@@ -238,6 +346,7 @@ const AssessmentSplitView: React.FC<AssessmentSplitViewProps> = ({ allMetrics })
         selectedWeekId={selectedWeekId}
         currentWeekId={currentWeekId}
         onWeekSelect={handleWeekSelect}
+        existingWeekIds={Object.keys(weeklyRatings)}
       />
 
       {/* Desktop: Left Week Navigator (280px) */}
