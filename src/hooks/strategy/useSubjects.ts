@@ -65,31 +65,21 @@ export const useSubjects = () => {
   useEffect(() => {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
-      const isDemoMode = localStorage.getItem('lqt_demo_mode') === 'true';
-      
-      console.log('🔍 useSubjects loading:', { 
-        storedExists: !!stored, 
-        isDemoMode, 
-        storedData: stored ? JSON.parse(stored) : null 
-      });
-      
+
       if (stored && stored !== 'null' && stored !== '[]') {
         const parsed = JSON.parse(stored);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          console.log('✅ Loaded subjects from storage:', parsed.length);
           setSubjects(parsed);
         } else {
-          console.log('⚠️ Empty subjects in storage, using defaults');
           setSubjects(DEFAULT_SUBJECTS);
         }
       } else {
-        console.log('📝 No subjects found, using defaults');
         setSubjects(DEFAULT_SUBJECTS);
         // Save defaults to localStorage for consistency
         localStorage.setItem(STORAGE_KEY, JSON.stringify(DEFAULT_SUBJECTS));
       }
     } catch (error) {
-      console.error('❌ Error loading subjects:', error);
+      if (import.meta.env.DEV) console.error('Error loading subjects:', error);
       setSubjects(DEFAULT_SUBJECTS);
       localStorage.setItem(STORAGE_KEY, JSON.stringify(DEFAULT_SUBJECTS));
     } finally {
@@ -102,7 +92,7 @@ export const useSubjects = () => {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(subjectsData));
     } catch (error) {
-      console.error('Error saving subjects:', error);
+      if (import.meta.env.DEV) console.error('Error saving subjects:', error);
     }
   }, []);
 
@@ -135,7 +125,7 @@ export const useSubjects = () => {
   const deleteSubject = useCallback((id: string) => {
     const subject = subjects.find(s => s.id === id);
     if (!subject || subject.type !== SubjectType.CUSTOM) {
-      console.warn('Cannot delete default subject');
+      if (import.meta.env.DEV) console.warn('Cannot delete default subject');
       return;
     }
 

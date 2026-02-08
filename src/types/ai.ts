@@ -26,10 +26,25 @@ export interface AIHypothesisImprovement {
 }
 
 export interface AIAnalysisContext {
-  weekData: any[];
-  goals: any[];
-  hypotheses: any[];
-  correlations?: any[];
+  weekData: Array<{
+    date: string;
+    [key: string]: number | string;
+  }>;
+  goals: Array<{
+    id: string;
+    title: string;
+    [key: string]: unknown;
+  }>;
+  hypotheses: Array<{
+    id: string;
+    title: string;
+    [key: string]: unknown;
+  }>;
+  correlations?: Array<{
+    metric1: string;
+    metric2: string;
+    correlation: number;
+  }>;
 }
 
 export interface ChatMessage {
@@ -45,9 +60,20 @@ export interface ChatMessage {
 }
 
 export interface ChatContext {
-  weekData: any[];
-  goals: any[];
-  hypotheses: any[];
+  weekData: Array<{
+    date: string;
+    [key: string]: number | string;
+  }>;
+  goals: Array<{
+    id: string;
+    title: string;
+    [key: string]: unknown;
+  }>;
+  hypotheses: Array<{
+    id: string;
+    title: string;
+    [key: string]: unknown;
+  }>;
   lastInsights: AIInsight[];
 }
 

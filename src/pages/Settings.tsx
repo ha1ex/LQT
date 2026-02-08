@@ -3,7 +3,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Separator } from '@/components/ui/separator';
 import { AIKeySetup } from '@/components/ai/AIKeySetup';
 import { ThemeToggle, DataExport, DataClear } from '@/components/settings';
-import { Settings as SettingsIcon, Brain, Key, Palette, Database } from 'lucide-react';
+import { DataImporter } from '@/components/DataImporter';
+import { QuickDataLoader } from '@/components/QuickDataLoader';
+import { Settings as SettingsIcon, Brain, Database, Upload, Zap } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 export const Settings: React.FC = () => {
@@ -17,7 +19,7 @@ export const Settings: React.FC = () => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-6 space-y-6">
+    <div className="max-w-4xl mx-auto space-y-6">
       <div>
         <h1 className="text-3xl font-bold flex items-center gap-2">
           <SettingsIcon className="h-8 w-8" />
@@ -61,6 +63,38 @@ export const Settings: React.FC = () => {
             <DataClear />
           </div>
         </div>
+
+        {/* Быстрая загрузка данных */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Zap className="h-5 w-5" />
+              Быстрая загрузка ваших данных
+            </CardTitle>
+            <CardDescription>
+              Один клик - и ваши реальные данные загружены в приложение
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <QuickDataLoader />
+          </CardContent>
+        </Card>
+
+        {/* Импорт данных */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Upload className="h-5 w-5" />
+              Импорт реальных данных
+            </CardTitle>
+            <CardDescription>
+              Загрузите ваши реальные данные из квартальных файлов
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <DataImporter />
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

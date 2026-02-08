@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { GlobalDataProvider } from "@/contexts/GlobalDataProvider";
+import { WeeklyRatingsProvider } from "@/contexts/WeeklyRatingsProvider";
 import Index from "./pages/Index";
 import { Settings } from "./pages/Settings";
 import NotFound from "./pages/NotFound";
@@ -27,21 +28,22 @@ const App = () => (
         enableSystem
         disableTransitionOnChange
       >
-        <GlobalDataProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <BrowserRouter>
-              <Routes>
-                <Route path="/" element={<ErrorBoundary><Index /></ErrorBoundary>} />
-                <Route path="/settings" element={<ErrorBoundary><Settings /></ErrorBoundary>} />
-                
-                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </BrowserRouter>
-          </TooltipProvider>
-        </GlobalDataProvider>
+        <WeeklyRatingsProvider>
+          <GlobalDataProvider>
+            <TooltipProvider>
+              <Toaster />
+              <Sonner />
+              <BrowserRouter>
+                <Routes>
+                  <Route path="/" element={<ErrorBoundary><Index /></ErrorBoundary>} />
+                  <Route path="/settings" element={<ErrorBoundary><Settings /></ErrorBoundary>} />
+                  {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </BrowserRouter>
+            </TooltipProvider>
+          </GlobalDataProvider>
+        </WeeklyRatingsProvider>
       </ThemeProvider>
     </QueryClientProvider>
   </ErrorBoundary>

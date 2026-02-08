@@ -10,30 +10,43 @@ import { WeeklyRating } from '@/types/weeklyRating';
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
-import { 
-  Calendar, Edit, Save, X, Plus, Trash2, 
-  Star, Heart, Brain, DollarSign, Users, Trophy,
-  Smile, Meh, Frown, Angry, Laugh
+import {
+  Edit, Save, X, Plus, Trash2,
+  Smile, Meh, Frown, Angry, Laugh,
+  AlertTriangle
 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 interface WeekDetailModalProps {
   isOpen: boolean;
   onClose: () => void;
   rating: WeeklyRating | null;
   onSave: (updatedRating: WeeklyRating) => void;
+  onDelete?: (weekId: string) => void;
   allMetrics: Array<{ id: string; name: string; icon: string; description: string; category: string }>;
 }
+
+const MOOD_LABELS: Record<WeeklyRating['mood'], string> = {
+  excellent: 'Отлично',
+  good: 'Хорошо',
+  neutral: 'Нормально',
+  poor: 'Плохо',
+  terrible: 'Ужасно'
+};
 
 const WeekDetailModal: React.FC<WeekDetailModalProps> = ({
   isOpen,
   onClose,
   rating,
   onSave,
+  onDelete,
   allMetrics
 }) => {
   const [editedRating, setEditedRating] = useState<WeeklyRating | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [newEvent, setNewEvent] = useState('');
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     if (rating) {
@@ -59,6 +72,21 @@ const WeekDetailModal: React.FC<WeekDetailModalProps> = ({
 
       onSave(updatedRating);
       setIsEditing(false);
+      toast({
+        title: 'Сохранено',
+        description: `Оценки за неделю ${editedRating.weekNumber} обновлены`,
+      });
+    }
+  };
+
+  const handleDelete = () => {
+    if (rating && onDelete) {
+      onDelete(rating.id);
+      setShowDeleteConfirm(false);
+      toast({
+        title: 'Удалено',
+        description: `Оценки за неделю ${rating.weekNumber} удалены`,
+      });
     }
   };
 
@@ -69,31 +97,31 @@ const WeekDetailModal: React.FC<WeekDetailModalProps> = ({
 
   const getMoodIcon = (mood: WeeklyRating['mood']) => {
     switch (mood) {
-      case 'excellent': return <Laugh className="w-5 h-5 text-green-600" />;
-      case 'good': return <Smile className="w-5 h-5 text-green-500" />;
-      case 'neutral': return <Meh className="w-5 h-5 text-yellow-500" />;
-      case 'poor': return <Frown className="w-5 h-5 text-orange-500" />;
-      case 'terrible': return <Angry className="w-5 h-5 text-red-500" />;
+      case 'excellent': return <Laugh className="w-5 h-5 text-green-600 dark:text-green-400" />;
+      case 'good': return <Smile className="w-5 h-5 text-green-500 dark:text-green-400" />;
+      case 'neutral': return <Meh className="w-5 h-5 text-yellow-500 dark:text-yellow-400" />;
+      case 'poor': return <Frown className="w-5 h-5 text-orange-500 dark:text-orange-400" />;
+      case 'terrible': return <Angry className="w-5 h-5 text-red-500 dark:text-red-400" />;
     }
   };
 
   const getMoodColor = (mood: WeeklyRating['mood']) => {
     switch (mood) {
-      case 'excellent': return 'bg-green-500';
-      case 'good': return 'bg-green-400';
-      case 'neutral': return 'bg-yellow-400';
-      case 'poor': return 'bg-orange-400';
-      case 'terrible': return 'bg-red-500';
-      default: return 'bg-gray-400';
+      case 'excellent': return 'bg-green-500 dark:bg-green-400';
+      case 'good': return 'bg-green-400 dark:bg-green-500';
+      case 'neutral': return 'bg-yellow-400 dark:bg-yellow-500';
+      case 'poor': return 'bg-orange-400 dark:bg-orange-500';
+      case 'terrible': return 'bg-red-500 dark:bg-red-400';
+      default: return 'bg-gray-400 dark:bg-gray-500';
     }
   };
 
   const getScoreColor = (score: number) => {
-    if (score >= 8) return 'text-green-600 bg-green-50';
-    if (score >= 6.5) return 'text-green-500 bg-green-50';
-    if (score >= 4) return 'text-yellow-600 bg-yellow-50';
-    if (score >= 2.5) return 'text-orange-600 bg-orange-50';
-    return 'text-red-600 bg-red-50';
+    if (score >= 8) return 'text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-950/40';
+    if (score >= 6.5) return 'text-green-500 dark:text-green-400 bg-green-50 dark:bg-green-950/40';
+    if (score >= 4) return 'text-yellow-600 dark:text-yellow-400 bg-yellow-50 dark:bg-yellow-950/40';
+    if (score >= 2.5) return 'text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-950/40';
+    return 'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/40';
   };
 
   const updateRating = (metricId: string, newRating: number) => {
@@ -155,10 +183,17 @@ const WeekDetailModal: React.FC<WeekDetailModalProps> = ({
                 {editedRating.overallScore.toFixed(1)}
               </Badge>
               {!isEditing ? (
-                <Button onClick={() => setIsEditing(true)} size="sm">
-                  <Edit className="w-4 h-4 mr-2" />
-                  Редактировать
-                </Button>
+                <div className="flex gap-2">
+                  <Button onClick={() => setIsEditing(true)} size="sm">
+                    <Edit className="w-4 h-4 mr-2" />
+                    Редактировать
+                  </Button>
+                  {onDelete && (
+                    <Button onClick={() => setShowDeleteConfirm(true)} variant="destructive" size="sm">
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  )}
+                </div>
               ) : (
                 <div className="flex gap-2">
                   <Button onClick={handleSave} size="sm">
@@ -266,7 +301,7 @@ const WeekDetailModal: React.FC<WeekDetailModalProps> = ({
               <CardContent>
                 <div className="flex items-center gap-2 mb-4">
                   <div className={cn("w-4 h-4 rounded-full", getMoodColor(editedRating.mood))} />
-                  <span className="capitalize">{editedRating.mood}</span>
+                  <span>{MOOD_LABELS[editedRating.mood]}</span>
                 </div>
                 
                 {isEditing && (
@@ -373,6 +408,32 @@ const WeekDetailModal: React.FC<WeekDetailModalProps> = ({
           </TabsContent>
         </Tabs>
       </DialogContent>
+
+      {/* Delete confirmation dialog */}
+      {showDeleteConfirm && (
+        <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+          <DialogContent className="max-w-sm">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-destructive">
+                <AlertTriangle className="w-5 h-5" />
+                Удалить оценку?
+              </DialogTitle>
+            </DialogHeader>
+            <p className="text-sm text-muted-foreground">
+              Вы уверены, что хотите удалить оценки за неделю {rating.weekNumber}? Это действие нельзя отменить.
+            </p>
+            <div className="flex justify-end gap-2 mt-4">
+              <Button variant="outline" onClick={() => setShowDeleteConfirm(false)}>
+                Отмена
+              </Button>
+              <Button variant="destructive" onClick={handleDelete}>
+                <Trash2 className="w-4 h-4 mr-2" />
+                Удалить
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </Dialog>
   );
 };

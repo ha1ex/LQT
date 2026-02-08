@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAIInsights } from '@/hooks/useAIInsights';
 import { AIInsightsCard } from './AIInsightsCard';
-import { AIKeySetup } from './AIKeySetup';
 import { AIChat } from './AIChat';
 import { Brain, RefreshCw, Sparkles, TrendingUp, MessageCircle, BarChart3, Settings, AlertCircle } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';

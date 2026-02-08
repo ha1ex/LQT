@@ -1,9 +1,8 @@
 // Global App Types
-export type UserState = 'empty' | 'demo' | 'real_data';
+export type UserState = 'empty' | 'real_data';
 
 export interface AppDataState {
   userState: UserState;
-  isDemoMode: boolean;
   hasData: boolean;
   lastDataSync: Date | null;
 }

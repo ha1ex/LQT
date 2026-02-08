@@ -1,5 +1,5 @@
 import React from 'react';
-import { Flame, Calendar, Trophy, Target } from 'lucide-react';
+import { Flame, Trophy } from 'lucide-react';
 
 interface StreakSystemProps {
   currentStreak: number;
@@ -24,13 +24,13 @@ const StreakSystem: React.FC<StreakSystemProps> = ({
       </div>
       
       <div className="grid grid-cols-2 gap-4 mb-6">
-        <div className="text-center p-4 bg-orange-50 rounded-2xl border border-orange-200">
-          <div className="text-2xl font-bold text-orange-600 mb-1">{currentStreak}</div>
-          <div className="text-sm text-orange-600 font-medium">Текущий стрик</div>
+        <div className="text-center p-4 bg-orange-50 dark:bg-orange-950/40 rounded-2xl border border-orange-200 dark:border-orange-800">
+          <div className="text-2xl font-bold text-orange-600 dark:text-orange-400 mb-1">{currentStreak}</div>
+          <div className="text-sm text-orange-600 dark:text-orange-400 font-medium">Текущий стрик</div>
         </div>
-        <div className="text-center p-4 bg-amber-50 rounded-2xl border border-amber-200">
-          <div className="text-2xl font-bold text-amber-600 mb-1">{bestStreak}</div>
-          <div className="text-sm text-amber-600 font-medium">Лучший стрик</div>
+        <div className="text-center p-4 bg-amber-50 dark:bg-amber-950/40 rounded-2xl border border-amber-200 dark:border-amber-800">
+          <div className="text-2xl font-bold text-amber-600 dark:text-amber-400 mb-1">{bestStreak}</div>
+          <div className="text-sm text-amber-600 dark:text-amber-400 font-medium">Лучший стрик</div>
         </div>
       </div>
       

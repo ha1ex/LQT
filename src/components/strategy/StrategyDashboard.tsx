@@ -1,5 +1,5 @@
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Lightbulb, Plus, Target, Users, CheckCircle, AlertTriangle, Sparkles } from 'lucide-react';
@@ -12,20 +12,20 @@ const EmptyState: React.FC<{ onCreateHypothesis: () => void }> = ({ onCreateHypo
     <div className="absolute inset-0 rounded-3xl" style={{ background: 'var(--gradient-card)' }} />
     <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,hsl(var(--primary)/0.1),transparent_50%)]" />
     
-    <div className="relative flex flex-col items-center justify-center min-h-[500px] text-center space-y-8 p-8">
+    <div className="relative flex flex-col items-center justify-center min-h-[300px] sm:min-h-[500px] text-center space-y-6 sm:space-y-8 p-4 sm:p-8">
       <div className="relative">
         <div className="absolute inset-0 rounded-full blur-xl animate-pulse" style={{ background: 'var(--gradient-primary)' }} />
         <div className="relative p-6 rounded-full border border-primary/20" style={{ background: 'var(--gradient-secondary)' }}>
-          <Lightbulb className="h-20 w-20 text-primary animate-fade-in" />
+          <Lightbulb className="h-12 w-12 sm:h-20 sm:w-20 text-primary animate-fade-in" />
         </div>
         <Sparkles className="absolute -top-2 -right-2 h-8 w-8 text-secondary animate-pulse" />
       </div>
       
       <div className="space-y-4 max-w-lg">
-        <h3 className="text-3xl font-bold text-primary">
+        <h3 className="text-xl sm:text-3xl font-bold text-primary">
           Начните научный эксперимент
         </h3>
-        <p className="text-muted-foreground text-lg leading-relaxed">
+        <p className="text-muted-foreground text-base sm:text-lg leading-relaxed">
           Превратите улучшение качества жизни в увлекательный научный процесс. 
           Создавайте гипотезы, тестируйте их и получайте измеримые результаты.
         </p>
@@ -41,7 +41,7 @@ const EmptyState: React.FC<{ onCreateHypothesis: () => void }> = ({ onCreateHypo
         Создать первую гипотезу
       </Button>
       
-      <div className="grid grid-cols-3 gap-4 mt-8 text-sm text-muted-foreground max-w-md">
+      <div className="grid grid-cols-3 gap-2 sm:gap-4 mt-4 sm:mt-8 text-sm text-muted-foreground max-w-md">
         <div className="text-center">
           <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-2">
             <span className="text-primary font-bold">1</span>
@@ -140,11 +140,8 @@ export const StrategyDashboard: React.FC<StrategyDashboardProps> = ({
 }) => {
   const { getActiveHypotheses, getStrategyMetrics, loading } = useEnhancedHypotheses();
   
-  console.log('StrategyDashboard: loading =', loading);
   const activeHypotheses = getActiveHypotheses();
   const metrics = getStrategyMetrics();
-  console.log('StrategyDashboard: activeHypotheses =', activeHypotheses);
-  console.log('StrategyDashboard: metrics =', metrics);
 
   if (loading) {
     return (

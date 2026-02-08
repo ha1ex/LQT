@@ -37,7 +37,7 @@ const sanitizeValue = (value: any): number => {
 
 const sanitizeDataArray = (data: any[]): any[] => {
   if (!Array.isArray(data)) {
-    console.warn('🚨 Invalid data passed to chart, using empty array');
+    if (import.meta.env.DEV) console.warn('Invalid data passed to chart, using empty array');
     return [];
   }
 
@@ -110,7 +110,6 @@ export const SafeLineChart: React.FC<any> = ({ data, children, ...props }) => {
     );
   }
 
-  console.log('🔒 SafeLineChart rendering with data:', safeData);
 
   return (
     <OriginalLineChart data={safeData} {...props}>
@@ -133,7 +132,6 @@ export const SafeAreaChart: React.FC<any> = ({ data, children, ...props }) => {
     );
   }
 
-  console.log('🔒 SafeAreaChart rendering with data:', safeData);
 
   return (
     <OriginalAreaChart data={safeData} {...props}>
@@ -156,7 +154,6 @@ export const SafeBarChart: React.FC<any> = ({ data, children, ...props }) => {
     );
   }
 
-  console.log('🔒 SafeBarChart rendering with data:', safeData);
 
   return (
     <OriginalBarChart data={safeData} {...props}>
@@ -182,7 +179,6 @@ export const SafePie: React.FC<any> = ({ data, ...props }) => {
     return null;
   }
 
-  console.log('🔒 SafePie rendering with data:', safeData);
 
   return <Pie data={safeData} {...props} />;
 };

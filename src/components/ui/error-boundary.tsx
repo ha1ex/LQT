@@ -63,7 +63,6 @@ export const ErrorBoundary: React.FC<ErrorBoundaryProps> = ({
       onError={onError}
       onReset={() => {
         // Clear any error state if needed
-        console.log('Error boundary reset');
       }}
     >
       {children}

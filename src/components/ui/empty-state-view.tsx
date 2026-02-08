@@ -1,27 +1,23 @@
 import React from 'react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { useGlobalData } from '@/contexts/GlobalDataProvider';
-import { 
-  Target, 
-  TrendingUp, 
-  Brain, 
-  Calendar, 
+import {
+  Target,
+  TrendingUp,
+  Brain,
+  Calendar,
   ArrowRight,
   Sparkles
 } from 'lucide-react';
 
 interface EmptyStateViewProps {
   onGetStarted: () => void;
-  onViewDemo: () => void;
+  onViewDemo?: () => void;
 }
 
 export const EmptyStateView: React.FC<EmptyStateViewProps> = ({
   onGetStarted,
-  onViewDemo
 }) => {
-  const { generateDemoData } = useGlobalData();
 
   const features = [
     {
@@ -46,11 +42,6 @@ export const EmptyStateView: React.FC<EmptyStateViewProps> = ({
     }
   ];
 
-  const handleDemoClick = () => {
-    generateDemoData();
-    onViewDemo();
-  };
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background/95 to-primary/5 flex items-center justify-center p-4">
       <div className="max-w-4xl w-full">
@@ -60,14 +51,14 @@ export const EmptyStateView: React.FC<EmptyStateViewProps> = ({
             <Sparkles className="w-4 h-4 text-primary" />
             <span className="text-sm font-medium text-primary">Добро пожаловать в Life Quality Tracker</span>
           </div>
-          
+
           <h1 className="text-4xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
             Качество жизни <br />
             <span className="text-primary">под контролем</span>
           </h1>
-          
+
           <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-            Трекер для осознанного улучшения качества жизни через системный подход, 
+            Трекер для осознанного улучшения качества жизни через системный подход,
             научные эксперименты и AI-рекомендации.
           </p>
         </div>
@@ -89,9 +80,8 @@ export const EmptyStateView: React.FC<EmptyStateViewProps> = ({
           ))}
         </div>
 
-        {/* Action Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto">
-          {/* Get Started Card */}
+        {/* Action Card */}
+        <div className="max-w-lg mx-auto">
           <Card className="p-6 border-2 border-dashed border-border hover:border-primary/50 transition-all duration-300">
             <div className="text-center">
               <div className="w-16 h-16 mx-auto bg-primary/10 rounded-2xl flex items-center justify-center mb-4">
@@ -101,7 +91,7 @@ export const EmptyStateView: React.FC<EmptyStateViewProps> = ({
               <p className="text-muted-foreground mb-6">
                 Создайте свою первую оценку недели и начните отслеживать прогресс
               </p>
-              <Button 
+              <Button
                 onClick={onGetStarted}
                 className="w-full"
                 size="lg"
@@ -111,41 +101,16 @@ export const EmptyStateView: React.FC<EmptyStateViewProps> = ({
               </Button>
             </div>
           </Card>
-
-          {/* Demo Card */}
-          <Card className="p-6 border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10">
-            <div className="text-center">
-              <div className="w-16 h-16 mx-auto bg-primary/20 rounded-2xl flex items-center justify-center mb-4">
-                <Sparkles className="w-8 h-8 text-primary" />
-              </div>
-              <h3 className="text-xl font-semibold mb-2">Посмотреть демо</h3>
-              <p className="text-muted-foreground mb-4">
-                Изучите возможности сервиса на примере 20+ недель данных
-              </p>
-              <Badge variant="secondary" className="mb-4">
-                Полнофункциональная демо-версия
-              </Badge>
-              <Button 
-                onClick={handleDemoClick}
-                variant="outline"
-                className="w-full border-primary/30 hover:bg-primary/10"
-                size="lg"
-              >
-                Загрузить демо
-                <ArrowRight className="w-4 h-4 ml-2" />
-              </Button>
-            </div>
-          </Card>
         </div>
 
         {/* Quick Info */}
         <div className="text-center mt-12 text-sm text-muted-foreground">
           <p>
-            🔒 Все данные хранятся локально в вашем браузере
-            <span className="mx-2">•</span>
-            ⚡ Работает без подключения к интернету
-            <span className="mx-2">•</span>
-            🧠 AI-функции опциональны
+            Все данные хранятся локально в вашем браузере
+            <span className="mx-2">|</span>
+            Работает без подключения к интернету
+            <span className="mx-2">|</span>
+            AI-функции опциональны
           </p>
         </div>
       </div>

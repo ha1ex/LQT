@@ -25,15 +25,10 @@ export const useEnhancedHypotheses = () => {
 
   // Load hypotheses from localStorage on mount
   useEffect(() => {
-    console.log('useEnhancedHypotheses: Starting to load from localStorage');
     try {
-      console.log('useEnhancedHypotheses: Demo mode active:', isDemoMode);
-      
       const stored = getDemoDataIfAvailable(STORAGE_KEY, []);
-      console.log('useEnhancedHypotheses: Stored data:', Array.isArray(stored) ? `${stored.length} items` : 'none');
-      
+
       if (Array.isArray(stored) && stored.length > 0) {
-        console.log('useEnhancedHypotheses: Processing data...');
         
         // Convert date strings back to Date objects and migrate old data
         const converted = stored.map((h: any) => {
@@ -58,16 +53,13 @@ export const useEnhancedHypotheses = () => {
           };
         });
         setHypotheses(converted);
-        console.log('useEnhancedHypotheses: Set hypotheses:', converted.length + ' items');
       } else {
-        console.log('useEnhancedHypotheses: No stored data, setting empty array');
         setHypotheses([]);
       }
     } catch (error) {
-      console.error('Error loading hypotheses:', error);
+      if (import.meta.env.DEV) console.error('Error loading hypotheses:', error);
       setHypotheses([]);
     } finally {
-      console.log('useEnhancedHypotheses: Setting loading to false');
       setLoading(false);
     }
   }, [isDemoMode]);
@@ -77,7 +69,7 @@ export const useEnhancedHypotheses = () => {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(hypothesesData));
     } catch (error) {
-      console.error('Error saving hypotheses:', error);
+      if (import.meta.env.DEV) console.error('Error saving hypotheses:', error);
     }
   }, []);
 

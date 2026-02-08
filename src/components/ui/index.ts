@@ -57,7 +57,6 @@ export * from './use-toast';
 // Custom components
 export { EmptyStateCard } from './empty-state-card';
 export { EmptyStateView } from './empty-state-view';
-export { DemoModeToggle } from './demo-mode-toggle';
 export { ErrorBoundary } from './error-boundary';
 export { SafeChartWrapper } from './safe-chart';
 export { 

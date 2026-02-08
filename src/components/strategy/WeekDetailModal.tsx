@@ -10,7 +10,7 @@ import { WeeklyProgress } from '@/types/strategy';
 import { getRatingColor, getRatingLabel } from '@/utils/strategy';
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
-import { Calendar, Clock, Tag, Heart, Camera, Save, X, Plus } from 'lucide-react';
+import { Calendar, Clock, Tag, Heart, Save, X, Plus } from 'lucide-react';
 
 interface WeekDetailModalProps {
   week: WeeklyProgress | null;

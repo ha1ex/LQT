@@ -1,7 +1,4 @@
 import React, { useMemo } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Brain, ArrowRightLeft, TrendingUp, TrendingDown } from 'lucide-react';
 
 interface Metric {
   id: string;
@@ -32,196 +29,114 @@ interface PersonalInsightsProps {
   className?: string;
 }
 
-const PersonalInsights: React.FC<PersonalInsightsProps> = ({ 
-  metrics, 
+const PersonalInsights: React.FC<PersonalInsightsProps> = ({
+  metrics,
   data,
-  className = "" 
+  className = ""
 }) => {
-  // Функция для расчета корреляции Пирсона
   const calculatePearsonCorrelation = (x: number[], y: number[]): number => {
     if (x.length !== y.length || x.length === 0) return 0;
-    
     const n = x.length;
     const sumX = x.reduce((a, b) => a + b, 0);
     const sumY = y.reduce((a, b) => a + b, 0);
     const sumXY = x.reduce((total, xi, i) => total + xi * y[i], 0);
     const sumXX = x.reduce((total, xi) => total + xi * xi, 0);
     const sumYY = y.reduce((total, yi) => total + yi * yi, 0);
-    
     const numerator = n * sumXY - sumX * sumY;
     const denominator = Math.sqrt((n * sumXX - sumX * sumX) * (n * sumYY - sumY * sumY));
-    
     return denominator === 0 ? 0 : Math.max(-1, Math.min(1, numerator / denominator));
   };
 
-  // Генерация корреляций
   const correlations = useMemo(() => {
-    if (!data || data.length < 4) return []; // Минимум 4 недели для анализа
+    if (!data || data.length < 4) return [];
+    const pairs: Correlation[] = [];
 
-    const correlationPairs: Correlation[] = [];
-    
-    // Анализируем все возможные пары метрик
     for (let i = 0; i < metrics.length; i++) {
       for (let j = i + 1; j < metrics.length; j++) {
-        const metric1 = metrics[i];
-        const metric2 = metrics[j];
-        
-        const values1 = data.map(week => week[metric1.name]).filter(v => v !== undefined);
-        const values2 = data.map(week => week[metric2.name]).filter(v => v !== undefined);
-        
-        if (values1.length >= 4 && values2.length >= 4) {
-          const correlation = calculatePearsonCorrelation(values1, values2);
-          
-          // Отбираем только сильные корреляции (|r| > 0.6)
-          if (Math.abs(correlation) > 0.6) {
-            const percentage = Math.round(Math.abs(correlation) * 100);
-            const type = correlation > 0 ? 'positive' : 'negative';
-            
-            let description = '';
-            if (type === 'positive') {
-              description = 'Взаимосвязаны';
-            } else {
-              description = 'Обратная связь';
-            }
+        const m1 = metrics[i], m2 = metrics[j];
+        const v1 = data.map(w => w[m1.name]).filter(v => v !== undefined);
+        const v2 = data.map(w => w[m2.name]).filter(v => v !== undefined);
 
-            correlationPairs.push({
-              metric1: metric1.name,
-              metric2: metric2.name,
-              icon1: metric1.icon,
-              icon2: metric2.icon,
-              correlation,
-              percentage,
-              type,
-              description
+        if (v1.length >= 4 && v2.length >= 4) {
+          const corr = calculatePearsonCorrelation(v1, v2);
+          if (Math.abs(corr) > 0.6) {
+            pairs.push({
+              metric1: m1.name, metric2: m2.name,
+              icon1: m1.icon, icon2: m2.icon,
+              correlation: corr, percentage: Math.round(Math.abs(corr) * 100),
+              type: corr > 0 ? 'positive' : 'negative',
+              description: corr > 0 ? 'Взаимосвязаны' : 'Обратная связь'
             });
           }
         }
       }
     }
 
-    // Сортируем по силе корреляции и берем топ-3
-    return correlationPairs
-      .sort((a, b) => Math.abs(b.correlation) - Math.abs(a.correlation))
-      .slice(0, 3);
+    return pairs.sort((a, b) => Math.abs(b.correlation) - Math.abs(a.correlation)).slice(0, 3);
   }, [metrics, data]);
 
-  const getCorrelationColor = (type: 'positive' | 'negative', percentage: number) => {
-    if (type === 'positive') {
-      return 'text-green-600 bg-green-500/10 border-green-500/20 dark:text-green-400 dark:bg-green-400/10 dark:border-green-400/20';
-    } else {
-      return 'text-red-600 bg-red-500/10 border-red-500/20 dark:text-red-400 dark:bg-red-400/10 dark:border-red-400/20';
-    }
-  };
-
-  const getCorrelationIcon = (type: 'positive' | 'negative') => {
-    return type === 'positive' ? (
-      <TrendingUp className="w-4 h-4" />
-    ) : (
-      <TrendingDown className="w-4 h-4" />
-    );
-  };
-
-  if (data.length < 4) {
+  // Empty / not enough data
+  if (data.length < 4 || correlations.length === 0) {
     return (
-      <Card className={`card-modern animate-fade-in ${className}`}>
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <Brain className="w-5 h-5 text-primary" />
-            Ваши инсайты
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="text-center py-6">
-            <div className="text-4xl mb-2">🔍</div>
-            <p className="text-muted-foreground mb-2">
-              Анализ взаимосвязей недоступен
-            </p>
-            <p className="text-sm text-muted-foreground">
-              Требуется минимум 4 недели данных для выявления корреляций
-            </p>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  if (correlations.length === 0) {
-    return (
-      <Card className={`card-modern animate-fade-in ${className}`}>
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <Brain className="w-5 h-5 text-primary" />
-            Ваши инсайты
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="text-center py-6">
-            <div className="text-4xl mb-2">📊</div>
-            <p className="text-muted-foreground">
-              Пока нет значимых взаимосвязей между метриками.
-            </p>
-          </div>
-        </CardContent>
-      </Card>
+      <div className={`bg-card border border-border rounded-[10px] p-3 ${className}`}>
+        <h4 className="text-xs font-semibold text-foreground mb-2.5 flex items-center gap-1.5">
+          🔗 Ваши инсайты
+        </h4>
+        <div className="text-center py-4">
+          <div className="text-xl mb-1.5 opacity-50">{data.length < 4 ? '🔍' : '📊'}</div>
+          <p className="text-[10px] text-muted-foreground">
+            {data.length < 4
+              ? 'Требуется минимум 4 недели данных'
+              : 'Пока нет значимых взаимосвязей'}
+          </p>
+        </div>
+      </div>
     );
   }
 
   return (
-    <Card className={`card-modern animate-fade-in ${className}`}>
-      <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <Brain className="w-5 h-5 text-primary" />
-            Ваши инсайты
-          </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
+    <div className={`bg-card border border-border rounded-[10px] p-3 ${className}`}>
+      <h4 className="text-xs font-semibold text-foreground mb-2.5 flex items-center gap-1.5">
+        🔗 Ваши инсайты
+      </h4>
+
+      <div className="space-y-1.5">
         {correlations.map((corr, index) => (
           <div
             key={`${corr.metric1}-${corr.metric2}`}
-            className={`p-4 rounded-lg border transition-all duration-200 hover:shadow-md ${getCorrelationColor(corr.type, corr.percentage)}`}
-            style={{ animationDelay: `${index * 100}ms` }}
+            className="bg-muted/30 rounded-md p-2"
           >
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-3">
-                <div className="flex items-center gap-2">
-                  <span className="text-xl">{corr.icon1}</span>
-                  <ArrowRightLeft className="w-4 h-4 text-muted-foreground" />
-                  <span className="text-xl">{corr.icon2}</span>
-                </div>
+            <div className="flex items-center justify-between mb-1">
+              <div className="flex items-center gap-1 text-xs">
+                <span>{corr.icon1}</span>
+                <span className="text-[9px] text-muted-foreground">⇄</span>
+                <span>{corr.icon2}</span>
               </div>
-              <div className="flex items-center gap-2">
-                <Badge variant="outline" className={`${getCorrelationColor(corr.type, corr.percentage)}`}>
-                  {getCorrelationIcon(corr.type)}
-                  <span className="ml-1">{corr.percentage}%</span>
-                </Badge>
-              </div>
+              <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${
+                corr.type === 'positive'
+                  ? 'bg-green-500/10 text-green-500'
+                  : 'bg-red-500/10 text-red-500'
+              }`}>
+                {corr.type === 'positive' ? '↗' : '↘'} {corr.percentage}%
+              </span>
             </div>
-
-            <div className="space-y-1">
-              <div className="flex items-center justify-between text-sm">
-                <span className="font-medium text-foreground/90">
-                  {corr.metric1}
-                </span>
-                <span className="text-muted-foreground">↔</span>
-                <span className="font-medium text-foreground/90">
-                  {corr.metric2}
-                </span>
-              </div>
-              <p className="text-xs text-center text-muted-foreground">
-                {corr.description}
-              </p>
+            <div className="text-[10px] text-foreground/80 truncate">
+              {corr.metric1} ↔ {corr.metric2}
+            </div>
+            <div className="text-[9px] text-muted-foreground">
+              {corr.description}
             </div>
           </div>
         ))}
+      </div>
 
-        <div className="mt-4 p-3 bg-muted/30 rounded-lg">
-          <p className="text-xs text-muted-foreground text-center">
-            💡 Корреляции показывают взаимосвязи между аспектами жизни. 
-            Используйте их для понимания влияния одних областей на другие.
-          </p>
-        </div>
-      </CardContent>
-    </Card>
+      <div className="mt-2 p-1.5 bg-muted/20 rounded text-center">
+        <p className="text-[9px] text-muted-foreground">
+          💡 Ключевые инсайты:
+          {correlations.length > 0 && ` Самая сильная связь: ${correlations[0].metric1} ↔ ${correlations[0].metric2} (${correlations[0].percentage}%)`}
+        </p>
+      </div>
+    </div>
   );
 };
 

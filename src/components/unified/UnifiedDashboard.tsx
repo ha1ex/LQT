@@ -4,17 +4,14 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
-import { 
-  BarChart3, 
-  Target, 
-  TrendingUp, 
-  TrendingDown, 
+import {
+  BarChart3,
+  Target,
+  TrendingUp,
+  TrendingDown,
   Network,
   Brain,
   Activity,
-  Zap,
-  Users,
-  Clock,
   ArrowUpRight,
   ArrowDownRight,
   Minus
@@ -32,13 +29,12 @@ interface UnifiedDashboardProps {
 export const UnifiedDashboard: React.FC<UnifiedDashboardProps> = ({
   onNavigateToSection
 }) => {
-  const { isNewUser, appState } = useGlobalData();
+  const { isNewUser } = useGlobalData();
   const { 
-    unifiedMetrics, 
-    systemHealth, 
-    crossSectionAnalytics,
+    unifiedMetrics,
+    systemHealth,
     unifiedRecommendations,
-    isAnalyzing 
+    isAnalyzing
   } = useUnifiedSystem();
 
   const [selectedTab, setSelectedTab] = useState('overview');

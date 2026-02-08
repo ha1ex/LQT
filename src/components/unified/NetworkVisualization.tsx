@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Network, Filter, Target, Activity, Brain, Zap } from 'lucide-react';
+import { Network, Filter, Target, Activity, Brain } from 'lucide-react';
 import { useUnifiedSystem } from '@/hooks/useUnifiedSystem';
 
 interface NetworkNode {
@@ -33,7 +33,7 @@ export const NetworkVisualization: React.FC<NetworkVisualizationProps> = ({
   className = '',
   onNodeClick
 }) => {
-  const { unifiedMetrics, systemConnections, crossSectionAnalytics } = useUnifiedSystem();
+  const { unifiedMetrics, systemConnections } = useUnifiedSystem();
   const [filterType, setFilterType] = useState<string>('all');
   const [selectedNode, setSelectedNode] = useState<string | null>(null);
 

@@ -29,8 +29,9 @@ export interface WeeklyRatingAnalytics {
   averageByMetric: Record<string, number>;
   trendsOverTime: Array<{
     weekNumber: number;
-    averageScore: number;
+    averageScore: number | null;
     date: string;
+    hasData?: boolean;
   }>;
   bestWeek: WeeklyRating | null;
   worstWeek: WeeklyRating | null;

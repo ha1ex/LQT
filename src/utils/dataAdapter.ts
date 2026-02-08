@@ -1,18 +1,22 @@
 import { WeeklyRating } from '@/types/weeklyRating';
 import { AppDataState } from '@/types/app';
 
-// Базовые метрики для совместимости
+// Все метрики из данных пользователя (включая исторические и новые)
 export const BASE_METRICS = [
   { id: 'peace_of_mind', name: 'Спокойствие ума', icon: '🧘', category: 'mental' },
   { id: 'financial_cushion', name: 'Финансовая подушка', icon: '💰', category: 'finance' },
   { id: 'income', name: 'Доход', icon: '💼', category: 'finance' },
   { id: 'wife_communication', name: 'Качество общения с женой', icon: '❤️', category: 'relationships' },
-  { id: 'family_communication', name: 'Качество общения с семьей', icon: '👨‍👩‍👧‍👦', category: 'relationships' },
-  { id: 'physical_health', name: 'Физическое здоровье', icon: '💪', category: 'health' },
+  { id: 'family_communication', name: 'Качество общения с семьёй', icon: '👨‍👩‍👧‍👦', category: 'relationships' },
+  { id: 'physical_activity', name: 'Уровень физической активности', icon: '🏃', category: 'health' },
   { id: 'socialization', name: 'Социализация', icon: '🤝', category: 'social' },
   { id: 'manifestation', name: 'Проявленность', icon: '✨', category: 'personal' },
   { id: 'travel', name: 'Путешествия', icon: '✈️', category: 'lifestyle' },
-  { id: 'mental_health', name: 'Ментальное здоровье', icon: '🧠', category: 'mental' }
+  { id: 'mental_health', name: 'Ментальное здоровье', icon: '🧠', category: 'mental' },
+  { id: 'anxiety_level', name: 'Уровень тревожности', icon: '😌', category: 'mental' },
+  { id: 'health_condition', name: 'Состояние здоровья', icon: '🏥', category: 'health' },
+  { id: 'happiness', name: 'Ощущение счастья', icon: '😊', category: 'mental' },
+  { id: 'self_esteem', name: 'Самооценка', icon: '💎', category: 'personal' }
 ];
 
 // Адаптер для преобразования данных из GlobalDataProvider в формат mockData
@@ -22,7 +26,6 @@ export const adaptWeeklyRatingsToMockData = (
 ): any[] => {
   // Если нет данных или это пустое состояние, возвращаем пустой массив
   if (appState.userState === 'empty' || Object.keys(weeklyRatings).length === 0) {
-    console.log('dataAdapter: No data available, returning empty array');
     return [];
   }
 
@@ -38,11 +41,20 @@ export const adaptWeeklyRatingsToMockData = (
 
       // Добавляем оценки по метрикам, используя правильные названия
       if (rating.ratings && typeof rating.ratings === 'object') {
+        // Маппинг старых id → новые id для обратной совместимости
+        const legacyIdMap: Record<string, string> = {
+          physical_health: 'physical_activity',
+          low_anxiety: 'anxiety_level',
+        };
+
         Object.entries(rating.ratings).forEach(([metricId, value]) => {
-          // Находим соответствующую метрику по ID
-          const metric = BASE_METRICS.find(m => m.id === metricId);
+          const resolvedId = legacyIdMap[metricId] ?? metricId;
+          const metric = BASE_METRICS.find(m => m.id === resolvedId);
           if (metric && typeof value === 'number' && !isNaN(value) && value !== null && value !== undefined) {
-            weekData[metric.name] = value;
+            // Не перезаписываем если новый id уже установлен
+            if (!(resolvedId !== metricId && weekData[metric.name] !== undefined)) {
+              weekData[metric.name] = value;
+            }
           }
         });
       }

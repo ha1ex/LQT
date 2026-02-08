@@ -4,10 +4,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Calendar, TrendingUp, Star, AlertCircle, CheckCircle2, Zap, History, BarChart3, Clock } from 'lucide-react';
+import { Calendar, TrendingUp, Star, AlertCircle, CheckCircle2, Zap, BarChart3, Clock } from 'lucide-react';
 import { useEnhancedHypotheses } from '@/hooks/strategy';
 import { getRatingColor, getRatingLabel, createTestWeeklyProgress } from '@/utils/strategy';
-import { WeeklyProgressHistory } from './WeeklyProgressHistory';
 import { WeekDetailModal } from './WeekDetailModal';
 import { ProgressAnalytics } from './ProgressAnalytics';
 import { WeeklyProgress } from '@/types/strategy';
@@ -17,7 +16,7 @@ interface WeeklyProgressTrackerProps {
 }
 
 export const WeeklyProgressTracker: React.FC<WeeklyProgressTrackerProps> = ({ hypothesisId }) => {
-  const { getHypothesis, updateWeeklyRating, updateHypothesis } = useEnhancedHypotheses();
+  const { getHypothesis, updateHypothesis } = useEnhancedHypotheses();
   const hypothesis = getHypothesis(hypothesisId);
   const [selectedWeek, setSelectedWeek] = useState<WeeklyProgress | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);

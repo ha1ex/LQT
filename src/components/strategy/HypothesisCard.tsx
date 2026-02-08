@@ -5,7 +5,7 @@ import { Progress } from '@/components/ui/progress';
 import { CheckCircle, AlertTriangle, Users, Target } from 'lucide-react';
 import { EnhancedHypothesis, ValidationStatus } from '@/types/strategy';
 import { useSubjects } from '@/hooks/strategy';
-import { getPriorityCategory, getProgressColor } from '@/utils/strategy';
+import { getPriorityCategory } from '@/utils/strategy';
 
 interface HypothesisCardProps {
   hypothesis: EnhancedHypothesis;
@@ -21,7 +21,6 @@ export const HypothesisCard: React.FC<HypothesisCardProps> = ({
   const { getSubjectsByIds } = useSubjects();
   const subjects = getSubjectsByIds(hypothesis.subjects);
   const priorityCategory = getPriorityCategory(hypothesis.calculatedPriority);
-  const progressColor = getProgressColor(hypothesis.progress);
 
   return (
     <Card 

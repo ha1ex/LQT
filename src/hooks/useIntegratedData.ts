@@ -2,8 +2,10 @@ import { useMemo } from 'react';
 import { useEnhancedHypotheses } from '@/hooks/strategy';
 import { useWeeklyRatings } from '@/hooks/useWeeklyRatings';
 import { useGlobalData } from '@/contexts/GlobalDataProvider';
+import { BASE_METRICS } from '@/utils/dataAdapter';
+import { format } from 'date-fns';
+import { ru } from 'date-fns/locale';
 import type { WeeklyRating } from '@/types/weeklyRating';
-import type { EnhancedHypothesis } from '@/types/strategy';
 
 export interface IntegratedMetric {
   id: string;
@@ -11,6 +13,7 @@ export interface IntegratedMetric {
   icon: string;
   category: string;
   currentValue: number;
+  previousValue: number;
   trend: 'up' | 'down' | 'stable';
   relatedHypotheses: string[];
   hasActiveExperiment: boolean;
@@ -25,57 +28,77 @@ export interface DashboardStrategyLink {
 
 /**
  * Unified hook for integrating Dashboard and Strategy data
+ * Uses real user metrics from BASE_METRICS instead of hardcoded generic ones
  */
 export const useIntegratedData = () => {
   const { appState } = useGlobalData();
-  const { hypotheses, getActiveHypotheses, getStrategyMetrics } = useEnhancedHypotheses();
-  const { ratings, getCurrentWeekRating, getAnalytics } = useWeeklyRatings();
+  const { getActiveHypotheses, getStrategyMetrics } = useEnhancedHypotheses();
+  const { ratings, getAnalytics } = useWeeklyRatings();
 
-  // Get current week data and analytics
-  const currentWeekData = getCurrentWeekRating();
   const analytics = getAnalytics();
   const activeHypotheses = getActiveHypotheses();
   const strategyMetrics = getStrategyMetrics();
 
-  // Create integrated metrics that combine ratings with hypothesis data
+  // Get latest week rating from actual data (sorted by date)
+  const latestWeekRating = useMemo(() => {
+    const sorted = Object.values(ratings).sort(
+      (a, b) => b.startDate.getTime() - a.startDate.getTime()
+    );
+    return sorted[0] || null;
+  }, [ratings]);
+
+  // Get previous week rating for trend calculation
+  const previousWeekRating = useMemo(() => {
+    const sorted = Object.values(ratings).sort(
+      (a, b) => b.startDate.getTime() - a.startDate.getTime()
+    );
+    return sorted[1] || null;
+  }, [ratings]);
+
+  // Period label for dashboard — shows which week the data is from
+  const periodLabel = useMemo(() => {
+    if (!latestWeekRating) return '';
+    const wNum = latestWeekRating.weekNumber;
+    const start = format(latestWeekRating.startDate, 'd MMM', { locale: ru });
+    const end = format(latestWeekRating.endDate, 'd MMM', { locale: ru });
+    return `W${String(wNum).padStart(2, '0')}, ${start} — ${end}`;
+  }, [latestWeekRating]);
+
+  // Create integrated metrics from real BASE_METRICS, using actual weekly rating data
   const integratedMetrics = useMemo((): IntegratedMetric[] => {
-    const baseMetrics = [
-      { id: 'health', name: 'Здоровье', icon: '💪', category: 'health' },
-      { id: 'relationships', name: 'Отношения', icon: '❤️', category: 'relationships' },
-      { id: 'career', name: 'Карьера', icon: '💼', category: 'career' },
-      { id: 'finance', name: 'Финансы', icon: '💰', category: 'finance' },
-      { id: 'education', name: 'Обучение', icon: '📚', category: 'education' },
-      { id: 'hobbies', name: 'Хобби', icon: '🎨', category: 'hobbies' },
-    ];
+    if (!latestWeekRating) return [];
 
-    return baseMetrics.map(metric => {
-      const currentValue = currentWeekData?.ratings?.[metric.id] || 0;
-      
-      // Find related hypotheses based on goal metric
-      const relatedHypotheses = activeHypotheses
-        .filter(hyp => hyp.goal.metricId === metric.id)
-        .map(hyp => hyp.id);
+    // Only include metrics that have data in the latest week
+    const activeMetricIds = Object.keys(latestWeekRating.ratings);
 
-      // Calculate trend based on last few weeks
-      const previousValue = analytics.trendsOverTime
-        .slice(-2, -1)[0]?.averageScore || currentValue;
-      
-      let trend: 'up' | 'down' | 'stable' = 'stable';
-      if (currentValue > previousValue + 0.5) trend = 'up';
-      else if (currentValue < previousValue - 0.5) trend = 'down';
+    return BASE_METRICS
+      .filter(metric => activeMetricIds.includes(metric.id))
+      .map(metric => {
+        const currentValue = latestWeekRating.ratings[metric.id] || 0;
+        const previousValue = previousWeekRating?.ratings?.[metric.id] || currentValue;
 
-      return {
-        id: metric.id,
-        name: metric.name,
-        icon: metric.icon,
-        category: metric.category,
-        currentValue,
-        trend,
-        relatedHypotheses,
-        hasActiveExperiment: relatedHypotheses.length > 0,
-      };
-    });
-  }, [currentWeekData, analytics, activeHypotheses]);
+        // Find related hypotheses based on goal metric
+        const relatedHypotheses = activeHypotheses
+          .filter(hyp => hyp.goal.metricId === metric.id)
+          .map(hyp => hyp.id);
+
+        let trend: 'up' | 'down' | 'stable' = 'stable';
+        if (currentValue > previousValue + 0.5) trend = 'up';
+        else if (currentValue < previousValue - 0.5) trend = 'down';
+
+        return {
+          id: metric.id,
+          name: metric.name,
+          icon: metric.icon,
+          category: metric.category,
+          currentValue,
+          previousValue,
+          trend,
+          relatedHypotheses,
+          hasActiveExperiment: relatedHypotheses.length > 0,
+        };
+      });
+  }, [latestWeekRating, previousWeekRating, activeHypotheses]);
 
   // Create strategy-dashboard links
   const strategyDashboardLinks = useMemo((): DashboardStrategyLink[] => {
@@ -84,7 +107,7 @@ export const useIntegratedData = () => {
       .map(metric => {
         const relatedHypotheses = activeHypotheses
           .filter(hyp => hyp.goal.metricId === metric.id);
-        
+
         const recommendations: string[] = [];
         const nextActions: string[] = [];
 
@@ -115,17 +138,12 @@ export const useIntegratedData = () => {
     activeHypotheses.forEach(hypothesis => {
       const metricRating = weekRating.ratings[hypothesis.goal.metricId];
       if (metricRating && metricRating > 0) {
-        // Find current week in hypothesis progress
-        const weekIndex = hypothesis.weeklyProgress.findIndex(w => 
+        const weekIndex = hypothesis.weeklyProgress.findIndex(w =>
           w.startDate <= weekRating.startDate && w.endDate >= weekRating.endDate
         );
-        
+
         if (weekIndex >= 0) {
-          // Convert 1-10 rating to 0-4 progress rating
-          const progressRating = Math.min(4, Math.max(0, Math.floor((metricRating - 1) / 2.25))) as 0 | 1 | 2 | 3 | 4;
-          
-          // This would need to be implemented in the hypothesis hook
-          // updateWeeklyRating(hypothesis.id, weekIndex, progressRating, weekRating.notes[hypothesis.goal.metricId]);
+          // Placeholder for future implementation
         }
       }
     });
@@ -133,17 +151,35 @@ export const useIntegratedData = () => {
 
   // Generate smart recommendations based on both data sources
   const generateSmartRecommendations = () => {
-    const recommendations = [];
+    const recommendations: Array<{
+      type: string;
+      title: string;
+      description: string;
+      action: () => Record<string, unknown>;
+      priority: 'high' | 'medium' | 'low';
+    }> = [];
 
     // Problem areas without active hypotheses
-    const problemAreas = integratedMetrics.filter(m => m.currentValue <= 4 && !m.hasActiveExperiment);
+    const problemAreas = integratedMetrics.filter(m => m.currentValue > 0 && m.currentValue <= 4 && !m.hasActiveExperiment);
     problemAreas.forEach(area => {
       recommendations.push({
         type: 'create-hypothesis',
-        title: `🎯 Создать эксперимент для ${area.name}`,
+        title: `Создать эксперимент для «${area.name}»`,
         description: `Низкая оценка (${area.currentValue}/10) требует системного подхода`,
         action: () => ({ type: 'CREATE_HYPOTHESIS', metricId: area.id }),
         priority: 'high'
+      });
+    });
+
+    // Declining metrics
+    const decliningMetrics = integratedMetrics.filter(m => m.trend === 'down' && m.currentValue > 0);
+    decliningMetrics.forEach(metric => {
+      recommendations.push({
+        type: 'attention-needed',
+        title: `Обратите внимание на «${metric.name}»`,
+        description: `Снижение с ${metric.previousValue} до ${metric.currentValue} за неделю`,
+        action: () => ({ type: 'VIEW_METRIC', metricId: metric.id }),
+        priority: 'medium'
       });
     });
 
@@ -152,11 +188,11 @@ export const useIntegratedData = () => {
       const recentProgress = h.weeklyProgress.slice(-3);
       return recentProgress.every(p => p.rating <= 2);
     });
-    
+
     stagnatingHypotheses.forEach(hyp => {
       recommendations.push({
         type: 'revise-hypothesis',
-        title: `🔄 Пересмотреть "${hyp.conditions}"`,
+        title: `Пересмотреть «${hyp.conditions}»`,
         description: 'Эксперимент не показывает результатов',
         action: () => ({ type: 'VIEW_HYPOTHESIS', id: hyp.id }),
         priority: 'medium'
@@ -168,7 +204,7 @@ export const useIntegratedData = () => {
     if (successfulHypotheses.length > 0) {
       recommendations.push({
         type: 'replicate-success',
-        title: '🚀 Применить успешную стратегию',
+        title: 'Применить успешную стратегию',
         description: 'У вас есть работающие подходы для других целей',
         action: () => ({ type: 'REPLICATE_SUCCESS', hypotheses: successfulHypotheses }),
         priority: 'low'
@@ -186,18 +222,19 @@ export const useIntegratedData = () => {
     integratedMetrics,
     strategyDashboardLinks,
     activeHypotheses,
-    currentWeekData,
+    currentWeekData: latestWeekRating,
     analytics,
     strategyMetrics,
-    
+    periodLabel,
+
     // Derived insights
     smartRecommendations: generateSmartRecommendations(),
-    
+
     // Actions
     syncRatingsToHypotheses,
-    
+
     // State
     hasData: appState.hasData,
-    isLoading: !currentWeekData && !activeHypotheses.length,
+    isLoading: Object.keys(ratings).length === 0 && !activeHypotheses.length,
   };
 };

@@ -2,11 +2,11 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, ChevronLeft, ChevronRight, Search, Filter } from 'lucide-react';
+import { Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { WeeklyProgress } from '@/types/strategy';
-import { getRatingColor, getRatingLabel, formatDate } from '@/utils/strategy';
+import { getRatingColor, getRatingLabel } from '@/utils/strategy';
 import { format, startOfWeek, endOfWeek, eachWeekOfInterval, isSameWeek } from 'date-fns';
 import { ru } from 'date-fns/locale';
 

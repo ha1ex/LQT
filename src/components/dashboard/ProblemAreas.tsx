@@ -1,9 +1,4 @@
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Badge } from '@/components/ui/badge';
-import { AlertTriangle, ArrowRight, TrendingDown, Target, Plus } from 'lucide-react';
 import { useIntegratedData } from '@/hooks/useIntegratedData';
 
 interface ProblemAreasProps {
@@ -13,114 +8,78 @@ interface ProblemAreasProps {
   onCreateHypothesis?: (metricId?: string) => void;
 }
 
-const ProblemAreas: React.FC<ProblemAreasProps> = ({ 
-  allMetrics, 
-  currentWeekData, 
+const ProblemAreas: React.FC<ProblemAreasProps> = ({
+  allMetrics,
+  currentWeekData,
   onMetricClick,
   onCreateHypothesis
 }) => {
-  // Get integrated data to show strategy context
-  const { integratedMetrics, strategyDashboardLinks } = useIntegratedData();
-  // Находим метрики с низкими оценками (4 и ниже) из интегрированных данных
+  const { integratedMetrics, periodLabel } = useIntegratedData();
+
   const problemMetrics = integratedMetrics
     .filter(metric => metric.currentValue > 0 && metric.currentValue <= 4)
     .sort((a, b) => a.currentValue - b.currentValue)
     .slice(0, 2);
 
+  const weekLabel = periodLabel ? periodLabel.replace(/^W\d+,\s*/, '').trim() : '';
+  const weekNum = periodLabel?.match(/W\d+/)?.[0] || '';
+
+  const getScoreColor = (val: number) => {
+    if (val <= 2) return 'bg-red-500/15 text-red-500';
+    if (val <= 4) return 'bg-orange-500/15 text-orange-500';
+    return 'bg-yellow-500/15 text-yellow-500';
+  };
+
   if (problemMetrics.length === 0) {
     return (
-      <Card className="border-border bg-card">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-            <AlertTriangle className="w-4 h-4 text-green-500" />
-            Проблемные зоны
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="text-center py-2">
-            <p className="text-sm text-green-600 font-medium">🎉 Отлично!</p>
-            <p className="text-xs text-muted-foreground mt-1">
-              Все метрики выше 4 баллов
-            </p>
+      <div className="bg-card border border-border rounded-[10px] p-3">
+        <div className="flex justify-between items-start mb-2.5">
+          <div className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
+            ⚠️ Проблемные зоны
           </div>
-        </CardContent>
-      </Card>
+          {weekNum && <span className="text-[9px] text-muted-foreground">{weekNum}</span>}
+        </div>
+        <div className="text-center py-5">
+          <p className="text-[11px] text-muted-foreground">🎉 Все метрики выше 4 баллов</p>
+          <p className="text-[10px] text-muted-foreground mt-1">Отличная работа!</p>
+        </div>
+      </div>
     );
   }
 
   return (
-    <Card className="border-border bg-card hover:bg-accent/50 transition-colors cursor-pointer">
-      <CardHeader className="pb-3">
-        <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-          <AlertTriangle className="w-4 h-4 text-destructive" />
-          Проблемные зоны
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        {problemMetrics.map((metric) => (
-          <Alert key={metric.id} className="border-destructive/20 bg-destructive/10">
-            <TrendingDown className="h-4 w-4 text-destructive" />
-            <AlertDescription className="ml-2">
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium text-sm">{metric.name}</span>
-                    <span className="text-destructive font-bold">{metric.currentValue}/10</span>
-                    {metric.hasActiveExperiment && (
-                      <Badge variant="outline" className="text-xs">
-                        <Target className="w-2 h-2 mr-1" />
-                        Активный
-                      </Badge>
-                    )}
-                  </div>
-                  <div className="flex gap-1">
-                    {!metric.hasActiveExperiment && onCreateHypothesis && (
-                      <Button 
-                        variant="ghost" 
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onCreateHypothesis(metric.id);
-                        }}
-                        className="h-6 px-2 text-xs"
-                      >
-                        <Plus className="w-3 h-3 mr-1" />
-                        Эксперимент
-                      </Button>
-                    )}
-                    <Button 
-                      variant="ghost" 
-                      size="sm"
-                      onClick={() => onMetricClick(metric.id)}
-                      className="h-6 px-2 text-xs"
-                    >
-                      Улучшить
-                      <ArrowRight className="w-3 h-3 ml-1" />
-                    </Button>
-                  </div>
-                </div>
-                {metric.hasActiveExperiment && (
-                  <p className="text-xs text-muted-foreground">
-                    {metric.relatedHypotheses.length} активных эксперимента
-                  </p>
-                )}
-              </div>
-            </AlertDescription>
-          </Alert>
-        ))}
-        
-        <div className="text-center pt-2">
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="text-xs"
-            onClick={() => onMetricClick('analytics')}
-          >
-            Подробный анализ
-          </Button>
+    <div className="bg-card border border-border rounded-[10px] p-3">
+      <div className="flex justify-between items-start mb-2.5">
+        <div className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
+          ⚠️ Проблемные зоны
         </div>
-      </CardContent>
-    </Card>
+        {weekNum && <span className="text-[9px] text-muted-foreground">{weekNum}</span>}
+      </div>
+
+      <div className="space-y-1.5">
+        {problemMetrics.map((metric) => (
+          <div
+            key={metric.id}
+            onClick={() => onMetricClick(metric.id)}
+            className="flex items-center gap-2 px-2 py-2 bg-muted/40 rounded-md text-[11px] cursor-pointer hover:bg-muted/60 transition-colors"
+          >
+            <span className="text-xs shrink-0">📉</span>
+            <span className="flex-1 text-foreground truncate">{metric.name}</span>
+            <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded ${getScoreColor(metric.currentValue)}`}>
+              {metric.currentValue}/10
+            </span>
+            <span className="text-primary text-[10px]">→</span>
+          </div>
+        ))}
+      </div>
+
+      <button
+        onClick={() => onMetricClick('analytics')}
+        className="w-full mt-2 py-1.5 text-[10px] text-muted-foreground border border-border rounded-[5px] hover:bg-muted/50 transition-colors"
+      >
+        Подробный анализ
+      </button>
+    </div>
   );
 };
 

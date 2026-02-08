@@ -3,20 +3,17 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { 
-  BarChart3, 
-  Target, 
-  Bot, 
-  Calendar, 
-  TrendingUp, 
-  ArrowRight, 
+import {
+  BarChart3,
+  Target,
+  Bot,
+  Calendar,
+  TrendingUp,
+  ArrowRight,
   ArrowLeft,
   CheckCircle,
-  Lightbulb,
-  Users,
-  Database
+  Lightbulb
 } from 'lucide-react';
-import { useGlobalData } from '@/contexts/GlobalDataProvider';
 
 interface OnboardingStep {
   id: string;
@@ -24,10 +21,6 @@ interface OnboardingStep {
   description: string;
   icon: React.ReactNode;
   content: React.ReactNode;
-  action?: {
-    label: string;
-    onClick: () => void;
-  };
 }
 
 interface OnboardingWizardProps {
@@ -37,7 +30,6 @@ interface OnboardingWizardProps {
 
 export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete, onSkip }) => {
   const [currentStep, setCurrentStep] = useState(0);
-  const { generateDemoData } = useGlobalData();
 
   const steps: OnboardingStep[] = [
     {
@@ -150,8 +142,8 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete, 
         <div className="space-y-4">
           <div className="grid grid-cols-5 gap-1">
             {[1, 2, 3, 4, 5].map((rating) => (
-              <div 
-                key={rating} 
+              <div
+                key={rating}
                 className={`h-8 rounded text-xs flex items-center justify-center font-medium ${
                   rating <= 3 ? 'bg-green-500 text-white' : 'bg-muted'
                 }`}
@@ -165,35 +157,6 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete, 
           </p>
         </div>
       )
-    },
-    {
-      id: 'demo',
-      title: 'Попробуйте демо-версию',
-      description: 'Загрузите пример данных, чтобы увидеть все возможности системы',
-      icon: <Database className="w-8 h-8 text-blue-500" />,
-      content: (
-        <div className="space-y-4">
-          <div className="p-4 bg-blue-500/10 border border-blue-500/20 rounded-lg">
-            <h4 className="font-medium mb-2 text-blue-700">Демо данные включают:</h4>
-            <ul className="text-sm space-y-1 text-blue-600">
-              <li>• 20 недель исторических оценок</li>
-              <li>• 3 активных эксперимента с прогрессом</li>
-              <li>• ИИ инсайты и рекомендации</li>
-              <li>• Аналитика и визуализации</li>
-            </ul>
-          </div>
-          <p className="text-sm text-muted-foreground">
-            Рекомендуем начать с демо-версии, чтобы понять как работает система.
-          </p>
-        </div>
-      ),
-      action: {
-        label: 'Загрузить демо данные',
-        onClick: () => {
-          generateDemoData();
-          onComplete();
-        }
-      }
     }
   ];
 
@@ -226,9 +189,9 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete, 
               Пропустить
             </Button>
           </div>
-          
+
           <Progress value={progress} className="mb-4" />
-          
+
           <div className="flex items-center gap-3">
             {currentStepData.icon}
             <div>
@@ -239,12 +202,12 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete, 
             </div>
           </div>
         </CardHeader>
-        
+
         <CardContent>
           <div className="mb-6">
             {currentStepData.content}
           </div>
-          
+
           <div className="flex items-center justify-between">
             <Button
               variant="outline"
@@ -254,19 +217,11 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete, 
               <ArrowLeft className="w-4 h-4 mr-2" />
               Назад
             </Button>
-            
-            <div className="flex gap-2">
-              {currentStepData.action && (
-                <Button onClick={currentStepData.action.onClick}>
-                  {currentStepData.action.label}
-                </Button>
-              )}
-              
-              <Button onClick={handleNext}>
-                {currentStep === steps.length - 1 ? 'Завершить' : 'Далее'}
-                <ArrowRight className="w-4 h-4 ml-2" />
-              </Button>
-            </div>
+
+            <Button onClick={handleNext}>
+              {currentStep === steps.length - 1 ? 'Завершить' : 'Далее'}
+              <ArrowRight className="w-4 h-4 ml-2" />
+            </Button>
           </div>
         </CardContent>
       </Card>

@@ -7,12 +7,20 @@ import { format, isSameDay, startOfWeek, endOfWeek, eachDayOfInterval } from 'da
 import { ru } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { CalendarDayData, WeeklyRating } from '@/types/weeklyRating';
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Plus, History } from 'lucide-react';
+import { Calendar as CalendarIcon, Plus, History } from 'lucide-react';
 import { EmptyStateCard } from '@/components/ui/empty-state-card';
 import { useGlobalData } from '@/contexts/GlobalDataProvider';
 import { ErrorBoundary } from '@/components/ui/error-boundary';
 import { HistoricalWeekEntry } from './HistoricalWeekEntry';
 import { HistoricalDataWizard } from './HistoricalDataWizard';
+
+const MOOD_LABELS: Record<string, string> = {
+  excellent: 'Отлично',
+  good: 'Хорошо',
+  neutral: 'Нормально',
+  poor: 'Плохо',
+  terrible: 'Ужасно'
+};
 
 interface WeeklyRatingCalendarProps {
   ratings: Record<string, WeeklyRating>;
@@ -48,6 +56,101 @@ const WeeklyRatingCalendar: React.FC<WeeklyRatingCalendarProps> = ({
   const handleBulkSave = (weeks: Array<{ date: Date; data: Partial<WeeklyRating> }>) => {
     onBulkUpdateWeeks(weeks);
     setShowBulkWizard(false);
+  };
+
+  // Prepare calendar data
+  const calendarData = useMemo(() => {
+    const data: Record<string, CalendarDayData> = {};
+    
+    Object.values(ratings).forEach(rating => {
+      const weekDays = eachDayOfInterval({
+        start: rating.startDate,
+        end: rating.endDate
+      });
+      
+      weekDays.forEach(day => {
+        const dayKey = format(day, 'yyyy-MM-dd');
+        data[dayKey] = {
+          date: day,
+          hasRating: true,
+          overallScore: rating.overallScore,
+          mood: rating.mood
+        };
+      });
+    });
+    
+    return data;
+  }, [ratings]);
+
+  // Get sorted ratings for list view
+  const sortedRatings = useMemo(() => {
+    return Object.values(ratings).sort((a, b) => b.startDate.getTime() - a.startDate.getTime());
+  }, [ratings]);
+
+  // Check if a week has rating data
+  const getWeekRating = (date: Date): WeeklyRating | null => {
+    const weekStart = startOfWeek(date, { locale: ru });
+    const weekKey = format(weekStart, 'yyyy-MM-dd');
+    return ratings[weekKey] || null;
+  };
+
+  // Get mood color
+  const getMoodColor = (mood: WeeklyRating['mood']) => {
+    switch (mood) {
+      case 'excellent': return 'bg-success';
+      case 'good': return 'bg-success/80';
+      case 'neutral': return 'bg-warning';
+      case 'poor': return 'bg-warning/80';
+      case 'terrible': return 'bg-error';
+      default: return 'bg-muted-foreground';
+    }
+  };
+
+  // Get score color
+  const getScoreColor = (score: number) => {
+    if (score >= 8) return 'text-success bg-success-light';
+    if (score >= 6.5) return 'text-success bg-success-light';
+    if (score >= 4) return 'text-warning bg-warning-light';
+    if (score >= 2.5) return 'text-warning bg-warning-light';
+    return 'text-error bg-error-light';
+  };
+
+  // Custom day cell component
+  const DayCell = ({ date }: { date: Date }) => {
+    const dayKey = format(date, 'yyyy-MM-dd');
+    const dayData = calendarData[dayKey];
+    const isSelected = isSameDay(date, selectedDate);
+    const weekRating = getWeekRating(date);
+    const isWeekEmpty = !weekRating;
+    
+    return (
+      <div 
+        className={cn(
+          "relative w-full h-full flex items-center justify-center cursor-pointer",
+          isSelected && "bg-primary text-primary-foreground rounded-md",
+          isWeekEmpty && "hover:bg-muted/50 border border-dashed border-muted-foreground/30"
+        )}
+        onClick={() => {
+          onDateSelect(date);
+          if (isWeekEmpty) {
+            setSelectedWeekForEdit(date);
+            setShowHistoricalEntry(true);
+          } else if (weekRating) {
+            onWeekSelect(weekRating);
+          }
+        }}
+      >
+        <span className="text-sm">{format(date, 'd')}</span>
+        {dayData?.hasRating ? (
+          <div className={cn(
+            "absolute bottom-0 left-1/2 transform -translate-x-1/2 w-2 h-2 rounded-full",
+            getMoodColor(dayData.mood!)
+          )} />
+        ) : isWeekEmpty && (
+          <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-muted-foreground/30 rounded-full" />
+        )}
+      </div>
+    );
   };
 
   // Show empty state for new users
@@ -107,99 +210,6 @@ const WeeklyRatingCalendar: React.FC<WeeklyRatingCalendarProps> = ({
       </div>
     );
   }
-
-  // Get mood color
-  const getMoodColor = (mood: WeeklyRating['mood']) => {
-    switch (mood) {
-      case 'excellent': return 'bg-success';
-      case 'good': return 'bg-success/80';
-      case 'neutral': return 'bg-warning';
-      case 'poor': return 'bg-warning/80';
-      case 'terrible': return 'bg-error';
-      default: return 'bg-muted-foreground';
-    }
-  };
-
-  // Get score color
-  const getScoreColor = (score: number) => {
-    if (score >= 8) return 'text-success bg-success-light';
-    if (score >= 6.5) return 'text-success bg-success-light';
-    if (score >= 4) return 'text-warning bg-warning-light';
-    if (score >= 2.5) return 'text-warning bg-warning-light';
-    return 'text-error bg-error-light';
-  };
-
-  // Prepare calendar data
-  const calendarData = useMemo(() => {
-    const data: Record<string, CalendarDayData> = {};
-    
-    Object.values(ratings).forEach(rating => {
-      const weekDays = eachDayOfInterval({
-        start: rating.startDate,
-        end: rating.endDate
-      });
-      
-      weekDays.forEach(day => {
-        const dayKey = format(day, 'yyyy-MM-dd');
-        data[dayKey] = {
-          date: day,
-          hasRating: true,
-          overallScore: rating.overallScore,
-          mood: rating.mood
-        };
-      });
-    });
-    
-    return data;
-  }, [ratings]);
-
-  // Check if a week has rating data
-  const getWeekRating = (date: Date): WeeklyRating | null => {
-    const weekStart = startOfWeek(date, { locale: ru });
-    const weekKey = format(weekStart, 'yyyy-MM-dd');
-    return ratings[weekKey] || null;
-  };
-
-  // Custom day cell component
-  const DayCell = ({ date }: { date: Date }) => {
-    const dayKey = format(date, 'yyyy-MM-dd');
-    const dayData = calendarData[dayKey];
-    const isSelected = isSameDay(date, selectedDate);
-    const weekRating = getWeekRating(date);
-    const isWeekEmpty = !weekRating;
-    
-    return (
-      <div 
-        className={cn(
-          "relative w-full h-full flex items-center justify-center cursor-pointer",
-          isSelected && "bg-primary text-primary-foreground rounded-md",
-          isWeekEmpty && "hover:bg-muted/50 border border-dashed border-muted-foreground/30"
-        )}
-        onClick={() => {
-          if (isWeekEmpty) {
-            setSelectedWeekForEdit(date);
-            setShowHistoricalEntry(true);
-          }
-        }}
-      >
-        <span className="text-sm">{format(date, 'd')}</span>
-        {dayData?.hasRating ? (
-          <div className={cn(
-            "absolute bottom-0 left-1/2 transform -translate-x-1/2 w-2 h-2 rounded-full",
-            getMoodColor(dayData.mood!)
-          )} />
-        ) : isWeekEmpty && (
-          <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-muted-foreground/30 rounded-full" />
-        )}
-      </div>
-    );
-  };
-
-  // Get sorted ratings for list view
-  const sortedRatings = useMemo(() => {
-    return Object.values(ratings).sort((a, b) => b.startDate.getTime() - a.startDate.getTime());
-  }, [ratings]);
-
 
   return (
     <ErrorBoundary>
@@ -345,7 +355,7 @@ const WeeklyRatingCalendar: React.FC<WeeklyRatingCalendarProps> = ({
                   <CardContent className="space-y-3">
                     <div className="flex items-center gap-2">
                       <div className={cn("w-3 h-3 rounded-full", getMoodColor(weekRating.mood))} />
-                      <span className="text-sm capitalize">{weekRating.mood}</span>
+                      <span className="text-sm">{MOOD_LABELS[weekRating.mood] || weekRating.mood}</span>
                     </div>
                     
                     {weekRating.keyEvents.length > 0 && (
@@ -401,7 +411,7 @@ const WeeklyRatingCalendar: React.FC<WeeklyRatingCalendarProps> = ({
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <div className={cn("w-3 h-3 rounded-full", getMoodColor(rating.mood))} />
-                      <span className="text-sm capitalize">{rating.mood}</span>
+                      <span className="text-sm">{MOOD_LABELS[rating.mood] || rating.mood}</span>
                     </div>
                     
                     <div className="text-sm text-muted-foreground">

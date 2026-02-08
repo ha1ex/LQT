@@ -3,8 +3,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { WeeklyProgress } from '@/types/strategy';
 import { getRatingColor, getRatingLabel } from '@/utils/strategy';
-import { TrendingUp, Calendar, Target, BarChart3, PieChart, Activity } from 'lucide-react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart as RechartsPieChart, Cell } from '@/components/ui/safe-recharts';
+import { TrendingUp, Target, BarChart3, PieChart, Activity } from 'lucide-react';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from '@/components/ui/safe-recharts';
 
 interface ProgressAnalyticsProps {
   weeklyProgress: WeeklyProgress[];

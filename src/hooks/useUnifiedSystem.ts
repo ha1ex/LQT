@@ -5,8 +5,6 @@ import { useEnhancedHypotheses } from './strategy';
 import { useWeeklyRatings } from './useWeeklyRatings';
 import { useAIInsights } from './useAIInsights';
 import type { WeeklyRating } from '@/types/weeklyRating';
-import type { EnhancedHypothesis } from '@/types/strategy';
-import type { AIInsight } from '@/types/ai';
 
 export interface SystemConnection {
   id: string;
@@ -80,16 +78,14 @@ export interface UnifiedRecommendation {
  */
 export const useUnifiedSystem = () => {
   const { appState } = useGlobalData();
-  const { 
-    integratedMetrics, 
-    strategyDashboardLinks, 
+  const {
+    integratedMetrics,
     activeHypotheses,
-    currentWeekData,
-    analytics: ratingsAnalytics 
+    currentWeekData
   } = useIntegratedData();
-  
+
   const { hypotheses } = useEnhancedHypotheses();
-  const { ratings, getAnalytics } = useWeeklyRatings();
+  const { ratings } = useWeeklyRatings();
   const { insights } = useAIInsights();
 
   // Состояние системных связей
@@ -385,10 +381,8 @@ export const useUnifiedSystem = () => {
           
           if (weekIndex >= 0) {
             // Конвертируем рейтинг 1-10 в прогресс 0-4
-            const progressRating = Math.min(4, Math.max(0, Math.floor((currentRating - 1) / 2.25))) as 0 | 1 | 2 | 3 | 4;
-            
+            // const progressRating = Math.min(4, Math.max(0, Math.floor((currentRating - 1) / 2.25))) as 0 | 1 | 2 | 3 | 4;
             // Здесь должно быть обновление через useEnhancedHypotheses
-            console.log(`Sync rating ${currentRating} -> progress ${progressRating} for hypothesis ${hypothesis.id}`);
           }
         }
       }
@@ -397,7 +391,7 @@ export const useUnifiedSystem = () => {
       createSystemConnections();
       
     } catch (error) {
-      console.error('Error syncing system data:', error);
+      if (import.meta.env.DEV) console.error('Error syncing system data:', error);
     } finally {
       setIsAnalyzing(false);
     }

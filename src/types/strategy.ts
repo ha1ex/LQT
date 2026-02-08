@@ -98,12 +98,16 @@ export interface EnhancedHypothesis {
   validationErrors: ValidationError[];
   experimentStartDate: Date;
   experimentStatus: ExperimentStatus;
-  experimentResults: any[];
-  successCriteria: string[];
-  weeklyProgress: WeeklyProgress[];
   status: 'active' | 'completed' | 'paused';
   progress: number; // Прогресс выполнения (0-100%)
   journal: JournalEntry[];
+  experimentResults: Array<{
+    date: Date;
+    result: string;
+    impact: number;
+  }>;
+  successCriteria: string[];
+  weeklyProgress: WeeklyProgress[];
   createdAt: Date;
   updatedAt: Date;
 }

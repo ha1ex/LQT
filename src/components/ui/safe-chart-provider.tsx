@@ -7,7 +7,7 @@ interface ChartErrorFallbackProps {
 }
 
 const ChartErrorFallback: React.FC<ChartErrorFallbackProps> = ({ error, resetErrorBoundary }) => {
-  console.error('Chart Error Boundary caught error:', error);
+  if (import.meta.env.DEV) console.error('Chart Error Boundary caught error:', error);
   
   return (
     <div className="flex items-center justify-center h-32 border-2 border-dashed border-destructive/20 rounded-lg bg-destructive/5">
@@ -40,7 +40,7 @@ export const SafeChartProvider: React.FC<SafeChartProviderProps> = ({
     <ErrorBoundary
       FallbackComponent={fallback}
       onError={(error, errorInfo) => {
-        console.error('🚨 Chart Error Boundary:', {
+        if (import.meta.env.DEV) console.error('Chart Error Boundary:', {
           error: error.message,
           stack: error.stack,
           componentStack: errorInfo.componentStack,
@@ -48,7 +48,6 @@ export const SafeChartProvider: React.FC<SafeChartProviderProps> = ({
         });
       }}
       onReset={() => {
-        console.log('🔄 Chart Error Boundary reset');
       }}
     >
       {children}

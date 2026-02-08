@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Textarea } from '@/components/ui/textarea';
 import { useAIInsights } from '@/hooks/useAIInsights';
 import { AIHypothesisImprovement } from '@/types/ai';
 import { Lightbulb, RefreshCw, Check, X, Sparkles } from 'lucide-react';
@@ -70,11 +69,11 @@ export const AIHypothesisHelper: React.FC<AIHypothesisHelperProps> = ({
 
   const getFieldColor = (field: string) => {
     switch (field) {
-      case 'conditions': return 'bg-blue-100 text-blue-800 border-blue-200';
-      case 'expectedOutcome': return 'bg-green-100 text-green-800 border-green-200';
-      case 'reasoning': return 'bg-purple-100 text-purple-800 border-purple-200';
-      case 'tasks': return 'bg-orange-100 text-orange-800 border-orange-200';
-      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+      case 'conditions': return 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 border-blue-200 dark:border-blue-800';
+      case 'expectedOutcome': return 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 border-green-200 dark:border-green-800';
+      case 'reasoning': return 'bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 border-purple-200 dark:border-purple-800';
+      case 'tasks': return 'bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-200 border-orange-200 dark:border-orange-800';
+      default: return 'bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 border-gray-200 dark:border-gray-700';
     }
   };
 
@@ -131,7 +130,7 @@ export const AIHypothesisHelper: React.FC<AIHypothesisHelperProps> = ({
           <CardContent className="space-y-3">
             {hypothesis.conditions && (
               <div>
-                <Badge variant="outline" className="bg-blue-100 text-blue-800 border-blue-200 mb-2">
+                <Badge variant="outline" className="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 border-blue-200 dark:border-blue-800 mb-2">
                   ЕСЛИ
                 </Badge>
                 <p className="text-sm text-muted-foreground">{hypothesis.conditions}</p>
@@ -139,7 +138,7 @@ export const AIHypothesisHelper: React.FC<AIHypothesisHelperProps> = ({
             )}
             {hypothesis.expectedOutcome && (
               <div>
-                <Badge variant="outline" className="bg-green-100 text-green-800 border-green-200 mb-2">
+                <Badge variant="outline" className="bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 border-green-200 dark:border-green-800 mb-2">
                   ТО
                 </Badge>
                 <p className="text-sm text-muted-foreground">{hypothesis.expectedOutcome}</p>
@@ -147,7 +146,7 @@ export const AIHypothesisHelper: React.FC<AIHypothesisHelperProps> = ({
             )}
             {hypothesis.reasoning && (
               <div>
-                <Badge variant="outline" className="bg-purple-100 text-purple-800 border-purple-200 mb-2">
+                <Badge variant="outline" className="bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 border-purple-200 dark:border-purple-800 mb-2">
                   ПОТОМУ ЧТО
                 </Badge>
                 <p className="text-sm text-muted-foreground">{hypothesis.reasoning}</p>
@@ -194,7 +193,7 @@ export const AIHypothesisHelper: React.FC<AIHypothesisHelperProps> = ({
                     {getFieldLabel(improvement.field)}
                   </Badge>
                   {isImprovementApplied(improvement) && (
-                    <Badge variant="outline" className="bg-green-100 text-green-800 border-green-200">
+                    <Badge variant="outline" className="bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 border-green-200 dark:border-green-800">
                       <Check className="h-3 w-3 mr-1" />
                       Применено
                     </Badge>
@@ -213,13 +212,13 @@ export const AIHypothesisHelper: React.FC<AIHypothesisHelperProps> = ({
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <p className="text-sm font-medium mb-2 text-red-600">Было:</p>
-                    <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+                    <div className="p-3 bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded-lg">
                       <p className="text-sm">{improvement.original}</p>
                     </div>
                   </div>
                   <div>
                     <p className="text-sm font-medium mb-2 text-green-600">Предлагается:</p>
-                    <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+                    <div className="p-3 bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 rounded-lg">
                       <p className="text-sm">{improvement.improved}</p>
                     </div>
                   </div>

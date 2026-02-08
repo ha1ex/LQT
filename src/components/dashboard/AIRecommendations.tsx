@@ -1,221 +1,178 @@
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Sparkles, ArrowRight, RefreshCw, Target, Lightbulb } from 'lucide-react';
 import { useIntegratedData } from '@/hooks/useIntegratedData';
 
+interface Recommendation {
+  title: string;
+  description: string;
+  action: string;
+  type: string;
+  metricId?: string;
+  tag?: string;
+}
+
 interface AIRecommendationsProps {
-  allMetrics: any[];
-  currentWeekData: any;
+  allMetrics: Array<{ id: string; name: string; icon: string; category: string }>;
+  currentWeekData: Record<string, unknown> | null;
   onOpenAIChat: () => void;
   onCreateHypothesis?: (metricId?: string) => void;
   onViewHypothesis?: (id: string) => void;
 }
 
-const AIRecommendations: React.FC<AIRecommendationsProps> = ({ 
-  allMetrics, 
-  currentWeekData, 
+const AIRecommendations: React.FC<AIRecommendationsProps> = ({
+  allMetrics,
+  currentWeekData,
   onOpenAIChat,
   onCreateHypothesis,
   onViewHypothesis
 }) => {
-  // Get integrated data for smart recommendations
-  const { smartRecommendations, strategyDashboardLinks, integratedMetrics } = useIntegratedData();
-  const [currentRecommendation, setCurrentRecommendation] = useState(0);
+  const { smartRecommendations, integratedMetrics, periodLabel } = useIntegratedData();
+  const [currentIdx, setCurrentIdx] = useState(0);
 
-  // Enhanced recommendations combining traditional analysis with strategy data
-  const generateRecommendations = () => {
-    // Start with smart recommendations from integrated data
-    const strategyRecommendations = smartRecommendations.slice(0, 2).map(rec => ({
-      title: rec.title,
-      description: rec.description,
-      action: rec.type === 'create-hypothesis' ? "Создать эксперимент" : 
-              rec.type === 'revise-hypothesis' ? "Пересмотреть" : 
-              "Применить опыт",
-      type: rec.type,
-      data: rec.action(),
-      isStrategy: true
-    }));
+  const weekNum = periodLabel?.match(/W\d+/)?.[0] || '';
 
-    // Traditional metric-based recommendations  
-    const recommendations = [];
-    
-    // Анализируем проблемные области
+  const generateRecommendations = (): Recommendation[] => {
+    const recs: Recommendation[] = [];
+
     const problemMetrics = integratedMetrics
       .filter(metric => metric.currentValue > 0 && metric.currentValue <= 4)
       .sort((a, b) => a.currentValue - b.currentValue);
 
-    // Анализируем сильные стороны
     const strongMetrics = integratedMetrics
       .filter(metric => metric.currentValue >= 8)
       .sort((a, b) => b.currentValue - a.currentValue);
 
-    // Рекомендации для проблемных зон
     if (problemMetrics.length > 0) {
-      const worstMetric = problemMetrics[0];
-      if (worstMetric.category === 'finance') {
-        recommendations.push({
-          title: "💰 Финансовая стабильность",
-          description: `${worstMetric.name} требует внимания. ${worstMetric.hasActiveExperiment ? 'Пересмотрите подход' : 'Создайте план эксперимента'}.`,
-          action: worstMetric.hasActiveExperiment ? "Пересмотреть" : "Создать план",
-          type: worstMetric.hasActiveExperiment ? 'revise' : 'create',
-          metricId: worstMetric.id
-        });
-      } else if (worstMetric.category === 'health') {
-        recommendations.push({
-          title: "🏃‍♂️ Забота о здоровье",
-          description: `${worstMetric.name} можно улучшить. ${worstMetric.hasActiveExperiment ? 'Корректируйте стратегию' : 'Начните с 15 минут в день'}.`,
-          action: worstMetric.hasActiveExperiment ? "Корректировать" : "Начать сегодня",
-          type: worstMetric.hasActiveExperiment ? 'revise' : 'create',
-          metricId: worstMetric.id
-        });
-      } else {
-        recommendations.push({
-          title: "🎯 Развитие",
-          description: `Сфокусируйтесь на ${worstMetric.name.toLowerCase()} - это принесёт наибольший эффект.`,
-          action: worstMetric.hasActiveExperiment ? "Пересмотреть" : "Начать работу",
-          type: worstMetric.hasActiveExperiment ? 'revise' : 'create',
-          metricId: worstMetric.id
-        });
-      }
+      const worst = problemMetrics[0];
+      recs.push({
+        title: worst.category === 'health'
+          ? '🏃 Забота о здоровье'
+          : worst.category === 'finance'
+            ? '💰 Финансовая стабильность'
+            : `🎯 Развитие: ${worst.name}`,
+        description: worst.category === 'health'
+          ? `${worst.name} можно улучшить. Начните с 15 минут в день.`
+          : `Низкая оценка (${worst.currentValue}/10) требует системного подхода`,
+        action: 'Начать сегодня →',
+        type: 'create',
+        metricId: worst.id,
+        tag: '🎯 Стратегия',
+      });
     }
 
-    // Рекомендации для усиления сильных сторон
+    if (problemMetrics.length > 1) {
+      const second = problemMetrics[1];
+      recs.push({
+        title: `📉 ${second.name}`,
+        description: `Оценка ${second.currentValue}/10. Создайте эксперимент для улучшения этой области.`,
+        action: 'Создать эксперимент →',
+        type: 'create',
+        metricId: second.id,
+        tag: '🎯 Стратегия',
+      });
+    }
+
     if (strongMetrics.length > 0) {
-      const strongestMetric = strongMetrics[0];
-      recommendations.push({
-        title: "⭐ Используйте силу",
-        description: `Ваша сила в ${strongestMetric.name.toLowerCase()}. Как это поможет в других сферах?`,
-        action: "Исследовать",
+      const best = strongMetrics[0];
+      recs.push({
+        title: '⭐ Используйте силу',
+        description: `Ваша сила в ${best.name.toLowerCase()}. Как это поможет в других сферах?`,
+        action: 'Исследовать →',
         type: 'leverage',
-        metricId: strongestMetric.id
+        metricId: best.id,
       });
     }
 
-    // Общие рекомендации
-    const averageScore = integratedMetrics.reduce((sum, metric) => {
-      return sum + metric.currentValue;
-    }, 0) / integratedMetrics.length;
-
-    if (averageScore < 5) {
-      recommendations.push({
-        title: "🌱 Начните с малого",
-        description: "Выберите одну сферу для улучшения. Маленькие шаги ведут к большим изменениям.",
-        action: "Выбрать цель",
-        type: 'general'
-      });
-    } else if (averageScore >= 7) {
-      recommendations.push({
-        title: "🚀 Время роста",
-        description: "У вас отличная база! Время ставить амбициозные цели и выходить из зоны комфорта.",
-        action: "Поставить цель",
-        type: 'general'
+    if (recs.length === 0) {
+      recs.push({
+        title: '🤖 ИИ готов помочь',
+        description: 'Расскажите о своих целях, и я дам персональные рекомендации.',
+        action: 'Начать чат →',
+        type: 'chat',
       });
     }
 
-    // Combine strategy and traditional recommendations
-    const allRecommendations = [...strategyRecommendations, ...recommendations];
-    
-    return allRecommendations.length > 0 ? allRecommendations : [
-      {
-        title: "🤖 ИИ готов помочь",
-        description: "Расскажите о своих целях, и я дам персональные рекомендации.",
-        action: "Начать чат",
-        type: 'chat'
-      }
-    ];
+    return recs;
   };
 
   const recommendations = generateRecommendations();
 
-  // Автоматическая ротация рекомендаций каждые 10 секунд
   useEffect(() => {
     if (recommendations.length > 1) {
       const interval = setInterval(() => {
-        setCurrentRecommendation(prev => (prev + 1) % recommendations.length);
+        setCurrentIdx(prev => (prev + 1) % recommendations.length);
       }, 10000);
       return () => clearInterval(interval);
     }
   }, [recommendations.length]);
 
-  const currentRec = recommendations[currentRecommendation];
+  const rec = recommendations[currentIdx % recommendations.length];
 
   return (
-    <Card className="border-border bg-card hover:bg-accent/50 transition-colors cursor-pointer" onClick={onOpenAIChat}>
-      <CardHeader className="pb-3">
-        <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-          <Sparkles className="w-4 h-4 text-primary" />
-          Рекомендации ИИ
+    <div className="bg-card border border-border rounded-[10px] p-3">
+      {/* Header */}
+      <div className="flex justify-between items-start mb-2.5">
+        <div className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
+          💡 Рекомендации ИИ
+        </div>
+        <div className="flex items-center gap-1.5">
+          {weekNum && <span className="text-[9px] text-muted-foreground">{weekNum}</span>}
           {recommendations.length > 1 && (
-            <span className="text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded">
-              {currentRecommendation + 1}/{recommendations.length}
+            <span className="text-[9px] px-1.5 py-0.5 rounded bg-muted/60 text-muted-foreground">
+              {currentIdx + 1}/{recommendations.length}
             </span>
           )}
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        <div className="space-y-2">
-          <div className="flex items-center gap-2">
-            <h4 className="font-medium text-sm text-foreground">
-              {currentRec.title}
-            </h4>
-            {currentRec.isStrategy && (
-              <Badge variant="outline" className="text-xs">
-                <Lightbulb className="w-2 h-2 mr-1" />
-                Стратегия
-              </Badge>
-            )}
-          </div>
-          <p className="text-xs text-muted-foreground leading-relaxed">
-            {currentRec.description}
-          </p>
         </div>
+      </div>
 
-        <div className="flex items-center justify-between pt-2">
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="text-xs"
+      {/* Recommendation card */}
+      <div className="bg-muted/40 rounded-md p-2.5">
+        <div className="flex justify-between items-start mb-1.5">
+          <span className="text-[11px] font-medium text-foreground">{rec.title}</span>
+          {rec.tag && (
+            <span className="text-[9px] px-1.5 py-0.5 rounded bg-purple-500/10 text-purple-400 shrink-0 ml-2">
+              {rec.tag}
+            </span>
+          )}
+        </div>
+        <p className="text-[10px] text-muted-foreground leading-relaxed mb-2">
+          {rec.description}
+        </p>
+        <div className="flex items-center gap-1.5">
+          <button
             onClick={(e) => {
               e.stopPropagation();
-              
-              if (currentRec.type === 'create-hypothesis' || currentRec.type === 'create') {
-                onCreateHypothesis?.(currentRec.metricId);
-              } else if (currentRec.type === 'revise-hypothesis' && currentRec.data?.id) {
-                onViewHypothesis?.(currentRec.data.id);
+              if (rec.type === 'create' && onCreateHypothesis) {
+                onCreateHypothesis(rec.metricId);
               } else {
                 onOpenAIChat();
               }
             }}
+            className="px-2 py-1 rounded text-[10px] bg-card border border-border text-foreground hover:bg-muted/50 transition-colors"
           >
-            {currentRec.isStrategy && <Target className="w-3 h-3 mr-1" />}
-            {currentRec.action}
-            <ArrowRight className="w-3 h-3 ml-1" />
-          </Button>
-          
+            {rec.action}
+          </button>
           {recommendations.length > 1 && (
-            <Button 
-              variant="ghost" 
-              size="sm"
+            <button
               onClick={(e) => {
                 e.stopPropagation();
-                setCurrentRecommendation(prev => (prev + 1) % recommendations.length);
+                setCurrentIdx(prev => (prev + 1) % recommendations.length);
               }}
-              className="p-1.5"
+              className="px-1.5 py-1 rounded text-[10px] text-muted-foreground hover:text-foreground transition-colors"
             >
-              <RefreshCw className="w-3 h-3" />
-            </Button>
+              🔄
+            </button>
           )}
         </div>
+      </div>
 
-        <div className="text-center pt-2 border-t border-border">
-          <Button variant="ghost" size="sm" className="text-xs text-primary">
-            Открыть ИИ чат
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
+      {/* Footer link */}
+      <button
+        onClick={onOpenAIChat}
+        className="text-primary text-[10px] mt-2 cursor-pointer hover:underline block"
+      >
+        Открыть ИИ чат
+      </button>
+    </div>
   );
 };
 

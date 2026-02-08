@@ -1,7 +1,6 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
@@ -30,8 +29,6 @@ export const HypothesisWizard: React.FC<HypothesisWizardProps> = ({ onComplete, 
   const { subjects, loading: subjectsLoading } = useSubjects();
   const { createHypothesis } = useEnhancedHypotheses();
 
-  // Debug logging
-  console.log('🔍 HypothesisWizard - subjects:', subjects.length, subjects);
 
   const steps = [
     { number: 1, title: 'Цель', icon: Target, description: 'Выберите цель для улучшения' },
@@ -69,23 +66,7 @@ export const HypothesisWizard: React.FC<HypothesisWizardProps> = ({ onComplete, 
 
   const handleSubmit = () => {
     if (isFormValid()) {
-      const hypothesisData = {
-        ...formData,
-        // Добавляем базовые задачи для новой гипотезы
-        tasks: [
-          {
-            description: "Ежедневные действия по гипотезе",
-            frequency: 'daily' as const,
-            priority: 'high' as const
-          },
-          {
-            description: "Еженедельная оценка прогресса", 
-            frequency: 'weekly' as const,
-            priority: 'medium' as const
-          }
-        ]
-      };
-      createHypothesis(hypothesisData as HypothesisFormData);
+      createHypothesis(formData as HypothesisFormData);
       onComplete();
     }
   };
@@ -359,7 +340,7 @@ export const HypothesisWizard: React.FC<HypothesisWizardProps> = ({ onComplete, 
   );
 
   return (
-    <div className="max-w-4xl mx-auto p-6">
+    <div className="max-w-4xl mx-auto">
       {/* Progress Steps */}
       <div className="mb-8">
         <div className="flex items-center justify-between">

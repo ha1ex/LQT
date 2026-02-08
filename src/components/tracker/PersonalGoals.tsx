@@ -5,7 +5,7 @@ import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
-import { Target, Plus, Edit, Trash2, CheckCircle, Circle } from 'lucide-react';
+import { Target, Plus, Trash2, CheckCircle, Circle } from 'lucide-react';
 
 interface Metric {
   id: string;
@@ -53,7 +53,7 @@ const PersonalGoals: React.FC<PersonalGoalsProps> = ({
       try {
         setGoals(JSON.parse(savedGoals));
       } catch (error) {
-        console.error('Error loading goals:', error);
+        if (import.meta.env.DEV) console.error('Error loading goals:', error);
       }
     }
   }, []);
@@ -117,32 +117,6 @@ const PersonalGoals: React.FC<PersonalGoalsProps> = ({
 
   const removeGoal = (goalId: string) => {
     setGoals(prev => prev.filter(g => g.id !== goalId));
-  };
-
-  const editGoal = (goalId: string, newTargetValue: number) => {
-    setGoals(prev => 
-      prev.map(goal => {
-        if (goal.id === goalId) {
-          const progress = Math.min(100, Math.round((goal.currentValue / newTargetValue) * 100));
-          const isCompleted = goal.currentValue >= newTargetValue;
-          
-          return {
-            ...goal,
-            targetValue: newTargetValue,
-            progress,
-            isCompleted
-          };
-        }
-        return goal;
-      })
-    );
-  };
-
-  const getProgressColor = (progress: number) => {
-    if (progress >= 100) return 'bg-green-500';
-    if (progress >= 75) return 'bg-blue-500';
-    if (progress >= 50) return 'bg-yellow-500';
-    return 'bg-red-500';
   };
 
   const getProgressTextColor = (progress: number) => {

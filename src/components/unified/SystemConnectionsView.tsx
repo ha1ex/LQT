@@ -34,7 +34,7 @@ export const SystemConnectionsView: React.FC<SystemConnectionsViewProps> = ({
     unifiedRecommendations 
   } = useUnifiedSystem();
 
-  const [selectedConnection, setSelectedConnection] = useState<string | null>(null);
+  const [, setSelectedConnection] = useState<string | null>(null);
 
   // Группировка связей по типам
   const connectionsByType = useMemo(() => {

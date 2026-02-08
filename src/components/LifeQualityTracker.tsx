@@ -1,50 +1,33 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { useState, useEffect, useMemo, useCallback } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { Separator } from '@/components/ui/separator';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
 import { BottomNavigation } from '@/components/ui/bottom-navigation';
 import { MobileHeader } from '@/components/ui/mobile-header';
 import { useMobile } from '@/hooks/use-mobile';
-import { 
-  Home, BarChart3, Target, TrendingUp, Search, Bell, Settings as SettingsIcon, 
-  Heart, Dumbbell, Brain, Users, DollarSign, Briefcase, 
-  Star, ChevronRight, Plus, Minus, Calendar, Clock,
-  Activity, Zap, Sun, Moon, Coffee, Book, Music, Camera,
-  Award, Trophy, Flame, CheckCircle, XCircle, ArrowUp, ArrowDown,
-  MoreHorizontal, Filter, RefreshCw, Share2, Download, Menu,
-  ChevronLeft, ChevronDown, Eye, Edit, Delete, Lightbulb,
-  Calendar as CalendarIcon, Smile, Meh, Frown, Angry, Laugh,
+import {
+  Home, BarChart3, Target, TrendingUp, Search, Settings as SettingsIcon,
+  Brain,
+  Star, ChevronRight, Plus, Calendar,
+  Activity,
+  Award,
+  Menu,
+  Lightbulb,
   X, Sparkles, ArrowLeft
 } from 'lucide-react';
-import { 
-  LineChart as RechartsLineChart, 
-  AreaChart, 
+import {
+  LineChart as RechartsLineChart,
   ResponsiveContainer,
-  Line, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  Legend, 
-  Area,
-  Bar, 
-  Pie, 
-  Cell
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
 } from '@/components/ui/safe-recharts';
 
 // Новые компоненты для улучшенного UX
 import CategoryBadge from './tracker/CategoryBadge';
-import StreakSystem from './tracker/StreakSystem';
 import QuickEmojiRating from './tracker/QuickEmojiRating';
-import Breadcrumbs from './tracker/Breadcrumbs';
 import WeeklyInsights from './tracker/WeeklyInsights';
 import CorrelationAnalysis from './tracker/CorrelationAnalysis';
 import MetricNotes from './tracker/MetricNotes';
@@ -53,33 +36,39 @@ import PersonalInsights from './tracker/PersonalInsights';
 import PersonalGoals from './tracker/PersonalGoals';
 import { StrategyDashboard, HypothesisWizard, HypothesisDetail } from './strategy';
 import { AdaptiveDashboard, AIWelcomeWizard } from './ai';
-import { WeeklyRatingCalendar, WeekDetailModal, RatingAnalytics } from './rating';
-import { ProblemAreas, WeeklyProgress, Strengths, AIRecommendations } from './dashboard';
-import { UnifiedDashboard } from './unified/UnifiedDashboard';
+import { WeeklyRatingCalendar, WeekDetailModal, AssessmentSplitView } from './rating';
+import { ProblemAreas, WeeklyProgress, Strengths, AIRecommendations, DashboardView as DashboardViewNew } from './dashboard';
+import { AnalyticsView as AnalyticsViewNew } from './analytics';
 import { Settings } from '@/pages/Settings';
 import { useIntegratedData } from '@/hooks/useIntegratedData';
 import { useWeeklyRatings } from '@/hooks/useWeeklyRatings';
 import { useGlobalData } from '@/contexts/GlobalDataProvider';
-import { DemoModeToggle } from '@/components/ui/demo-mode-toggle';
 import { OnboardingWizard } from '@/components/onboarding/OnboardingWizard';
 import { EmptyStateView } from '@/components/ui/empty-state-view';
-import { adaptWeeklyRatingsToMockData, filterDataByPeriod, BASE_METRICS } from '@/utils/dataAdapter';
+import { adaptWeeklyRatingsToMockData, filterDataByPeriod } from '@/utils/dataAdapter';
+import { format } from 'date-fns';
+import { ru } from 'date-fns/locale';
+import { cn } from '@/lib/utils';
+
+
+
+
 
 const LifeQualityTracker = () => {
   const [currentView, setCurrentView] = useState('dashboard');
-  const [timeFilter, setTimeFilter] = useState('month');
+  const [timeFilter, setTimeFilter] = useState('year');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [useQuickRating, setUseQuickRating] = useState(false);
-  const [weekRatings, setWeekRatings] = useState({});
+  const [, setWeekRatings] = useState({});
   const [metricNotes, setMetricNotes] = useState({});
   const [selectedMetric, setSelectedMetric] = useState(null);
-  const [animationDelay, setAnimationDelay] = useState(0);
+  // animationDelay state removed (unused)
   const [customMetrics, setCustomMetrics] = useState([]);
   const [isAddingMetric, setIsAddingMetric] = useState(false);
   const [newMetricName, setNewMetricName] = useState('');
   const [newMetricDescription, setNewMetricDescription] = useState('');
-  const [currentStreak, setCurrentStreak] = useState(5);
-  const [bestStreak, setBestStreak] = useState(12);
+  const [currentStreak] = useState(5);
+
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [strategyView, setStrategyView] = useState<'dashboard' | 'create' | 'detail'>('dashboard');
   const [selectedHypothesisId, setSelectedHypothesisId] = useState<string | null>(null);
@@ -92,10 +81,10 @@ const LifeQualityTracker = () => {
   
   // Global data management with error boundary
   const globalData = useGlobalData();
-  const { appState, syncStatus, generateDemoData, toggleDemoMode } = globalData || {};
+  const { appState } = globalData || {};
   
   // Integrated dashboard-strategy data
-  const { integratedMetrics, smartRecommendations } = useIntegratedData();
+  const { periodLabel } = useIntegratedData();
   
   // Weekly ratings hook
   const {
@@ -104,11 +93,17 @@ const LifeQualityTracker = () => {
     getCurrentWeekRating,
     updateWeekRating,
     updateMetricRating,
+    deleteWeekRating,
     getAnalytics,
-    goToWeek,
-    generateTestData
+    goToWeek
   } = useWeeklyRatings();
+
+
+
+
   
+
+
   // Check if we should show onboarding or AI welcome
   useEffect(() => {
     const hasShownOnboarding = localStorage.getItem('lqt_onboarding_completed');
@@ -144,86 +139,118 @@ const LifeQualityTracker = () => {
     setShowAIWelcome(false);
   };
   
-  // Базовые метрики с иконками и описаниями
+  // Базовые метрики — актуальный список по Q1/26 из "Качество жизни.xlsx"
   const baseMetrics = [
-    { 
+    {
       id: 'peace_of_mind',
-      name: 'Спокойствие ума', 
-      icon: '🧘', 
+      name: 'Спокойствие ума',
+      icon: '🧘',
       description: 'Внутренняя гармония и стрессоустойчивость',
       category: 'mental',
       isCustom: false
     },
-    { 
+    {
       id: 'financial_cushion',
-      name: 'Финансовая подушка', 
-      icon: '💰', 
+      name: 'Финансовая подушка',
+      icon: '💰',
       description: 'Финансовая стабильность и резервы',
       category: 'finance',
       isCustom: false
     },
-    { 
+    {
       id: 'income',
-      name: 'Доход', 
-      icon: '📈', 
+      name: 'Доход',
+      icon: '📈',
       description: 'Уровень и стабильность доходов',
       category: 'finance',
       isCustom: false
     },
-    { 
+    {
       id: 'wife_communication',
-      name: 'Качество общения с женой', 
-      icon: '❤️', 
+      name: 'Качество общения с женой',
+      icon: '❤️',
       description: 'Близость и взаимопонимание в отношениях',
       category: 'relationships',
       isCustom: false
     },
-    { 
+    {
       id: 'family_communication',
-      name: 'Качество общения с семьей', 
-      icon: '👨‍👩‍👧‍👦', 
+      name: 'Качество общения с семьёй',
+      icon: '👨‍👩‍👧‍👦',
       description: 'Семейные связи и поддержка',
       category: 'relationships',
       isCustom: false
     },
-    { 
-      id: 'physical_health',
-      name: 'Физическое здоровье', 
-      icon: '💪', 
-      description: 'Состояние тела и физическая форма',
+    {
+      id: 'physical_activity',
+      name: 'Уровень физической активности',
+      icon: '🏃',
+      description: 'Регулярность и интенсивность физических нагрузок',
       category: 'health',
       isCustom: false
     },
-    { 
+    {
       id: 'socialization',
-      name: 'Социализация', 
-      icon: '🤝', 
+      name: 'Социализация',
+      icon: '🤝',
       description: 'Общение и социальные связи',
       category: 'social',
       isCustom: false
     },
-    { 
+    {
       id: 'manifestation',
-      name: 'Проявленность', 
-      icon: '🎯', 
+      name: 'Проявленность',
+      icon: '🎯',
       description: 'Самореализация и достижение целей',
       category: 'personal',
       isCustom: false
     },
-    { 
+    {
       id: 'travel',
-      name: 'Путешествия', 
-      icon: '✈️', 
+      name: 'Путешествия',
+      icon: '✈️',
       description: 'Исследование мира и новый опыт',
       category: 'lifestyle',
       isCustom: false
     },
-    { 
+    {
       id: 'mental_health',
-      name: 'Ментальное здоровье', 
-      icon: '🧠', 
+      name: 'Ментальное здоровье',
+      icon: '🧠',
       description: 'Психическое благополучие',
       category: 'mental',
+      isCustom: false
+    },
+    {
+      id: 'anxiety_level',
+      name: 'Уровень тревожности',
+      icon: '😰',
+      description: 'Уровень тревоги и беспокойства',
+      category: 'mental',
+      isCustom: false
+    },
+    {
+      id: 'health_condition',
+      name: 'Состояние здоровья',
+      icon: '🏥',
+      description: 'Общее состояние здоровья и самочувствие',
+      category: 'health',
+      isCustom: false
+    },
+    {
+      id: 'happiness',
+      name: 'Ощущение счастья',
+      icon: '😊',
+      description: 'Общее ощущение счастья и удовлетворённости',
+      category: 'personal',
+      isCustom: false
+    },
+    {
+      id: 'self_esteem',
+      name: 'Самооценка',
+      icon: '💎',
+      description: 'Уверенность в себе и самоценность',
+      category: 'personal',
       isCustom: false
     }
   ];
@@ -231,28 +258,87 @@ const LifeQualityTracker = () => {
   // Объединяем базовые и кастомные метрики
   const allMetrics = [...baseMetrics, ...customMetrics];
 
-  // Функция для генерации инсайтов
+  // Функция для генерации инсайтов на основе реальных данных
   const generateWeeklyInsights = () => {
-    return [
-      {
-        type: 'improvement' as const,
-        title: 'Отличный прогресс!',
-        description: 'Ваше физическое здоровье улучшилось на 2 балла за неделю',
-        metric: 'Физическое здоровье',
-        change: 2.0
-      },
-      {
-        type: 'recommendation' as const,
-        title: 'Обратите внимание',
-        description: 'Финансовая подушка требует больше внимания. Попробуйте составить план накоплений',
-        metric: 'Финансовая подушка'
-      },
-      {
-        type: 'achievement' as const,
-        title: 'Достижение!',
-        description: 'Вы поддерживаете стрик уже 5 недель подряд',
+    const insights: Array<{
+      type: 'improvement' | 'decline' | 'recommendation' | 'achievement';
+      title: string;
+      description: string;
+      metric?: string;
+      change?: number;
+    }> = [];
+
+    if (mockData.length < 2) return insights;
+
+    const latest = mockData[mockData.length - 1];
+    const previous = mockData[mockData.length - 2];
+
+    // Find improvements and declines
+    allMetrics.forEach(metric => {
+      const current = latest?.[metric.name];
+      const prev = previous?.[metric.name];
+      if (typeof current === 'number' && typeof prev === 'number' && current > 0 && prev > 0) {
+        const change = current - prev;
+        if (change >= 2) {
+          insights.push({
+            type: 'improvement',
+            title: `${metric.icon} Рост: ${metric.name}`,
+            description: `Улучшение с ${prev} до ${current} (+${change}) за неделю`,
+            metric: metric.name,
+            change
+          });
+        } else if (change <= -2) {
+          insights.push({
+            type: 'decline',
+            title: `⚠️ Снижение: ${metric.name}`,
+            description: `Снижение с ${prev} до ${current} (${change}) за неделю`,
+            metric: metric.name,
+            change
+          });
+        }
       }
-    ];
+    });
+
+    // Find low metrics needing attention
+    allMetrics.forEach(metric => {
+      const current = latest?.[metric.name];
+      if (typeof current === 'number' && current > 0 && current <= 4) {
+        insights.push({
+          type: 'recommendation',
+          title: `Обратите внимание на «${metric.name}»`,
+          description: `Текущая оценка ${current}/10. Эта область требует внимания`,
+          metric: metric.name
+        });
+      }
+    });
+
+    // Find strengths (high metrics maintained)
+    const highMetrics = allMetrics.filter(m => {
+      const val = latest?.[m.name];
+      return typeof val === 'number' && val >= 8;
+    });
+    if (highMetrics.length >= 3) {
+      insights.push({
+        type: 'achievement',
+        title: '🏆 Отличная неделя!',
+        description: `${highMetrics.length} метрик с оценкой 8+ — продолжайте в том же духе`
+      });
+    }
+
+    // Total weeks tracked
+    if (mockData.length >= 10) {
+      insights.push({
+        type: 'achievement',
+        title: '📊 Стабильное отслеживание',
+        description: `Вы отслеживаете качество жизни уже ${mockData.length} недель`
+      });
+    }
+
+    // Sort: improvements first, then declines, then recommendations, then achievements
+    const typeOrder = { improvement: 0, decline: 1, recommendation: 2, achievement: 3 };
+    insights.sort((a, b) => typeOrder[a.type] - typeOrder[b.type]);
+
+    return insights.slice(0, 5);
   };
 
   // Функция для расчета корреляции Пирсона с защитой от NaN
@@ -292,17 +378,40 @@ const LifeQualityTracker = () => {
     return Math.max(-1, Math.min(1, correlation));
   };
 
+  // Линейная регрессия для линии тренда
+  const addTrendLine = (data: any[]): any[] => {
+    if (data.length < 2) return data;
+    const vals = data.map((d, i) => ({ x: i, y: typeof d.overall === 'number' && isFinite(d.overall) ? d.overall : null }));
+    const valid = vals.filter(v => v.y !== null) as { x: number; y: number }[];
+    if (valid.length < 2) return data.map(d => ({ ...d, trendLine: d.overall ?? 0 }));
+
+    const n = valid.length;
+    const sumX = valid.reduce((s, v) => s + v.x, 0);
+    const sumY = valid.reduce((s, v) => s + v.y, 0);
+    const sumXY = valid.reduce((s, v) => s + v.x * v.y, 0);
+    const sumX2 = valid.reduce((s, v) => s + v.x * v.x, 0);
+    const denom = n * sumX2 - sumX * sumX;
+    if (denom === 0) return data.map(d => ({ ...d, trendLine: sumY / n }));
+
+    const slope = (n * sumXY - sumX * sumY) / denom;
+    const intercept = (sumY - slope * sumX) / n;
+
+    return data.map((d, i) => ({
+      ...d,
+      trendLine: parseFloat((slope * i + intercept).toFixed(2)),
+    }));
+  };
+
   // Функция для получения отфильтрованных данных с санитизацией
   const getFilteredData = (filter: string) => {
     const rawData = filterDataByPeriod(mockData, filter);
-    console.log('Raw filtered data:', rawData);
-    
+
     // Санитизируем данные для предотвращения NaN
     const sanitizedData = rawData.map(week => {
       if (!week || typeof week !== 'object') return null;
-      
+
       const sanitizedWeek = { ...week };
-      
+
       // Проверяем и исправляем все числовые значения
       Object.keys(sanitizedWeek).forEach(key => {
         if (key !== 'week' && key !== 'date') {
@@ -312,40 +421,27 @@ const LifeQualityTracker = () => {
           }
         }
       });
-      
+
       return sanitizedWeek;
     }).filter(week => week !== null);
-    
-    console.log('Sanitized filtered data:', sanitizedData);
-    return sanitizedData;
-  };
 
-  // Функция для динамического расчета общего индекса
-  const calculateOverallIndex = (weekData: any, metrics: any[]) => {
-    if (!weekData || typeof weekData !== 'object') return 0;
-    
-    const values = metrics
-      .map(metric => weekData[metric.name])
-      .filter(value => typeof value === 'number' && value !== null && value !== undefined && !isNaN(value));
-    
-    return values.length > 0 ? parseFloat((values.reduce((sum, val) => sum + val, 0) / values.length).toFixed(1)) : 0;
+    // Добавляем линию тренда
+    return addTrendLine(sanitizedData);
   };
 
   // Адаптированные данные из GlobalDataProvider с полной санитизацией
   const mockData = useMemo(() => {
     const adaptedData = adaptWeeklyRatingsToMockData(weeklyRatings, appState);
-    console.log('Adapted mock data:', adaptedData);
     
     // Если данных нет, создаем пустую структуру с безопасными значениями
     if (!adaptedData || adaptedData.length === 0) {
-      console.log('No data available, creating safe fallback');
       return [];
     }
     
     // Дополнительная санитизация на уровне mockData
     const sanitizedData = adaptedData.map((week, index) => {
       if (!week || typeof week !== 'object') {
-        console.warn(`Invalid week data at index ${index}:`, week);
+        if (import.meta.env.DEV) console.warn(`Invalid week data at index ${index}:`, week);
         return null;
       }
       
@@ -366,7 +462,6 @@ const LifeQualityTracker = () => {
       return sanitizedWeek;
     }).filter(week => week !== null);
     
-    console.log('Final sanitized mock data:', sanitizedData);
     return sanitizedData;
   }, [weeklyRatings, appState]);
 
@@ -454,13 +549,6 @@ const LifeQualityTracker = () => {
     if (value >= 6) return 'text-yellow-600';
     if (value >= 4) return 'text-muted-foreground';
     return 'text-red-600';
-  };
-
-  const getScoreBgColor = (value) => {
-    if (value >= 8) return 'bg-green-50 border-green-200';
-    if (value >= 6) return 'bg-yellow-50 border-yellow-200';
-    if (value >= 4) return 'bg-muted border-border';
-    return 'bg-red-50 border-red-200';
   };
 
   // Функции для управления кастомными метриками
@@ -583,9 +671,9 @@ const LifeQualityTracker = () => {
     const navigationItems = [
       { id: 'dashboard', label: 'Главная', icon: Home },
       { id: 'rate', label: 'Оценка', icon: Calendar },
+      { id: 'analytics', label: 'Аналитика', icon: BarChart3 },
       { id: 'strategy', label: 'Стратегия', icon: Lightbulb },
       { id: 'ai', label: 'AI Coach', icon: Brain },
-      { id: 'analytics', label: 'Аналитика', icon: BarChart3 },
       { id: 'insights', label: 'Инсайты', icon: Activity },
     ];
 
@@ -704,15 +792,11 @@ const LifeQualityTracker = () => {
         <div className="flex flex-col">
           <MobileHeader
             title="Life Quality Tracker"
-            onSearch={(query) => console.log('Search:', query)}
+            onSearch={() => {}}
           >
             <Sidebar />
           </MobileHeader>
           
-          {/* Mobile Demo Toggle */}
-          <div className="bg-card border-b border-border p-3">
-            <DemoModeToggle />
-          </div>
         </div>
       );
     }
@@ -728,9 +812,6 @@ const LifeQualityTracker = () => {
           </div>
           
           <div className="flex items-center gap-4">
-            {/* Demo Mode Toggle */}
-            <DemoModeToggle />
-            
             {/* Поиск */}
             <div className="relative hidden md:block">
               <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
@@ -757,254 +838,7 @@ const LifeQualityTracker = () => {
     );
   };
 
-  // Dashboard для веб интерфейса
-  const DashboardView = () => {
-    // Показываем пустое состояние если нет данных
-    if (appState.userState === 'empty' || mockData.length === 0) {
-      return (
-        <EmptyStateView
-          onGetStarted={() => setCurrentView('rate')}
-          onViewDemo={() => {
-            toggleDemoMode();
-          }}
-        />
-      );
-    }
-
-    const latestWeek = mockData && mockData.length > 0 ? mockData[mockData.length - 1] : null;
-    const prevWeek = mockData && mockData.length > 1 ? mockData[mockData.length - 2] : latestWeek;
-    const weekChange = latestWeek && prevWeek && !isNaN(latestWeek.overall) && !isNaN(prevWeek.overall) 
-      ? latestWeek.overall - prevWeek.overall 
-      : 0;
-    const filteredData = getFilteredData(timeFilter);
-    
-    const topMetrics = latestWeek ? allMetrics
-      .map(metric => ({
-        ...metric,
-        value: typeof latestWeek[metric.name] === 'number' && !isNaN(latestWeek[metric.name]) ? latestWeek[metric.name] : 0,
-        change: latestWeek && prevWeek 
-          ? (typeof latestWeek[metric.name] === 'number' && !isNaN(latestWeek[metric.name]) ? latestWeek[metric.name] : 0) - 
-            (typeof prevWeek[metric.name] === 'number' && !isNaN(prevWeek[metric.name]) ? prevWeek[metric.name] : 0)
-          : 0
-      }))
-      .sort((a, b) => b.value - a.value)
-      .slice(0, 6) : [];
-    
-    // Safety check for empty data
-    if (!mockData || mockData.length === 0) {
-      return (
-        <div className="p-4 lg:p-6 space-y-6">
-          <div className="text-center py-12">
-            <p className="text-muted-foreground">Нет данных для отображения. Добавьте первую оценку недели.</p>
-          </div>
-        </div>
-      );
-    }
-
-    return (
-      <div className="p-4 lg:p-6 space-y-6">
-        {/* Enhanced Dashboard Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <ProblemAreas 
-            allMetrics={allMetrics}
-            currentWeekData={latestWeek}
-            onMetricClick={(metricId) => {
-              if (metricId === 'analytics') {
-                setCurrentView('analytics');
-              } else {
-                setSelectedMetric(allMetrics.find(m => m.id === metricId)?.name || null);
-                setCurrentView('analytics');
-              }
-            }}
-          />
-
-          <WeeklyProgress 
-            mockData={mockData}
-            onViewHistory={() => setCurrentView('rating')}
-          />
-
-          <Strengths 
-            allMetrics={allMetrics}
-            currentWeekData={latestWeek}
-            onMetricClick={(metricId) => {
-              setSelectedMetric(allMetrics.find(m => m.id === metricId)?.name || null);
-              setCurrentView('analytics');
-            }}
-          />
-
-          <AIRecommendations 
-            allMetrics={allMetrics}
-            currentWeekData={latestWeek}
-            onOpenAIChat={() => setCurrentView('ai')}
-          />
-        </div>
-
-        {/* Premium Chart Section */}
-        <div className="card-premium p-8 animate-fade-in">
-          <div className="flex items-center justify-between mb-8">
-            <div>
-              <h3 className="text-2xl font-bold text-foreground mb-2">Динамика общего индекса</h3>
-              <p className="text-sm text-muted-foreground">Отслеживание прогресса по времени</p>
-            </div>
-            <div className="flex gap-3">
-              {['week', 'month', 'quarter', 'year'].map(period => (
-                <button
-                  key={period}
-                  onClick={() => setTimeFilter(period)}
-                  className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200 ${
-                    timeFilter === period
-                      ? 'btn-primary'
-                      : 'btn-modern'
-                  }`}
-                >
-                  {period === 'week' ? '1Н' : period === 'month' ? '1М' : period === 'quarter' ? '3М' : '1Г'}
-                </button>
-              ))}
-            </div>
-          </div>
-          <div className="bg-card border border-border rounded-2xl p-6">
-            <ResponsiveContainer width="100%" height={350}>
-              <RechartsLineChart data={getFilteredData(timeFilter)}>
-                <defs>
-                  <linearGradient id="overallGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3}/>
-                    <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0.05}/>
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis 
-                  dataKey="week" 
-                  stroke="hsl(var(--muted-foreground))" 
-                  fontSize={12}
-                />
-                <YAxis 
-                  domain={[0, 10]} 
-                  stroke="hsl(var(--muted-foreground))" 
-                  fontSize={12}
-                />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: 'hsl(var(--card))', 
-                    border: '1px solid hsl(var(--border))',
-                    borderRadius: '8px',
-                    boxShadow: 'var(--shadow-lg)',
-                    color: 'hsl(var(--card-foreground))'
-                  }}
-                  formatter={(value: any) => [`${value.toFixed(1)}`, 'Общий индекс']}
-                  labelFormatter={(label) => `Неделя: ${label}`}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="overall"
-                  stroke="hsl(var(--primary))"
-                  strokeWidth={3}
-                  dot={{ fill: 'hsl(var(--primary))', strokeWidth: 2, r: 6 }}
-                  activeDot={{ r: 8, fill: 'hsl(var(--primary))' }}
-                />
-              </RechartsLineChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        {/* Оптимизированная секция дашборда */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Лучшие метрики - расширенный блок */}
-          <div className="lg:col-span-2 card-premium p-8 animate-slide-up">
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h3 className="text-xl font-bold text-foreground mb-2">Лучшие метрики</h3>
-                <p className="text-sm text-muted-foreground">Ваши сильные стороны на этой неделе</p>
-              </div>
-              <div className="btn-icon bg-primary/10">
-                <TrendingUp className="w-5 h-5 text-primary" />
-              </div>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {topMetrics.map((metric, index) => (
-                <div 
-                  key={metric.id}
-                  className="group flex items-center justify-between p-4 rounded-xl hover:bg-gradient-to-r hover:from-primary/5 hover:to-transparent transition-all duration-300 cursor-pointer border border-transparent hover:border-primary/10 animate-fade-in"
-                  onClick={() => {
-                    setSelectedMetric(metric.name);
-                    setCurrentView('analytics');
-                  }}
-                  style={{ animationDelay: `${index * 100}ms` }}
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="text-2xl group-hover:scale-110 transition-transform duration-200">
-                      {metric.icon}
-                    </div>
-                    <div>
-                      <div className="font-semibold text-foreground mb-1">{metric.name}</div>
-                      <CategoryBadge category={metric.category} />
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-2xl font-bold text-foreground mb-1">
-                      {metric.value.toFixed(1)}
-                    </div>
-                    <div className={`text-sm font-semibold ${metric.change >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
-                      {metric.change >= 0 ? '+' : ''}{metric.change.toFixed(1)}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Краткие инсайты - компактный блок */}
-          <div className="card-premium p-6 animate-slide-up" style={{animationDelay: '0.2s'}}>
-            <div className="flex items-center gap-3 mb-4">
-              <div className="btn-icon bg-gradient-to-br from-emerald-500 to-teal-500 text-white">
-                <Lightbulb className="w-5 h-5" />
-              </div>
-              <h3 className="text-lg font-bold text-foreground">Инсайты недели</h3>
-            </div>
-            <div className="space-y-3">
-              {generateWeeklyInsights().slice(0, 3).map((insight, index) => (
-                <div key={index} className="p-3 bg-muted/30 rounded-lg border border-border">
-                  <p className="text-sm text-muted-foreground leading-relaxed">
-                    {typeof insight === 'string' ? insight : insight.description || insight.title || ''}
-                  </p>
-                </div>
-              ))}
-            </div>
-            <button 
-              onClick={() => setCurrentView('insights')}
-              className="w-full mt-4 btn-modern text-sm"
-            >
-              Все инсайты →
-            </button>
-          </div>
-        </div>
-        
-        {/* Персональные блоки */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Персональные рекомендации */}
-          <PersonalRecommendations 
-            metrics={allMetrics}
-            data={mockData}
-            className="animate-slide-up"
-          />
-
-          {/* Ваши инсайты (корреляции) */}
-          <PersonalInsights 
-            metrics={allMetrics}
-            data={mockData}
-            className="animate-slide-up"
-          />
-
-          {/* Ваши цели */}
-          <PersonalGoals 
-            metrics={allMetrics}
-            data={mockData}
-            className="animate-slide-up"
-          />
-        </div>
-        
-      </div>
-    );
-  };
+  // DashboardView moved to ./dashboard/DashboardView.tsx
 
   // Компактный обзор областей для интеграции в аналитику
   const CompactAreasOverview = () => {
@@ -1099,29 +933,136 @@ const LifeQualityTracker = () => {
   };
 
   // Аналитика для веб интерфейса
-  const AnalyticsView = () => {
-    const filteredData = getFilteredData(timeFilter);
+  // Компонент обзора статистики (оптимизированный)
+  const StatisticsOverview = () => {
+    const analytics = getAnalytics();
+    const { averageByMetric, trendsOverTime, bestWeek } = analytics;
     
     return (
-      <div className="p-4 lg:p-6 space-y-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card className="p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-muted-foreground">Общий индекс</p>
+              <p className="text-2xl font-bold">
+                {trendsOverTime.length > 0 ? trendsOverTime[trendsOverTime.length - 1]?.averageScore?.toFixed(1) || '—' : '—'}
+              </p>
+              <p className="text-xs text-muted-foreground">Текущая неделя</p>
+            </div>
+            <Target className="w-6 h-6 text-muted-foreground" />
+          </div>
+        </Card>
+
+        <Card className="p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-muted-foreground">Лучшая неделя</p>
+              <p className="text-2xl font-bold">
+                {bestWeek ? bestWeek.overallScore.toFixed(1) : '—'}
+              </p>
+              {bestWeek && (
+                <p className="text-xs text-muted-foreground">
+                  {format(bestWeek.startDate, 'dd.MM', { locale: ru })}
+                </p>
+              )}
+            </div>
+            <Award className="w-6 h-6 text-muted-foreground" />
+          </div>
+        </Card>
+
+        <Card className="p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-muted-foreground">Оценено метрик</p>
+              <p className="text-2xl font-bold">{Object.keys(averageByMetric).length}</p>
+            </div>
+            <BarChart3 className="w-6 h-6 text-muted-foreground" />
+          </div>
+        </Card>
+
+        <Card className="p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-muted-foreground">Всего недель</p>
+              <p className="text-2xl font-bold">{trendsOverTime.length}</p>
+            </div>
+            <Calendar className="w-6 h-6 text-muted-foreground" />
+          </div>
+        </Card>
+      </div>
+    );
+  };
+
+  // Компонент средних оценок (ультра-компактный, 2 колонки)
+  const AverageScoresOverview = () => {
+    const analytics = getAnalytics();
+    const { averageByMetric } = analytics;
+
+    const metricsChartData = Object.entries(averageByMetric)
+      .filter(([, average]) => typeof average === 'number' && !isNaN(average))
+      .map(([metricId, average]) => {
+        const metric = allMetrics.find(m => m.id === metricId);
+        return {
+          name: metric?.name || metricId,
+          value: average,
+          icon: metric?.icon || '📊'
+        };
+      }).sort((a, b) => b.value - a.value);
+
+    const getBarColor = (score: number) => {
+      if (score >= 7) return 'bg-emerald-500 dark:bg-emerald-400';
+      if (score >= 5) return 'bg-amber-500 dark:bg-amber-400';
+      return 'bg-red-500 dark:bg-red-400';
+    };
+
+    const getValueColor = (score: number) => {
+      if (score >= 7) return 'text-emerald-600 dark:text-emerald-400';
+      if (score >= 5) return 'text-amber-600 dark:text-amber-400';
+      return 'text-red-600 dark:text-red-400';
+    };
+
+    if (metricsChartData.length === 0) return null;
+
+    return (
+      <Card className="p-3">
+        <p className="text-xs font-medium text-muted-foreground mb-2">Средние оценки по критериям</p>
+        <div className="grid grid-cols-2 gap-x-4 gap-y-0.5">
+          {metricsChartData.map((metric) => (
+            <div key={metric.name} className="flex items-center gap-1.5">
+              <span className="text-xs shrink-0">{metric.icon}</span>
+              <span className="text-[11px] truncate min-w-0 flex-1 text-muted-foreground">{metric.name}</span>
+              <div className="w-12 bg-muted rounded-full h-1 shrink-0">
+                <div
+                  className={cn("h-1 rounded-full", getBarColor(metric.value))}
+                  style={{ width: `${(metric.value / 10) * 100}%` }}
+                />
+              </div>
+              <span className={cn("text-[11px] font-semibold tabular-nums shrink-0", getValueColor(metric.value))}>
+                {metric.value.toFixed(1)}
+              </span>
+            </div>
+          ))}
+        </div>
+      </Card>
+    );
+  };
+
+  const AnalyticsView = () => {
+    return (
+      <div className="space-y-6">
         <div className="flex items-center justify-between">
           <h2 className="text-2xl font-bold">Аналитика</h2>
-          <div className="flex gap-2">
-            <select
-              value={timeFilter}
-              onChange={(e) => setTimeFilter(e.target.value)}
-              className="px-3 py-2 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
-            >
-              <option value="week">1 неделя</option>
-              <option value="month">1 месяц</option>
-              <option value="quarter">3 месяца</option>
-              <option value="year">1 год</option>
-            </select>
-          </div>
+          <TimeFilterButtons />
         </div>
+
+        {/* Обзор статистики */}
+        <StatisticsOverview />
 
         {/* Компактный обзор областей */}
         <CompactAreasOverview />
+
+        {/* Средние оценки по критериям */}
+        <AverageScoresOverview />
 
         {/* Детальные графики */}
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
@@ -1173,6 +1114,25 @@ const LifeQualityTracker = () => {
     );
   };
 
+  // Компонент переключателей периодов
+  const TimeFilterButtons = () => (
+    <div className="flex gap-3">
+      {['week', 'month', 'quarter', 'year'].map(period => (
+        <button
+          key={period}
+          onClick={() => setTimeFilter(period)}
+          className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200 ${
+            timeFilter === period
+              ? 'btn-primary'
+              : 'btn-modern'
+          }`}
+        >
+          {period === 'week' ? '1Н' : period === 'month' ? '1М' : period === 'quarter' ? '3М' : '1Г'}
+        </button>
+      ))}
+    </div>
+  );
+
   // RatingView с календарной системой
   const RatingView = () => {
     const currentWeekRating = getCurrentWeekRating();
@@ -1201,16 +1161,12 @@ const LifeQualityTracker = () => {
         {/* Header with test data button */}
         <div className="flex items-center justify-between">
           <h2 className="text-2xl font-bold">Еженедельная оценка</h2>
-          <Button onClick={generateTestData} variant="outline" size="sm">
-            Тестовые данные (20 недель)
-          </Button>
         </div>
 
         <Tabs value={ratingTab} onValueChange={setRatingTab}>
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="current">Текущая неделя</TabsTrigger>
             <TabsTrigger value="calendar">Календарь</TabsTrigger>
-            <TabsTrigger value="analytics">Аналитика</TabsTrigger>
           </TabsList>
 
           <TabsContent value="current" className="space-y-6">
@@ -1367,6 +1323,8 @@ const LifeQualityTracker = () => {
             </div>
           </div>
         )}
+
+
           </TabsContent>
 
           <TabsContent value="calendar">
@@ -1384,12 +1342,7 @@ const LifeQualityTracker = () => {
             />
           </TabsContent>
 
-          <TabsContent value="analytics">
-            <RatingAnalytics
-              analytics={getAnalytics()}
-              allMetrics={allMetrics}
-            />
-          </TabsContent>
+
         </Tabs>
 
         <WeekDetailModal
@@ -1397,7 +1350,16 @@ const LifeQualityTracker = () => {
           onClose={() => setIsWeekModalOpen(false)}
           rating={selectedWeekRating}
           onSave={(updatedRating) => {
-            // Handle save logic here
+            updateWeekRating(updatedRating.startDate, {
+              ratings: updatedRating.ratings,
+              notes: updatedRating.notes,
+              mood: updatedRating.mood,
+              keyEvents: updatedRating.keyEvents,
+            });
+            setIsWeekModalOpen(false);
+          }}
+          onDelete={(weekId) => {
+            deleteWeekRating(weekId);
             setIsWeekModalOpen(false);
           }}
           allMetrics={allMetrics}
@@ -1468,9 +1430,12 @@ const LifeQualityTracker = () => {
 
         {/* График метрики */}
         <div className="bg-card rounded-xl p-6 border border-border">
-          <h3 className="text-lg font-semibold mb-4">Динамика за период</h3>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold">Динамика за период</h3>
+            <TimeFilterButtons />
+          </div>
           <ResponsiveContainer width="100%" height={400}>
-            <RechartsLineChart data={metricData}>
+            <RechartsLineChart data={getFilteredData(timeFilter)}>
               <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
               <XAxis dataKey="week" className="text-muted-foreground" />
               <YAxis domain={[0, 10]} className="text-muted-foreground" />
@@ -1483,7 +1448,7 @@ const LifeQualityTracker = () => {
               />
               <Line
                 type="monotone"
-                dataKey="value"
+                dataKey={metric.name}
                 stroke="hsl(var(--primary))"
                 strokeWidth={3}
                 dot={{ fill: 'hsl(var(--primary))', strokeWidth: 2, r: 6 }}
@@ -1498,75 +1463,6 @@ const LifeQualityTracker = () => {
           data={generateCorrelations(metric.name)}
           targetMetric={metric.name}
         />
-      </div>
-    );
-  };
-
-  // Обновленный AreasView для веб интерфейса
-  const AreasView = () => {
-    const categories = {
-      mental: { name: 'Ментальное', icon: '🧠', color: 'primary' },
-      health: { name: 'Здоровье', icon: '💪', color: 'success' },
-      relationships: { name: 'Отношения', icon: '❤️', color: 'warning' },
-      finance: { name: 'Финансы', icon: '💰', color: 'secondary' },
-      social: { name: 'Социальное', icon: '🤝', color: 'info' },
-      personal: { name: 'Личное', icon: '🎯', color: 'accent' },
-      lifestyle: { name: 'Образ жизни', icon: '✈️', color: 'muted' }
-    };
-
-    const latestWeek = mockData[mockData.length - 1];
-
-    return (
-      <div className="p-4 lg:p-6 space-y-6">
-        <h2 className="text-2xl font-bold">Области жизни</h2>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {Object.entries(categories).map(([key, category]) => {
-            const categoryMetrics = allMetrics.filter(m => m.category === key);
-            const avgScore = categoryMetrics.length > 0 
-              ? categoryMetrics.reduce((sum, m) => sum + (latestWeek[m.name] || 0), 0) / categoryMetrics.length 
-              : 0;
-
-            return (
-              <div 
-                key={key}
-                className="bg-card rounded-xl p-6 border border-border hover:shadow-md transition-all cursor-pointer"
-                onClick={() => {
-                  setCategoryFilter(key);
-                  setCurrentView('analytics');
-                }}
-              >
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="text-2xl">{category.icon}</div>
-                  <div>
-                    <h3 className="font-semibold">{category.name}</h3>
-                    <p className="text-sm text-muted-foreground">{categoryMetrics.length} метрик</p>
-                  </div>
-                </div>
-                
-                <div className={`text-3xl font-bold mb-2 ${getScoreColor(avgScore)}`}>
-                  {avgScore.toFixed(1)}
-                </div>
-                
-                <div className="space-y-2">
-                  {categoryMetrics.slice(0, 3).map(metric => (
-                    <div key={metric.id} className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">{metric.name}</span>
-                      <span className={`font-medium ${getScoreColor(latestWeek[metric.name] || 0)}`}>
-                        {(latestWeek[metric.name] || 0).toFixed(1)}
-                      </span>
-                    </div>
-                  ))}
-                  {categoryMetrics.length > 3 && (
-                    <div className="text-xs text-muted-foreground text-center pt-2">
-                      +{categoryMetrics.length - 3} еще
-                    </div>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
       </div>
     );
   };
@@ -1610,18 +1506,51 @@ const LifeQualityTracker = () => {
         
         {/* Контент */}
         <div className={`flex-1 overflow-auto ${isMobile ? 'pb-24' : ''}`}>
-          {currentView === 'dashboard' && <DashboardView />}
-          {currentView === 'analytics' && <AnalyticsView />}
+          {currentView === 'dashboard' && (
+            <div className="max-w-7xl mx-auto p-3 md:p-4 lg:p-6">
+              <DashboardViewNew
+                allMetrics={allMetrics}
+                mockData={mockData}
+                appState={appState}
+                generateWeeklyInsights={generateWeeklyInsights}
+                generateCorrelations={generateCorrelations}
+                getFilteredData={getFilteredData}
+                timeFilter={timeFilter}
+                setTimeFilter={setTimeFilter}
+                setCurrentView={setCurrentView}
+                setSelectedMetric={setSelectedMetric}
+                currentStreak={currentStreak}
+              />
+            </div>
+          )}
+          {currentView === 'analytics' && !selectedMetric && (
+            <div className="max-w-7xl mx-auto p-3 md:p-4 lg:p-6">
+              <AnalyticsViewNew
+                allMetrics={allMetrics}
+                mockData={mockData}
+                timeFilter={timeFilter}
+                setTimeFilter={setTimeFilter}
+                categoryFilter={categoryFilter}
+                setCategoryFilter={setCategoryFilter}
+                getFilteredData={getFilteredData}
+                getAnalytics={getAnalytics}
+                generateCorrelations={generateCorrelations}
+                setSelectedMetric={setSelectedMetric}
+              />
+            </div>
+          )}
+          {currentView === 'analytics' && selectedMetric && (
+            <div className="max-w-7xl mx-auto p-3 md:p-4 lg:p-6">
+              <MetricDetailView />
+            </div>
+          )}
           {currentView === 'rate' && (
-            <div className="p-3 md:p-4 lg:p-6">
-              <h2 className="text-xl md:text-2xl font-bold mb-4 md:mb-6">Оценка недели</h2>
-              <div className="max-w-4xl">
-                <RatingView />
-              </div>
+            <div className="max-w-7xl mx-auto p-3 md:p-4 lg:p-6">
+              <AssessmentSplitView allMetrics={allMetrics} />
             </div>
           )}
           {currentView === 'insights' && (
-            <div className="p-3 md:p-4 lg:p-6">
+            <div className="max-w-7xl mx-auto p-3 md:p-4 lg:p-6">
               <h2 className="text-xl md:text-2xl font-bold mb-4 md:mb-6">Инсайты и корреляции</h2>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
                 <WeeklyInsights insights={generateWeeklyInsights()} />
@@ -1633,7 +1562,7 @@ const LifeQualityTracker = () => {
             </div>
           )}
           {currentView === 'strategy' && (
-            <div className="p-3 md:p-4 lg:p-6">
+            <div className="max-w-7xl mx-auto p-3 md:p-4 lg:p-6">
               {strategyView === 'dashboard' && (
                 <StrategyDashboard
                   onCreateHypothesis={() => setStrategyView('create')}
@@ -1659,7 +1588,7 @@ const LifeQualityTracker = () => {
             </div>
           )}
           {currentView === 'ai' && (
-            <div className="p-3 md:p-4 lg:p-6">
+            <div className="max-w-7xl mx-auto p-3 md:p-4 lg:p-6">
               <AdaptiveDashboard
                 weekData={mockData}
                 goals={[]}
@@ -1675,12 +1604,12 @@ const LifeQualityTracker = () => {
             </div>
           )}
           {currentView === 'settings' && (
-            <div className="p-3 md:p-4 lg:p-6">
+            <div className="max-w-7xl mx-auto p-3 md:p-4 lg:p-6">
               <Settings />
             </div>
           )}
           {selectedMetric && (
-            <div className="p-3 md:p-4 lg:p-6">
+            <div className="max-w-7xl mx-auto p-3 md:p-4 lg:p-6">
               <MetricDetailView />
             </div>
           )}

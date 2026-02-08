@@ -36,7 +36,8 @@ export const AdaptiveDashboard: React.FC<AdaptiveDashboardProps> = ({
   const journeyStage = useMemo(() => {
     const dataPoints = weekData.length;
     const activeGoals = goals.length;
-    const activeHypotheses = hypotheses.length;
+    // hypotheses.length is available but not used for stage calculation currently
+    void hypotheses;
 
     if (dataPoints === 0 && activeGoals === 0) return 'new';
     if (dataPoints < 4 || activeGoals < 2) return 'growing';
@@ -98,57 +99,57 @@ export const AdaptiveDashboard: React.FC<AdaptiveDashboardProps> = ({
   // API key setup for users without key
   if (!hasApiKey) {
     return (
-      <div className="space-y-6">
+      <div className="max-w-4xl mx-auto space-y-6">
         <Card className="relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-background to-secondary/5" />
-          <CardHeader className="relative">
-            <CardTitle className="flex items-center gap-2">
-              <Brain className="h-6 w-6" />
+          <CardHeader className="relative text-center">
+            <CardTitle className="flex items-center justify-center gap-2 text-2xl">
+              <Brain className="h-7 w-7" />
               AI Life Coach
-              <Sparkles className="h-5 w-5 text-yellow-500" />
+              <Sparkles className="h-6 w-6 text-yellow-500" />
             </CardTitle>
-            <CardDescription className="text-base">
+            <CardDescription className="text-base max-w-2xl mx-auto">
               Получайте персонализированные рекомендации на основе ваших данных
             </CardDescription>
           </CardHeader>
           <CardContent className="relative">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-              <div className="text-center p-4 rounded-lg bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950 dark:to-blue-900">
-                <TrendingUp className="h-8 w-8 text-blue-600 mx-auto mb-2" />
-                <h4 className="font-medium">Умные инсайты</h4>
-                <p className="text-sm text-muted-foreground mt-1">Анализ паттернов в данных</p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+              <div className="text-center p-6 rounded-xl bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950 dark:to-blue-900 border border-blue-200 dark:border-blue-800">
+                <TrendingUp className="h-10 w-10 text-blue-600 mx-auto mb-3" />
+                <h4 className="font-semibold text-lg mb-2">Умные инсайты</h4>
+                <p className="text-sm text-muted-foreground">Анализ паттернов в данных</p>
               </div>
-              <div className="text-center p-4 rounded-lg bg-gradient-to-br from-green-50 to-green-100 dark:from-green-950 dark:to-green-900">
-                <Target className="h-8 w-8 text-green-600 mx-auto mb-2" />
-                <h4 className="font-medium">Цели и рекомендации</h4>
-                <p className="text-sm text-muted-foreground mt-1">Персональные предложения</p>
+              <div className="text-center p-6 rounded-xl bg-gradient-to-br from-green-50 to-green-100 dark:from-green-950 dark:to-green-900 border border-green-200 dark:border-green-800">
+                <Target className="h-10 w-10 text-green-600 mx-auto mb-3" />
+                <h4 className="font-semibold text-lg mb-2">Цели и рекомендации</h4>
+                <p className="text-sm text-muted-foreground">Персональные предложения</p>
               </div>
-              <div className="text-center p-4 rounded-lg bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-950 dark:to-purple-900">
-                <MessageCircle className="h-8 w-8 text-purple-600 mx-auto mb-2" />
-                <h4 className="font-medium">AI Чат</h4>
-                <p className="text-sm text-muted-foreground mt-1">Интерактивные консультации</p>
+              <div className="text-center p-6 rounded-xl bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-950 dark:to-purple-900 border border-purple-200 dark:border-purple-800">
+                <MessageCircle className="h-10 w-10 text-purple-600 mx-auto mb-3" />
+                <h4 className="font-semibold text-lg mb-2">AI Чат</h4>
+                <p className="text-sm text-muted-foreground">Интерактивные консультации</p>
               </div>
             </div>
-            <AIKeySetup onKeySet={() => window.location.reload()} />
+            <div className="max-w-md mx-auto">
+              <AIKeySetup onKeySet={() => window.location.reload()} />
+            </div>
           </CardContent>
         </Card>
       </div>
     );
   }
 
-  const contextualActions = [];
-
   return (
-    <div className="space-y-6">
-      {/* Adaptive Header */}
+    <div className="max-w-6xl mx-auto space-y-6">
+      {/* Compact Header */}
       <Card className="relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-background to-secondary/5" />
-        <CardHeader className="relative">
+        <CardHeader className="relative pb-4">
           <div className="flex items-center justify-between">
-            <div className="space-y-2">
+            <div className="space-y-1">
               <div className="flex items-center gap-2">
                 <Brain className="h-6 w-6" />
-                <CardTitle>AI Life Coach</CardTitle>
+                <CardTitle className="text-xl">AI Life Coach</CardTitle>
                 <Sparkles className="h-5 w-5 text-yellow-500" />
                 <Badge variant="outline" className="ml-2">
                   {userJourney === 'new' && 'Новичок'}
@@ -156,7 +157,7 @@ export const AdaptiveDashboard: React.FC<AdaptiveDashboardProps> = ({
                   {userJourney === 'advanced' && 'Эксперт'}
                 </Badge>
               </div>
-              <CardDescription>
+              <CardDescription className="text-sm">
                 {userJourney === 'new' && 'Добро пожаловать! Начните собирать данные для получения первых рекомендаций'}
                 {userJourney === 'growing' && 'Отлично! Добавьте больше данных для более точных рекомендаций'}
                 {userJourney === 'advanced' && 'Вы опытный пользователь! Получайте продвинутые инсайты и гипотезы'}
@@ -166,14 +167,15 @@ export const AdaptiveDashboard: React.FC<AdaptiveDashboardProps> = ({
               variant="ghost"
               size="icon"
               onClick={() => setShowSettings(!showSettings)}
+              className="shrink-0"
             >
               <Settings className="h-4 w-4" />
             </Button>
           </div>
 
-          {/* Progress indicators for growing users */}
+          {/* Compact Progress for growing users */}
           {userJourney === 'growing' && (
-            <div className="mt-4 space-y-2">
+            <div className="mt-3 space-y-2">
               <div className="flex justify-between text-sm">
                 <span>Прогресс развития</span>
                 <span>{Math.min(Math.round((weekData.length / 8) * 100), 100)}%</span>
@@ -217,7 +219,7 @@ export const AdaptiveDashboard: React.FC<AdaptiveDashboardProps> = ({
                 </div>
                 <div>
                   <h4 className="font-medium">Добавьте первую неделю данных</h4>
-                  <p className="text-sm text-muted-foreground">Перейдите в раздел "Трекер" и оцените свою неделю</p>
+                  <p className="text-sm text-muted-foreground">Перейдите в раздел "Оценка" и оцените свою неделю</p>
                 </div>
               </div>
               <div className="flex items-center gap-3 p-3 rounded-lg bg-accent/50 opacity-60">
@@ -234,10 +236,9 @@ export const AdaptiveDashboard: React.FC<AdaptiveDashboardProps> = ({
         </Card>
       )}
 
-
       {/* Tabs for Insights and Chat */}
       <Tabs defaultValue="insights" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className="grid w-full max-w-md mx-auto grid-cols-2">
           <TabsTrigger value="insights" className="flex items-center gap-2">
             <BarChart3 className="h-4 w-4" />
             Инсайты
@@ -327,7 +328,7 @@ export const AdaptiveDashboard: React.FC<AdaptiveDashboardProps> = ({
                   <Target className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                   <h3 className="text-lg font-semibold mb-2">Готовы начать?</h3>
                   <p className="text-muted-foreground mb-4">
-                    Добавьте первые данные в разделе "Трекер" для получения персональных рекомендаций
+                    Добавьте первые данные в разделе "Оценка" для получения персональных рекомендаций
                   </p>
                 </div>
               )}

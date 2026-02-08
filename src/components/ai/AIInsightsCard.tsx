@@ -60,30 +60,30 @@ export const AIInsightsCard: React.FC<AIInsightsCardProps> = ({ insight, onActio
   const confidencePercentage = Math.round(insight.confidence * 100);
 
   return (
-    <Card className="relative overflow-hidden transition-all duration-300 hover:shadow-lg hover:scale-[1.02] group">
+    <Card className="relative overflow-hidden transition-all duration-300 hover:shadow-lg hover:scale-[1.02] group h-full flex flex-col">
       {/* Полоска уверенности AI */}
       <div 
         className="absolute top-0 left-0 h-1 bg-gradient-to-r from-destructive via-amber-400 to-primary transition-all duration-500"
         style={{ width: `${confidencePercentage}%` }}
       />
       
-      <CardHeader className="pb-3">
+      <CardHeader className="pb-3 flex-shrink-0">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-2">
             <Icon className="h-5 w-5" />
-            <Badge variant="outline" className={getInsightColor(insight.type)}>
+            <Badge variant="outline" className={`${getInsightColor(insight.type)} text-xs`}>
               {getTypeLabel(insight.type)}
             </Badge>
           </div>
           <div className="text-xs text-muted-foreground">
-            Уверенность: {confidencePercentage}%
+            {confidencePercentage}%
           </div>
         </div>
         <CardTitle className="text-base leading-tight">{insight.title}</CardTitle>
       </CardHeader>
       
-      <CardContent className="space-y-3">
-        <CardDescription className="text-sm leading-relaxed">
+      <CardContent className="space-y-3 flex-1 flex flex-col">
+        <CardDescription className="text-sm leading-relaxed flex-1">
           {insight.description}
         </CardDescription>
         
@@ -94,20 +94,22 @@ export const AIInsightsCard: React.FC<AIInsightsCardProps> = ({ insight, onActio
           </div>
         )}
         
-        {onActionClick && (
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={() => onActionClick(insight)}
-            className="w-full transition-all duration-200 hover:bg-primary hover:text-primary-foreground group-hover:scale-[1.02]"
-          >
-            <ExternalLink className="h-4 w-4 mr-2" />
-            Применить рекомендацию
-          </Button>
-        )}
-        
-        <div className="text-xs text-muted-foreground">
-          {new Date(insight.createdAt).toLocaleString('ru-RU')}
+        <div className="mt-auto space-y-2">
+          {onActionClick && (
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => onActionClick(insight)}
+              className="w-full transition-all duration-200 hover:bg-primary hover:text-primary-foreground group-hover:scale-[1.02]"
+            >
+              <ExternalLink className="h-4 w-4 mr-2" />
+              Применить
+            </Button>
+          )}
+          
+          <div className="text-xs text-muted-foreground text-center">
+            {new Date(insight.createdAt).toLocaleDateString('ru-RU')}
+          </div>
         </div>
       </CardContent>
     </Card>

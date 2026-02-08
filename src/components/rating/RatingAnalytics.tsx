@@ -1,8 +1,8 @@
 import React, { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { WeeklyRatingAnalytics, WeeklyRating } from '@/types/weeklyRating';
-import { LineChart as RechartsLineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell } from '@/components/ui/safe-recharts';
+import { WeeklyRatingAnalytics } from '@/types/weeklyRating';
+import { LineChart as RechartsLineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from '@/components/ui/safe-recharts';
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
@@ -14,7 +14,30 @@ interface RatingAnalyticsProps {
 }
 
 const RatingAnalytics: React.FC<RatingAnalyticsProps> = ({ analytics, allMetrics }) => {
-  const { averageByMetric, trendsOverTime, bestWeek, worstWeek, moodDistribution, seasonalTrends } = analytics;
+  const { averageByMetric, trendsOverTime, bestWeek, worstWeek, moodDistribution } = analytics;
+
+  // Данные для графика включая пропуски
+  const chartData = trendsOverTime.map(item => ({
+    ...item,
+    averageScore: item.hasData === false ? null : item.averageScore
+  }));
+  // Если данных нет, показываем сообщение о загрузке
+  if (trendsOverTime.length === 0) {
+    return (
+      <div className="space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Загрузка...</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">...</div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
   // Prepare metrics data for charts
   const metricsChartData = useMemo(() => {
@@ -47,11 +70,15 @@ const RatingAnalytics: React.FC<RatingAnalyticsProps> = ({ analytics, allMetrics
   }));
 
   const getScoreColor = (score: number) => {
-    if (score >= 8) return 'text-success bg-success-light border-success/20';
-    if (score >= 6.5) return 'text-success bg-success-light border-success/20';
-    if (score >= 4) return 'text-warning bg-warning-light border-warning/20';
-    if (score >= 2.5) return 'text-warning bg-warning-light border-warning/20';
-    return 'text-error bg-error-light border-error/20';
+    if (score >= 7) return 'text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800';
+    if (score >= 5) return 'text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800';
+    return 'text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-950/40 border-red-200 dark:border-red-800';
+  };
+
+  const getBarColor = (score: number) => {
+    if (score >= 7) return 'bg-emerald-500 dark:bg-emerald-400';
+    if (score >= 5) return 'bg-amber-500 dark:bg-amber-400';
+    return 'bg-red-500 dark:bg-red-400';
   };
 
   const getTrendIcon = (current: number, previous: number) => {
@@ -140,74 +167,104 @@ const RatingAnalytics: React.FC<RatingAnalyticsProps> = ({ analytics, allMetrics
       </div>
 
       {/* Trends Chart */}
-      {trendsOverTime.length > 0 && (
+      {chartData.length > 0 && (
         <Card>
           <CardHeader>
             <CardTitle>Динамика оценок по времени</CardTitle>
           </CardHeader>
           <CardContent>
-             <div className="h-64">
+            {chartData.length > 0 ? (
+              <div className="h-64">
                 <ResponsiveContainer width="100%" height="100%">
-                  <RechartsLineChart data={trendsOverTime.filter(item => 
-                    typeof item.averageScore === 'number' && 
-                    !isNaN(item.averageScore) && 
-                    isFinite(item.averageScore)
-                  )}>
+                  <RechartsLineChart data={chartData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                    <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" />
-                    <YAxis domain={[0, 10]} stroke="hsl(var(--muted-foreground))" />
-                   <Tooltip 
-                     formatter={(value: any) => [`${value.toFixed(1)}`, 'Средний балл']}
-                     labelFormatter={(label) => `Неделя: ${label}`}
-                     contentStyle={{
-                       backgroundColor: 'hsl(var(--card))',
-                       border: '1px solid hsl(var(--border))',
-                       borderRadius: '8px',
-                       color: 'hsl(var(--card-foreground))'
-                     }}
-                   />
-                   <Line 
-                     type="monotone" 
-                     dataKey="averageScore" 
-                     stroke="hsl(var(--primary))" 
-                     strokeWidth={2}
-                     dot={{ fill: 'hsl(var(--primary))', strokeWidth: 2, r: 4 }}
-                   />
-                 </RechartsLineChart>
-               </ResponsiveContainer>
-            </div>
+                    <XAxis 
+                      dataKey="date" 
+                      stroke="hsl(var(--muted-foreground))"
+                      tickFormatter={(value) => {
+                        try {
+                          return new Date(value).toLocaleDateString('ru-RU', { 
+                            month: 'short', 
+                            day: 'numeric' 
+                          });
+                        } catch {
+                          return value;
+                        }
+                      }}
+                    />
+                    <YAxis 
+                      domain={[0, 10]} 
+                      stroke="hsl(var(--muted-foreground))"
+                      tickFormatter={(value) => value.toFixed(1)}
+                    />
+                    <Tooltip 
+                      formatter={(value: any) => [`${value.toFixed(1)}`, 'Средний балл']}
+                      labelFormatter={(label) => {
+                        try {
+                          return `Неделя: ${new Date(label).toLocaleDateString('ru-RU')}`;
+                        } catch {
+                          return `Неделя: ${label}`;
+                        }
+                      }}
+                      contentStyle={{
+                        backgroundColor: 'hsl(var(--card))',
+                        border: '1px solid hsl(var(--border))',
+                        borderRadius: '8px',
+                        color: 'hsl(var(--card-foreground))'
+                      }}
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="averageScore" 
+                      stroke="hsl(var(--primary))" 
+                      strokeWidth={2}
+                      dot={{ fill: 'hsl(var(--primary))', strokeWidth: 2, r: 4 }}
+                      name="Средний балл"
+                      connectNulls={false}
+                    />
+                  </RechartsLineChart>
+                </ResponsiveContainer>
+              </div>
+            ) : (
+              <div className="h-64 flex items-center justify-center text-muted-foreground">
+                <div className="text-center">
+                  <BarChart3 className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                  <p>Нет данных для отображения</p>
+                  <p className="text-sm">Добавьте оценки за несколько недель</p>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Metrics Ranking */}
+        {/* Metrics Ranking — ultra-compact */}
         {metricsChartData.length > 0 && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Средние оценки по критериям</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {metricsChartData.map((metric, index) => (
-                <div key={metric.name} className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <span className="text-lg">{metric.icon}</span>
-                    <span className="font-medium">{metric.name}</span>
+          <Card className="p-3">
+            <p className="text-xs font-medium text-muted-foreground mb-2">Средние оценки по критериям</p>
+            <div className="grid grid-cols-2 gap-x-4 gap-y-0.5">
+              {metricsChartData.map((metric) => (
+                <div key={metric.name} className="flex items-center gap-1.5">
+                  <span className="text-xs shrink-0">{metric.icon}</span>
+                  <span className="text-[11px] truncate min-w-0 flex-1 text-muted-foreground">{metric.name}</span>
+                  <div className="w-12 bg-muted rounded-full h-1 shrink-0">
+                    <div
+                      className={cn("h-1 rounded-full", getBarColor(metric.value))}
+                      style={{ width: `${(metric.value / 10) * 100}%` }}
+                    />
                   </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-32 bg-muted rounded-full h-2">
-                      <div 
-                        className="bg-primary h-2 rounded-full transition-all duration-300"
-                        style={{ width: `${(metric.value / 10) * 100}%` }}
-                      />
-                    </div>
-                    <Badge className={cn("px-2 py-1", getScoreColor(metric.value))}>
-                      {metric.value.toFixed(1)}
-                    </Badge>
-                  </div>
+                  <span className={cn(
+                    "text-[11px] font-semibold tabular-nums shrink-0",
+                    metric.value >= 7 ? 'text-emerald-600 dark:text-emerald-400' :
+                    metric.value >= 5 ? 'text-amber-600 dark:text-amber-400' :
+                    'text-red-600 dark:text-red-400'
+                  )}>
+                    {metric.value.toFixed(1)}
+                  </span>
                 </div>
               ))}
-            </CardContent>
+            </div>
           </Card>
         )}
 
