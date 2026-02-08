@@ -1,5 +1,11 @@
-import { kv } from '@vercel/kv';
+import { Redis } from '@upstash/redis';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+
+// Создаём клиент Redis из переменных окружения
+const redis = new Redis({
+  url: process.env.UPSTASH_REDIS_REST_URL!,
+  token: process.env.UPSTASH_REDIS_REST_TOKEN!,
+});
 
 const RATINGS_KEY = 'lqt_weekly_ratings';
 const AUTH_PASSWORD = 'qwerty87';
@@ -35,7 +41,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     switch (req.method) {
       case 'GET': {
         // Получить все оценки
-        const ratings = await kv.get(RATINGS_KEY);
+        const ratings = await redis.get(RATINGS_KEY);
         return res.status(200).json(ratings || {});
       }
 
@@ -48,13 +54,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         }
 
         // Получаем текущие данные
-        const existingRatings = (await kv.get(RATINGS_KEY)) || {};
+        const existingRatings = (await redis.get(RATINGS_KEY)) || {};
 
         // Мержим с новыми данными
         const mergedRatings = { ...existingRatings as object, ...ratings };
 
         // Сохраняем
-        await kv.set(RATINGS_KEY, mergedRatings);
+        await redis.set(RATINGS_KEY, mergedRatings);
 
         return res.status(200).json({
           success: true,
@@ -71,11 +77,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           return res.status(400).json({ error: 'Rating ID required' });
         }
 
-        const existingRatings = (await kv.get(RATINGS_KEY) || {}) as Record<string, unknown>;
+        const existingRatings = (await redis.get(RATINGS_KEY) || {}) as Record<string, unknown>;
 
         if (existingRatings[id]) {
           delete existingRatings[id];
-          await kv.set(RATINGS_KEY, existingRatings);
+          await redis.set(RATINGS_KEY, existingRatings);
           return res.status(200).json({ success: true, message: 'Rating deleted' });
         }
 

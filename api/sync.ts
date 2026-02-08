@@ -1,5 +1,10 @@
-import { kv } from '@vercel/kv';
+import { Redis } from '@upstash/redis';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+
+const redis = new Redis({
+  url: process.env.UPSTASH_REDIS_REST_URL!,
+  token: process.env.UPSTASH_REDIS_REST_TOKEN!,
+});
 
 const AUTH_PASSWORD = 'qwerty87';
 
@@ -43,8 +48,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         // Получить все данные для синхронизации
         const allData: Record<string, unknown> = {};
 
-        for (const [key, kvKey] of Object.entries(STORAGE_KEYS)) {
-          const data = await kv.get(kvKey);
+        for (const [key, redisKey] of Object.entries(STORAGE_KEYS)) {
+          const data = await redis.get(redisKey);
           allData[key] = data || null;
         }
 
@@ -65,9 +70,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
         const results: Record<string, boolean> = {};
 
-        for (const [key, kvKey] of Object.entries(STORAGE_KEYS)) {
+        for (const [key, redisKey] of Object.entries(STORAGE_KEYS)) {
           if (data[key] !== undefined && data[key] !== null) {
-            await kv.set(kvKey, data[key]);
+            await redis.set(redisKey, data[key]);
             results[key] = true;
           }
         }
