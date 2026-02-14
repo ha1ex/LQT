@@ -20,6 +20,8 @@ jobs:
 
       - run: npm ci
 
+      - run: npm ls @sentry/react || true
+
       - run: npm run lint
 
       - run: npm run type-check
