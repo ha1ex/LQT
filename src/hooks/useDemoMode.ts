@@ -1,5 +1,3 @@
-import { useState } from 'react';
-
 export const useDemoMode = () => {
   return { isDemoMode: false, isLoading: false };
 };

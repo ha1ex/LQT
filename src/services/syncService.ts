@@ -22,7 +22,7 @@ interface SyncResponse {
 const getAuthToken = (): string | null => {
   // Используем тот же пароль что и для входа
   if (localStorage.getItem('lqt_authenticated') === 'true') {
-    return 'qwerty87';
+    return import.meta.env.VITE_APP_PASSWORD;
   }
   return null;
 };

@@ -25,7 +25,7 @@ const AIRecommendations: React.FC<AIRecommendationsProps> = ({
   onCreateHypothesis,
   onViewHypothesis
 }) => {
-  const { smartRecommendations, integratedMetrics, periodLabel } = useIntegratedData();
+  const { smartRecommendations: _smartRecommendations, integratedMetrics, periodLabel } = useIntegratedData();
   const [currentIdx, setCurrentIdx] = useState(0);
 
   const weekNum = periodLabel?.match(/W\d+/)?.[0] || '';

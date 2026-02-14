@@ -2,7 +2,23 @@ import { put, head, del } from '@vercel/blob';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 const RATINGS_FILE = 'lqt-data/ratings.json';
-const AUTH_PASSWORD = 'qwerty87';
+const AUTH_PASSWORD = process.env.APP_PASSWORD;
+
+// Rate limiting
+const RATE_LIMIT_WINDOW_MS = 60_000;
+const RATE_LIMIT_MAX = 60;
+const requestCounts = new Map<string, { count: number; resetAt: number }>();
+
+const isRateLimited = (ip: string): boolean => {
+  const now = Date.now();
+  const entry = requestCounts.get(ip);
+  if (!entry || now > entry.resetAt) {
+    requestCounts.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
+    return false;
+  }
+  entry.count++;
+  return entry.count > RATE_LIMIT_MAX;
+};
 
 // Простая проверка авторизации
 const isAuthorized = (req: VercelRequest): boolean => {
@@ -47,13 +63,19 @@ const saveRatings = async (data: Record<string, unknown>): Promise<void> => {
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // CORS headers
   res.setHeader('Access-Control-Allow-Credentials', 'true');
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Origin', process.env.ALLOWED_ORIGIN || 'https://lqt.vercel.app');
   res.setHeader('Access-Control-Allow-Methods', 'GET,POST,DELETE,OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Authorization, Content-Type');
 
   // Handle preflight
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
+  }
+
+  // Rate limiting
+  const clientIp = (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() || 'unknown';
+  if (isRateLimited(clientIp)) {
+    return res.status(429).json({ error: 'Too many requests' });
   }
 
   // Проверка авторизации

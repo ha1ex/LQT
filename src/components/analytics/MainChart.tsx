@@ -10,12 +10,6 @@ import {
   Tooltip,
 } from '@/components/ui/safe-recharts';
 
-interface ChartFilter {
-  key: string;
-  label: string;
-  color: string;
-  active: boolean;
-}
 
 interface MainChartProps {
   data: any[];

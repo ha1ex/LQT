@@ -65,7 +65,7 @@ const PersonalRecommendations: React.FC<PersonalRecommendationsProps> = ({
   const handleGenerateAI = async () => {
     if (!hasApiKey) { setShowAI(true); return; }
     try {
-      await generateInsights('dashboard', { weekData: data, goals: [], hypotheses: [], correlations: [] });
+      await generateInsights('dashboard', { weekData: data as any, goals: [], hypotheses: [], correlations: [] });
       setShowAI(true);
     } catch (error) {
       if (import.meta.env.DEV) console.error('Failed to generate AI insights:', error);

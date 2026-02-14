@@ -8,10 +8,8 @@ import {
   eachDayOfInterval,
   addMonths,
   subMonths,
-  isSameWeek,
   isSameDay,
   getWeek,
-  getDay,
 } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { ChevronLeft, ChevronRight } from 'lucide-react';

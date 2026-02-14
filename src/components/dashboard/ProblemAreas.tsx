@@ -21,7 +21,6 @@ const ProblemAreas: React.FC<ProblemAreasProps> = ({
     .sort((a, b) => a.currentValue - b.currentValue)
     .slice(0, 2);
 
-  const weekLabel = periodLabel ? periodLabel.replace(/^W\d+,\s*/, '').trim() : '';
   const weekNum = periodLabel?.match(/W\d+/)?.[0] || '';
 
   const getScoreColor = (val: number) => {

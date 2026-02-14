@@ -36,7 +36,7 @@ const InsightsOfWeek: React.FC<InsightsOfWeekProps> = ({ insights, periodLabel, 
       ) : (
         <div className="space-y-0">
           {insights.slice(0, 3).map((insight, index) => {
-            const ins = typeof insight === 'string' ? { description: insight } : insight;
+            const ins = typeof insight === 'string' ? { description: insight } as unknown as Insight : insight;
             return (
               <div
                 key={index}

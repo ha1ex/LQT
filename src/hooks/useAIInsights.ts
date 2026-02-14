@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { AIInsight, AIGoalSuggestion, AIHypothesisImprovement, AIAnalysisContext, AIResponse } from '@/types/ai';
+import { AIInsight, AIAnalysisContext, AIResponse } from '@/types/ai';
 
 export const useAIInsights = () => {
   const [insights, setInsights] = useState<AIInsight[]>([]);

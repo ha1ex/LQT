@@ -117,7 +117,7 @@ const RatingAnalytics: React.FC<RatingAnalyticsProps> = ({ analytics, allMetrics
                     ? (() => {
                         const validScores = trendsOverTime.filter(week => typeof week.averageScore === 'number' && !isNaN(week.averageScore));
                         return validScores.length > 0 
-                          ? (validScores.reduce((sum, week) => sum + week.averageScore, 0) / validScores.length).toFixed(1)
+                          ? (validScores.reduce((sum, week) => sum + (week.averageScore ?? 0), 0) / validScores.length).toFixed(1)
                           : '0.0';
                       })()
                     : '0.0'
@@ -289,7 +289,7 @@ const RatingAnalytics: React.FC<RatingAnalyticsProps> = ({ analytics, allMetrics
                       cy="50%"
                       outerRadius={80}
                       dataKey="value"
-                      label={({ name, value }) => `${name}: ${value}`}
+                      label={({ name, value }: { name: string; value: number }) => `${name}: ${value}`}
                     >
                       {moodChartData.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={entry.color} />

@@ -25,7 +25,7 @@ const QuickEmojiRating: React.FC<QuickEmojiRatingProps> = ({ value, onChange, di
               : 'bg-muted/50 border border-border hover:bg-primary/5'
           }`}
         >
-          {emojiMap[rating]}
+          {emojiMap[rating as keyof typeof emojiMap]}
         </button>
       ))}
     </div>
