@@ -21,6 +21,21 @@ const RatingAnalytics: React.FC<RatingAnalyticsProps> = ({ analytics, allMetrics
     ...item,
     averageScore: item.hasData === false ? null : item.averageScore
   }));
+
+  // Prepare metrics data for charts (must be before early return to satisfy rules-of-hooks)
+  const metricsChartData = useMemo(() => {
+    return Object.entries(averageByMetric)
+      .filter(([_metricId, average]) => typeof average === 'number' && !isNaN(average))
+      .map(([metricId, average]) => {
+        const metric = allMetrics.find(m => m.id === metricId);
+        return {
+          name: metric?.name || metricId,
+          value: average,
+          icon: metric?.icon || '📊'
+        };
+      }).sort((a, b) => b.value - a.value);
+  }, [averageByMetric, allMetrics]);
+
   // Если данных нет, показываем сообщение о загрузке
   if (trendsOverTime.length === 0) {
     return (
@@ -38,20 +53,6 @@ const RatingAnalytics: React.FC<RatingAnalyticsProps> = ({ analytics, allMetrics
       </div>
     );
   }
-
-  // Prepare metrics data for charts
-  const metricsChartData = useMemo(() => {
-    return Object.entries(averageByMetric)
-      .filter(([metricId, average]) => typeof average === 'number' && !isNaN(average))
-      .map(([metricId, average]) => {
-        const metric = allMetrics.find(m => m.id === metricId);
-        return {
-          name: metric?.name || metricId,
-          value: average,
-          icon: metric?.icon || '📊'
-        };
-      }).sort((a, b) => b.value - a.value);
-  }, [averageByMetric, allMetrics]);
 
   // Mood colors
   const moodColors = {

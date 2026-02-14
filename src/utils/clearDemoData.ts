@@ -42,6 +42,7 @@ export const logCurrentLocalStorageState = () => {
       } catch {
       }
     } else {
+      // key not in localStorage — nothing to clear
     }
   });
 };
