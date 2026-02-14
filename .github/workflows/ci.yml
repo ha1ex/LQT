@@ -20,6 +20,12 @@ jobs:
 
       - run: npm ci
 
+      - name: Debug sentry
+        run: |
+          ls node_modules/@sentry/react/build/types/ || echo "NO TYPES DIR"
+          node -e "console.log(require.resolve('@sentry/react'))" || echo "RESOLVE FAIL"
+          npx tsc --version
+
       - run: npm run lint
 
       - run: npm run type-check
