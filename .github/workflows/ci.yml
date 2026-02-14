@@ -22,7 +22,11 @@ jobs:
 
       - run: npm run lint
 
-      - run: npm run type-check
+      - name: Type Check
+        run: |
+          echo "Node: $(node -v)"
+          echo "TypeScript: $(npx tsc --version)"
+          npm run type-check
 
       - run: npm run test
 
