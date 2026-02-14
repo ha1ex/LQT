@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components -- context provider exports context alongside component */
 import React, { createContext, useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { WeeklyRating, WeeklyRatingData, WeeklyRatingAnalytics } from '@/types/weeklyRating';
 import { startOfWeek, endOfWeek, format, addWeeks, subWeeks, parseISO } from 'date-fns';

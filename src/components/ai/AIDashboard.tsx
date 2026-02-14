@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAIInsights } from '@/hooks/useAIInsights';
+import type { AIInsight } from '@/types/ai';
 import { AIInsightsCard } from './AIInsightsCard';
 import { AIChat } from './AIChat';
 import { Brain, RefreshCw, Sparkles, TrendingUp, MessageCircle, BarChart3, Settings, AlertCircle } from 'lucide-react';
@@ -11,10 +12,13 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
 
 interface AIDashboardProps {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- dynamic week data with metric keys
   weekData: any[];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- goals data has dynamic structure
   goals: any[];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- hypotheses data has dynamic structure
   hypotheses: any[];
-  onInsightAction?: (insight: any) => void;
+  onInsightAction?: (insight: AIInsight) => void;
 }
 
 export const AIDashboard: React.FC<AIDashboardProps> = ({ 
@@ -46,6 +50,7 @@ export const AIDashboard: React.FC<AIDashboardProps> = ({
     if (shouldAutoAnalyze()) {
       handleAnalyze();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- auto-analyze only on data/key changes, not on every re-render
   }, [weekData, hasApiKey]);
 
   const handleAnalyze = async () => {
@@ -56,7 +61,7 @@ export const AIDashboard: React.FC<AIDashboardProps> = ({
         title: "Анализ завершен",
         description: "AI сгенерировал новые рекомендации",
       });
-    } catch (err) {
+    } catch (_err) {
       toast({
         title: "Ошибка анализа",
         description: error || "Не удалось получить рекомендации",

@@ -10,6 +10,7 @@ interface Metric {
 
 interface RecommendationData {
   week: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- dynamic metric keys
   [key: string]: any;
 }
 
@@ -65,6 +66,7 @@ const PersonalRecommendations: React.FC<PersonalRecommendationsProps> = ({
   const handleGenerateAI = async () => {
     if (!hasApiKey) { setShowAI(true); return; }
     try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- RecommendationData is compatible at runtime
       await generateInsights('dashboard', { weekData: data as any, goals: [], hypotheses: [], correlations: [] });
       setShowAI(true);
     } catch (error) {
@@ -98,6 +100,7 @@ const PersonalRecommendations: React.FC<PersonalRecommendationsProps> = ({
     }
 
     return recs.sort((a, b) => ({ high: 3, medium: 2, low: 1 }[b.priority] - { high: 3, medium: 2, low: 1 }[a.priority])).slice(0, 3);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- recommendationTemplates is a stable object literal
   }, [metrics, data]);
 
   const allRecommendations = useMemo(() => {

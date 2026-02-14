@@ -35,7 +35,7 @@ import { useIntegratedData } from '@/hooks/useIntegratedData';
 import { useWeeklyRatings } from '@/hooks/useWeeklyRatings';
 import { useGlobalData } from '@/contexts/GlobalDataProvider';
 import { OnboardingWizard } from '@/components/onboarding/OnboardingWizard';
-import { adaptWeeklyRatingsToMockData, filterDataByPeriod } from '@/utils/dataAdapter';
+import { adaptWeeklyRatingsToMockData, filterDataByPeriod, type WeekDataRecord } from '@/utils/dataAdapter';
 
 
 
@@ -349,7 +349,7 @@ const LifeQualityTracker = () => {
   };
 
   // Линейная регрессия для линии тренда
-  const addTrendLine = (data: any[]): any[] => {
+  const addTrendLine = (data: WeekDataRecord[]): WeekDataRecord[] => {
     if (data.length < 2) return data;
     const vals = data.map((d, i) => ({ x: i, y: typeof d.overall === 'number' && isFinite(d.overall) ? d.overall : null }));
     const valid = vals.filter(v => v.y !== null) as { x: number; y: number }[];
@@ -380,7 +380,7 @@ const LifeQualityTracker = () => {
     const sanitizedData = rawData.map(week => {
       if (!week || typeof week !== 'object') return null;
 
-      const sanitizedWeek: Record<string, any> = { ...week };
+      const sanitizedWeek: WeekDataRecord = { ...week };
 
       // Проверяем и исправляем все числовые значения
       Object.keys(sanitizedWeek).forEach(key => {
@@ -415,7 +415,7 @@ const LifeQualityTracker = () => {
         return null;
       }
       
-      const sanitizedWeek: Record<string, any> = {
+      const sanitizedWeek: WeekDataRecord = {
         week: week.week || `W${index + 1}`,
         date: week.date || 'Unknown',
         overall: typeof week.overall === 'number' && !isNaN(week.overall) && isFinite(week.overall) ? week.overall : 0

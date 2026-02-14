@@ -10,7 +10,9 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
 
 interface AIGoalSuggestionsProps {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- week data with dynamic metric keys
   weekData: any[];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- goals data has dynamic structure
   existingGoals: any[];
   onCreateGoal?: (goal: AIGoalSuggestion) => void;
 }
@@ -34,7 +36,7 @@ export const AIGoalSuggestions: React.FC<AIGoalSuggestionsProps> = ({
           description: `AI сгенерировал ${response.goals.length} предложений целей`,
         });
       }
-    } catch (err) {
+    } catch (_err) {
       toast({
         title: "Ошибка генерации",
         description: error || "Не удалось получить предложения целей",

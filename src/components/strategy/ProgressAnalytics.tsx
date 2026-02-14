@@ -11,9 +11,9 @@ interface ProgressAnalyticsProps {
   hypothesisTitle: string;
 }
 
-export const ProgressAnalytics: React.FC<ProgressAnalyticsProps> = ({ 
-  weeklyProgress, 
-  hypothesisTitle 
+export const ProgressAnalytics: React.FC<ProgressAnalyticsProps> = ({
+  weeklyProgress,
+  hypothesisTitle: _hypothesisTitle
 }) => {
   // Подготовка данных для графиков
   const chartData = weeklyProgress.map(week => ({

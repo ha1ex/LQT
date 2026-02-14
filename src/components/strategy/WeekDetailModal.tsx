@@ -117,7 +117,7 @@ export const WeekDetailModal: React.FC<WeekDetailModalProps> = ({
                     backgroundColor: getRatingColor(rating),
                     borderColor: getRatingColor(rating)
                   } : {}}
-                  onClick={() => setEditedWeek(prev => ({ ...prev!, rating: rating as any }))}
+                  onClick={() => setEditedWeek(prev => ({ ...prev!, rating: rating as 0 | 1 | 2 | 3 | 4 }))}
                 >
                   <span className="text-xl">{getRatingIcon(rating)}</span>
                   <span className="text-xs">{getRatingLabel(rating)}</span>

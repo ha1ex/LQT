@@ -199,7 +199,7 @@ const RatingAnalytics: React.FC<RatingAnalyticsProps> = ({ analytics, allMetrics
                       tickFormatter={(value) => value.toFixed(1)}
                     />
                     <Tooltip 
-                      formatter={(value: any) => [`${value.toFixed(1)}`, 'Средний балл']}
+                      formatter={(value: number) => [`${value.toFixed(1)}`, 'Средний балл']}
                       labelFormatter={(label) => {
                         try {
                           return `Неделя: ${new Date(label).toLocaleDateString('ru-RU')}`;

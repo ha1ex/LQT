@@ -1,6 +1,10 @@
 import { WeeklyRating } from '@/types/weeklyRating';
 import { AppDataState } from '@/types/app';
 
+/** A single row of weekly metric data with dynamic metric-name keys */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- dynamic metric keys require flexible index type; values are always string | number at runtime
+export type WeekDataRecord = Record<string, any>;
+
 // Все метрики из данных пользователя (включая исторические и новые)
 export const BASE_METRICS = [
   { id: 'peace_of_mind', name: 'Спокойствие ума', icon: '🧘', category: 'mental' },
@@ -23,7 +27,7 @@ export const BASE_METRICS = [
 export const adaptWeeklyRatingsToMockData = (
   weeklyRatings: Record<string, WeeklyRating>,
   appState: AppDataState
-): any[] => {
+): WeekDataRecord[] => {
   // Если нет данных или это пустое состояние, возвращаем пустой массив
   if (appState.userState === 'empty' || Object.keys(weeklyRatings).length === 0) {
     return [];
@@ -34,7 +38,7 @@ export const adaptWeeklyRatingsToMockData = (
     .filter(rating => rating && rating.startDate && rating.endDate) // Фильтруем некорректные записи
     .sort((a, b) => a.startDate.getTime() - b.startDate.getTime())
     .map(rating => {
-      const weekData: any = {
+      const weekData: WeekDataRecord = {
         week: `W${rating.weekNumber || 0}`,
         date: formatWeekRange(rating.startDate.toISOString(), rating.endDate.toISOString()),
       };
@@ -95,12 +99,12 @@ const formatWeekRange = (start: string, end: string): string => {
 };
 
 // Получение последних N недель данных
-export const getLastNWeeks = (data: any[], n: number): any[] => {
+export const getLastNWeeks = (data: WeekDataRecord[], n: number): WeekDataRecord[] => {
   return data.slice(-n);
 };
 
 // Фильтрация данных по временному периоду
-export const filterDataByPeriod = (data: any[], period: string): any[] => {
+export const filterDataByPeriod = (data: WeekDataRecord[], period: string): WeekDataRecord[] => {
   switch (period) {
     case 'week':
       return getLastNWeeks(data, 1);
@@ -116,13 +120,13 @@ export const filterDataByPeriod = (data: any[], period: string): any[] => {
 };
 
 // Проверка наличия данных
-export const hasDataForPeriod = (data: any[], period: string): boolean => {
+export const hasDataForPeriod = (data: WeekDataRecord[], period: string): boolean => {
   const filteredData = filterDataByPeriod(data, period);
   return filteredData.length > 0;
 };
 
 // Получение метрик из данных
-export const getMetricsFromData = (data: any[]): string[] => {
+export const getMetricsFromData = (data: WeekDataRecord[]): string[] => {
   if (data.length === 0) return [];
   
   const latestWeek = data[data.length - 1];

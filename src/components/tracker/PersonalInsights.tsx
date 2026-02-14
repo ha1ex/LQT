@@ -9,6 +9,7 @@ interface Metric {
 
 interface InsightData {
   week: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- dynamic metric keys
   [key: string]: any;
 }
 
@@ -101,7 +102,7 @@ const PersonalInsights: React.FC<PersonalInsightsProps> = ({
       </h4>
 
       <div className="space-y-1.5">
-        {correlations.map((corr, index) => (
+        {correlations.map((corr, _index) => (
           <div
             key={`${corr.metric1}-${corr.metric2}`}
             className="bg-muted/30 rounded-md p-2"

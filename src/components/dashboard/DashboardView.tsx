@@ -18,10 +18,14 @@ import { PersonalRecommendations, PersonalInsights, PersonalGoals } from '../tra
 
 interface DashboardViewProps {
   allMetrics: Array<{ id: string; name: string; icon: string; description: string; category: string }>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- dynamic week data with metric keys
   mockData: any[];
   appState: { userState: string; hasData: boolean; lastDataSync: Date | null };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- insights return dynamic shapes
   generateWeeklyInsights: () => any[];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- correlation data has dynamic structure
   generateCorrelations: (targetMetric: string) => any[];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- dynamic week data with metric keys
   getFilteredData: (filter: string) => any[];
   timeFilter: string;
   setTimeFilter: (filter: string) => void;

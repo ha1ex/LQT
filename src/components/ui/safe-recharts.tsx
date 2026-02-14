@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components -- re-exports recharts utilities alongside wrapper components */
 /**
  * NUCLEAR SOLUTION: Completely safe Recharts wrappers
  * This replaces ALL Recharts components with bulletproof versions
@@ -23,7 +24,7 @@ import {
 } from 'recharts';
 
 // Ultra-aggressive data sanitization
-const sanitizeValue = (value: any): number => {
+const sanitizeValue = (value: unknown): number => {
   if (value === null || value === undefined) return 0;
   if (typeof value === 'string') {
     const parsed = parseFloat(value);
@@ -35,7 +36,7 @@ const sanitizeValue = (value: any): number => {
   return 0;
 };
 
-const sanitizeDataArray = (data: any[]): any[] => {
+const sanitizeDataArray = (data: object[]): Record<string, unknown>[] => {
   if (!Array.isArray(data)) {
     if (import.meta.env.DEV) console.warn('Invalid data passed to chart, using empty array');
     return [];
@@ -43,10 +44,10 @@ const sanitizeDataArray = (data: any[]): any[] => {
 
   return data
     .filter(item => item && typeof item === 'object')
-    .map((item, index) => {
-      const sanitized: any = {};
+    .map((item) => {
+      const sanitized: Record<string, unknown> = {};
       
-      Object.entries(item).forEach(([key, value]) => {
+      Object.entries(item).forEach(([key, value]: [string, unknown]) => {
         if (typeof value === 'string' && !['week', 'date', 'name', 'metric'].includes(key)) {
           // Try to parse strings that might be numbers
           const parsed = parseFloat(value);
@@ -69,9 +70,9 @@ const sanitizeDataArray = (data: any[]): any[] => {
 };
 
 // Safe domain calculation
-const calculateSafeDomain = (data: any[], dataKey: string): [number, number] => {
+const calculateSafeDomain = (data: object[], dataKey: string): [number, number] => {
   const values = data
-    .map(item => sanitizeValue(item[dataKey]))
+    .map(item => sanitizeValue((item as Record<string, unknown>)[dataKey]))
     .filter(val => typeof val === 'number' && !isNaN(val) && isFinite(val));
   
   if (values.length === 0) return [0, 10];
@@ -86,7 +87,7 @@ const calculateSafeDomain = (data: any[], dataKey: string): [number, number] => 
 };
 
 // Safe wrapper for ResponsiveContainer
-export const SafeResponsiveContainer: React.FC<any> = ({ children, ...props }) => {
+export const SafeResponsiveContainer: React.FC<React.ComponentProps<typeof OriginalResponsiveContainer>> = ({ children, ...props }) => {
   return (
     <div className="relative">
       <OriginalResponsiveContainer {...props}>
@@ -97,7 +98,7 @@ export const SafeResponsiveContainer: React.FC<any> = ({ children, ...props }) =
 };
 
 // Safe LineChart wrapper
-export const SafeLineChart: React.FC<any> = ({ data, children, ...props }) => {
+export const SafeLineChart: React.FC<React.ComponentProps<typeof OriginalLineChart>> = ({ data, children, ...props }) => {
   const safeData = sanitizeDataArray(data || []);
   
   if (safeData.length === 0) {
@@ -119,7 +120,7 @@ export const SafeLineChart: React.FC<any> = ({ data, children, ...props }) => {
 };
 
 // Safe AreaChart wrapper
-export const SafeAreaChart: React.FC<any> = ({ data, children, ...props }) => {
+export const SafeAreaChart: React.FC<React.ComponentProps<typeof OriginalAreaChart>> = ({ data, children, ...props }) => {
   const safeData = sanitizeDataArray(data || []);
   
   if (safeData.length === 0) {
@@ -141,7 +142,7 @@ export const SafeAreaChart: React.FC<any> = ({ data, children, ...props }) => {
 };
 
 // Safe BarChart wrapper
-export const SafeBarChart: React.FC<any> = ({ data, children, ...props }) => {
+export const SafeBarChart: React.FC<React.ComponentProps<typeof OriginalBarChart>> = ({ data, children, ...props }) => {
   const safeData = sanitizeDataArray(data || []);
   
   if (safeData.length === 0) {
@@ -163,7 +164,7 @@ export const SafeBarChart: React.FC<any> = ({ data, children, ...props }) => {
 };
 
 // Safe PieChart wrapper
-export const SafePieChart: React.FC<any> = ({ children, ...props }) => {
+export const SafePieChart: React.FC<React.ComponentProps<typeof OriginalPieChart>> = ({ children, ...props }) => {
   return (
     <OriginalPieChart {...props}>
       {children}
@@ -172,9 +173,10 @@ export const SafePieChart: React.FC<any> = ({ children, ...props }) => {
 };
 
 // Safe Pie wrapper
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- Pie component props have complex internal types that don't compose cleanly
 export const SafePie: React.FC<any> = ({ data, ...props }) => {
   const safeData = sanitizeDataArray(data || []);
-  
+
   if (safeData.length === 0) {
     return null;
   }

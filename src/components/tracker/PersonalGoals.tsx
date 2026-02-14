@@ -16,6 +16,7 @@ interface Metric {
 
 interface GoalData {
   week: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- dynamic metric keys
   [key: string]: any;
 }
 

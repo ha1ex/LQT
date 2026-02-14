@@ -100,7 +100,7 @@ export const ExperimentJournal: React.FC<ExperimentJournalProps> = ({ hypothesis
                         key={mood.value}
                         variant={selectedMood === mood.value ? "default" : "outline"}
                         size="sm"
-                        onClick={() => setSelectedMood(mood.value as any)}
+                        onClick={() => setSelectedMood(mood.value as 'positive' | 'negative' | 'neutral')}
                         className="flex items-center gap-2"
                       >
                         <mood.icon className={`h-4 w-4 ${selectedMood === mood.value ? '' : mood.color}`} />

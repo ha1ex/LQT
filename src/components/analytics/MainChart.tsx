@@ -12,6 +12,7 @@ import {
 
 
 interface MainChartProps {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- chart data with dynamic metric keys
   data: any[];
   availableLines: { key: string; label: string; color: string }[];
   defaultActiveKeys?: string[];

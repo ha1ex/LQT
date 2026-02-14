@@ -130,7 +130,7 @@ export const HistoricalWeekEntry: React.FC<HistoricalWeekEntryProps> = ({
         description: existingRating ? "Неделя обновлена" : "Новая неделя добавлена"
       });
       onClose();
-    } catch (error) {
+    } catch (_error) {
       toast({
         title: "Ошибка сохранения",
         description: "Не удалось сохранить данные. Попробуйте еще раз.",

@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Lightbulb, Plus, Target, Users, CheckCircle, AlertTriangle, Sparkles } from 'lucide-react';
 import { useEnhancedHypotheses } from '@/hooks/strategy';
 import { HypothesisCard } from './HypothesisCard';
+import type { StrategyMetrics } from '@/types/strategy';
 
 const EmptyState: React.FC<{ onCreateHypothesis: () => void }> = ({ onCreateHypothesis }) => (
   <div className="relative overflow-hidden">
@@ -65,7 +66,7 @@ const EmptyState: React.FC<{ onCreateHypothesis: () => void }> = ({ onCreateHypo
   </div>
 );
 
-const MetricsOverview: React.FC<{ metrics: any }> = ({ metrics }) => (
+const MetricsOverview: React.FC<{ metrics: StrategyMetrics }> = ({ metrics }) => (
   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
     <Card className="relative overflow-hidden hover:shadow-lg transition-all duration-300 group">
       <div className="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity" />
