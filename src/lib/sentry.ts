@@ -3,7 +3,9 @@ export async function initSentry() {
   if (!dsn) return;
 
   try {
-    const Sentry = await import('@sentry/react');
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const sentryModule = '@sentry/react';
+    const Sentry = await import(/* @vite-ignore */ sentryModule);
     Sentry.init({
       dsn,
       environment: import.meta.env.MODE,

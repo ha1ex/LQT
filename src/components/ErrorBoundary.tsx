@@ -18,7 +18,8 @@ export class SentryErrorBoundary extends React.Component<
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    import('@sentry/react')
+    const sentryModule = '@sentry/react';
+    import(/* @vite-ignore */ sentryModule)
       .then((Sentry) => {
         Sentry.captureException(error, { extra: { componentStack: errorInfo.componentStack } });
       })
