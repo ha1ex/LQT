@@ -47,7 +47,7 @@ const CorrelationAnalysis: React.FC<CorrelationAnalysisProps> = ({ data, targetM
     }
   };
 
-  const handleBarClick = (data: any) => {
+  const handleBarClick = (data: { payload?: CorrelationData }) => {
     const correlation = data?.payload;
     if (correlation) {
       setSelectedCorrelation({
@@ -107,7 +107,7 @@ const CorrelationAnalysis: React.FC<CorrelationAnalysisProps> = ({ data, targetM
                   tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
                 />
                 <Tooltip 
-                  formatter={(value: any) => [`${(Number(value) * 100).toFixed(0)}%`, 'Корреляция']}
+                  formatter={(value: number) => [`${(Number(value) * 100).toFixed(0)}%`, 'Корреляция']}
                   labelFormatter={(label) => `${label}`}
                   contentStyle={{
                     backgroundColor: 'hsl(var(--card))',

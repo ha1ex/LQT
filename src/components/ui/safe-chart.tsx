@@ -5,7 +5,7 @@ import React from 'react';
  */
 
 export interface SafeChartData {
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 interface SafeChartWrapperProps {
@@ -14,7 +14,7 @@ interface SafeChartWrapperProps {
   fallback?: React.ReactNode;
 }
 
-const isValidNumber = (value: any): boolean => {
+const isValidNumber = (value: unknown): boolean => {
   return typeof value === 'number' && !isNaN(value) && isFinite(value);
 };
 
@@ -65,6 +65,7 @@ export const SafeChartWrapper: React.FC<SafeChartWrapperProps> = ({
   // Clone children and inject sanitized data
   return React.Children.map(children, (child) => {
     if (React.isValidElement(child)) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- injecting data prop into unknown child element
       return React.cloneElement(child, { data: sanitizedData } as any);
     }
     return child;

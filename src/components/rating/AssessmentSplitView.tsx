@@ -1,12 +1,12 @@
 import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react';
-import { startOfWeek, format, getWeek, parseISO, subWeeks, addWeeks } from 'date-fns';
+import { startOfWeek, format, getWeek, parseISO, subWeeks } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { useWeeklyRatings } from '@/hooks/useWeeklyRatings';
-import { useMobile } from '@/hooks/use-mobile';
+
 import WeekNavigator from './WeekNavigator';
 import AssessmentPanel from './AssessmentPanel';
 import type { WeeklyRating } from '@/types/weeklyRating';
-import { ChevronLeft, ChevronRight, Plus, X, Calendar } from 'lucide-react';
+import { Plus, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -226,8 +226,6 @@ const AssessmentSplitView: React.FC<AssessmentSplitViewProps> = ({ allMetrics })
     updateMetricRating,
     deleteWeekRating,
   } = useWeeklyRatings();
-
-  const isMobile = useMobile();
 
   // Current week id
   const currentWeekId = useMemo(() => getWeekId(currentWeek), [currentWeek]);

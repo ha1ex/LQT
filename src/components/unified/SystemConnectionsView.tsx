@@ -151,8 +151,8 @@ export const SystemConnectionsView: React.FC<SystemConnectionsViewProps> = ({
             </CardHeader>
             <CardContent className="space-y-3">
               {topCorrelations.length > 0 ? (
-                topCorrelations.map((correlation, index) => (
-                  <div 
+                topCorrelations.map((correlation, _index) => (
+                  <div
                     key={`${correlation.metric1}-${correlation.metric2}`}
                     className="flex items-center justify-between p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors cursor-pointer"
                     onClick={() => onNavigateToSection?.('analytics', 'correlations')}
@@ -208,7 +208,7 @@ export const SystemConnectionsView: React.FC<SystemConnectionsViewProps> = ({
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-2">
-                {connections.slice(0, 3).map((connection, index) => (
+                {connections.slice(0, 3).map((connection, _index) => (
                   <div 
                     key={connection.id}
                     className="flex items-center justify-between p-2 rounded border bg-card hover:bg-accent/50 transition-colors cursor-pointer"
@@ -336,7 +336,7 @@ export const SystemConnectionsView: React.FC<SystemConnectionsViewProps> = ({
                       key={index}
                       variant="outline" 
                       size="sm"
-                      onClick={() => onNavigateToSection?.(action.section, action.params?.metricId)}
+                      onClick={() => onNavigateToSection?.(action.section, action.params?.metricId as string | undefined)}
                     >
                       {action.action === 'CREATE_HYPOTHESIS' ? 'Создать гипотезу' :
                        action.action === 'CREATE_CORRELATION_HYPOTHESIS' ? 'Создать связную гипотезу' :

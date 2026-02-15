@@ -66,7 +66,7 @@ export interface UnifiedRecommendation {
   actions: Array<{
     section: string;
     action: string;
-    params?: any;
+    params?: Record<string, unknown>;
   }>;
   expectedOutcome: string;
   timeframe: string;

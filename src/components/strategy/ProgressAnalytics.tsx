@@ -11,9 +11,9 @@ interface ProgressAnalyticsProps {
   hypothesisTitle: string;
 }
 
-export const ProgressAnalytics: React.FC<ProgressAnalyticsProps> = ({ 
-  weeklyProgress, 
-  hypothesisTitle 
+export const ProgressAnalytics: React.FC<ProgressAnalyticsProps> = ({
+  weeklyProgress,
+  hypothesisTitle: _hypothesisTitle
 }) => {
   // Подготовка данных для графиков
   const chartData = weeklyProgress.map(week => ({
@@ -55,9 +55,9 @@ export const ProgressAnalytics: React.FC<ProgressAnalyticsProps> = ({
   // Анализ паттернов
   const getConsistencyScore = () => {
     if (chartData.length < 3) return 0;
-    const ratings = chartData.map(w => w.rating || 0);
-    const avg = ratings.reduce((sum, r) => sum + r, 0) / ratings.length;
-    const variance = ratings.reduce((sum, r) => sum + Math.pow(r - avg, 2), 0) / ratings.length;
+    const ratings = chartData.map(w => w.rating || 0) as number[];
+    const avg = ratings.reduce((sum: number, r: number) => sum + r, 0) / ratings.length;
+    const variance = ratings.reduce((sum: number, r: number) => sum + Math.pow(r - avg, 2), 0) / ratings.length;
     return Math.max(0, 100 - variance * 25); // Нормализация в процентах
   };
 

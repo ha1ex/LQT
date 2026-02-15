@@ -18,7 +18,7 @@ interface CategoryBadgeProps {
 }
 
 const CategoryBadge: React.FC<CategoryBadgeProps> = ({ category, size = 'sm' }) => {
-  const config = categoryConfig[category] || categoryConfig.custom;
+  const config = categoryConfig[category as keyof typeof categoryConfig] || categoryConfig.custom;
   const Icon = config.icon;
   
   return (

@@ -10,6 +10,7 @@ import {
 } from '@/components/ui/safe-recharts';
 
 interface DynamicsChartProps {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- chart data with dynamic metric keys
   getFilteredData: (filter: string) => any[];
   timeFilter: string;
   setTimeFilter: (filter: string) => void;
@@ -73,8 +74,10 @@ const DynamicsChart: React.FC<DynamicsChartProps> = ({
             width={28}
           />
           <Tooltip
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any -- recharts Tooltip content callback has complex internal types
             content={({ active, payload, label }: any) => {
               if (!active || !payload) return null;
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any -- recharts payload items have complex types
               const item = payload.find((p: any) => p.dataKey === 'overall');
               if (!item) return null;
               return (

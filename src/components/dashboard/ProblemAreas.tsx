@@ -2,17 +2,17 @@ import React from 'react';
 import { useIntegratedData } from '@/hooks/useIntegratedData';
 
 interface ProblemAreasProps {
-  allMetrics: any[];
-  currentWeekData: any;
+  allMetrics: Array<{ id: string; name: string; icon: string; category: string }>;
+  currentWeekData: Record<string, unknown> | null;
   onMetricClick: (metricId: string) => void;
   onCreateHypothesis?: (metricId?: string) => void;
 }
 
 const ProblemAreas: React.FC<ProblemAreasProps> = ({
-  allMetrics,
-  currentWeekData,
+  allMetrics: _allMetrics,
+  currentWeekData: _currentWeekData,
   onMetricClick,
-  onCreateHypothesis
+  onCreateHypothesis: _onCreateHypothesis
 }) => {
   const { integratedMetrics, periodLabel } = useIntegratedData();
 
@@ -21,7 +21,6 @@ const ProblemAreas: React.FC<ProblemAreasProps> = ({
     .sort((a, b) => a.currentValue - b.currentValue)
     .slice(0, 2);
 
-  const weekLabel = periodLabel ? periodLabel.replace(/^W\d+,\s*/, '').trim() : '';
   const weekNum = periodLabel?.match(/W\d+/)?.[0] || '';
 
   const getScoreColor = (val: number) => {

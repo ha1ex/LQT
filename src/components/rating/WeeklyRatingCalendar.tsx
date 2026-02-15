@@ -198,9 +198,9 @@ const WeeklyRatingCalendar: React.FC<WeeklyRatingCalendarProps> = ({
             setSelectedWeekForEdit(null);
           }}
           onSave={handleHistoricalWeekSave}
-          selectedDate={selectedWeekForEdit}
+          selectedDate={selectedWeekForEdit ?? undefined}
         />
-        
+
         <HistoricalDataWizard
           isOpen={showBulkWizard}
           onClose={() => setShowBulkWizard(false)}

@@ -19,13 +19,13 @@ interface AIRecommendationsProps {
 }
 
 const AIRecommendations: React.FC<AIRecommendationsProps> = ({
-  allMetrics,
-  currentWeekData,
+  allMetrics: _allMetrics,
+  currentWeekData: _currentWeekData,
   onOpenAIChat,
   onCreateHypothesis,
-  onViewHypothesis
+  onViewHypothesis: _onViewHypothesis
 }) => {
-  const { smartRecommendations, integratedMetrics, periodLabel } = useIntegratedData();
+  const { smartRecommendations: _smartRecommendations, integratedMetrics, periodLabel } = useIntegratedData();
   const [currentIdx, setCurrentIdx] = useState(0);
 
   const weekNum = periodLabel?.match(/W\d+/)?.[0] || '';

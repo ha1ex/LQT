@@ -48,7 +48,7 @@ export const DataExport: React.FC = () => {
         title: "Экспорт завершен",
         description: "Ваши данные успешно сохранены в файл",
       });
-    } catch (error) {
+    } catch (_error) {
       toast({
         title: "Ошибка экспорта",
         description: "Не удалось экспортировать данные",

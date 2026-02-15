@@ -8,6 +8,7 @@ import TrendsPanel from './TrendsPanel';
 import CorrelationsPanel from './CorrelationsPanel';
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
+import type { WeekDataRecord } from '@/utils/dataAdapter';
 
 interface Metric {
   id: string;
@@ -20,13 +21,15 @@ interface Metric {
 
 interface AnalyticsViewProps {
   allMetrics: Metric[];
-  mockData: any[];
+  mockData: WeekDataRecord[];
   timeFilter: string;
   setTimeFilter: (f: string) => void;
   categoryFilter: string;
   setCategoryFilter: (f: string) => void;
-  getFilteredData: (filter: string) => any[];
+  getFilteredData: (filter: string) => WeekDataRecord[];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- analytics returns a complex dynamic structure
   getAnalytics: () => any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- correlation data has dynamic metric-based structure
   generateCorrelations: (target: string) => any[];
   setSelectedMetric: (name: string | null) => void;
 }

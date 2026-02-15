@@ -1,19 +1,15 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { BottomNavigation } from '@/components/ui/bottom-navigation';
 import { MobileHeader } from '@/components/ui/mobile-header';
 import { useMobile } from '@/hooks/use-mobile';
 import {
-  Home, BarChart3, Target, TrendingUp, Search, Settings as SettingsIcon,
+  Home, BarChart3, Target, Search, Settings as SettingsIcon,
   Brain,
-  Star, ChevronRight, Plus, Calendar,
+  Star, Plus, Calendar,
   Activity,
-  Award,
   Menu,
   Lightbulb,
-  X, Sparkles, ArrowLeft
+  Sparkles, ArrowLeft
 } from 'lucide-react';
 import {
   LineChart as RechartsLineChart,
@@ -27,28 +23,19 @@ import {
 
 // Новые компоненты для улучшенного UX
 import CategoryBadge from './tracker/CategoryBadge';
-import QuickEmojiRating from './tracker/QuickEmojiRating';
 import WeeklyInsights from './tracker/WeeklyInsights';
 import CorrelationAnalysis from './tracker/CorrelationAnalysis';
-import MetricNotes from './tracker/MetricNotes';
-import PersonalRecommendations from './tracker/PersonalRecommendations';
-import PersonalInsights from './tracker/PersonalInsights';
-import PersonalGoals from './tracker/PersonalGoals';
 import { StrategyDashboard, HypothesisWizard, HypothesisDetail } from './strategy';
 import { AdaptiveDashboard, AIWelcomeWizard } from './ai';
-import { WeeklyRatingCalendar, WeekDetailModal, AssessmentSplitView } from './rating';
-import { ProblemAreas, WeeklyProgress, Strengths, AIRecommendations, DashboardView as DashboardViewNew } from './dashboard';
+import { AssessmentSplitView } from './rating';
+import { DashboardView as DashboardViewNew } from './dashboard';
 import { AnalyticsView as AnalyticsViewNew } from './analytics';
 import { Settings } from '@/pages/Settings';
 import { useIntegratedData } from '@/hooks/useIntegratedData';
 import { useWeeklyRatings } from '@/hooks/useWeeklyRatings';
 import { useGlobalData } from '@/contexts/GlobalDataProvider';
 import { OnboardingWizard } from '@/components/onboarding/OnboardingWizard';
-import { EmptyStateView } from '@/components/ui/empty-state-view';
-import { adaptWeeklyRatingsToMockData, filterDataByPeriod } from '@/utils/dataAdapter';
-import { format } from 'date-fns';
-import { ru } from 'date-fns/locale';
-import { cn } from '@/lib/utils';
+import { adaptWeeklyRatingsToMockData, filterDataByPeriod, type WeekDataRecord } from '@/utils/dataAdapter';
 
 
 
@@ -58,23 +45,13 @@ const LifeQualityTracker = () => {
   const [currentView, setCurrentView] = useState('dashboard');
   const [timeFilter, setTimeFilter] = useState('year');
   const [categoryFilter, setCategoryFilter] = useState('all');
-  const [useQuickRating, setUseQuickRating] = useState(false);
-  const [, setWeekRatings] = useState({});
-  const [metricNotes, setMetricNotes] = useState({});
-  const [selectedMetric, setSelectedMetric] = useState(null);
-  // animationDelay state removed (unused)
-  const [customMetrics, setCustomMetrics] = useState([]);
-  const [isAddingMetric, setIsAddingMetric] = useState(false);
-  const [newMetricName, setNewMetricName] = useState('');
-  const [newMetricDescription, setNewMetricDescription] = useState('');
+  const [selectedMetric, setSelectedMetric] = useState<string | null>(null);
+
   const [currentStreak] = useState(5);
 
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [strategyView, setStrategyView] = useState<'dashboard' | 'create' | 'detail'>('dashboard');
   const [selectedHypothesisId, setSelectedHypothesisId] = useState<string | null>(null);
-  const [selectedWeekRating, setSelectedWeekRating] = useState(null);
-  const [isWeekModalOpen, setIsWeekModalOpen] = useState(false);
-  const [ratingTab, setRatingTab] = useState('current');
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [showAIWelcome, setShowAIWelcome] = useState(false);
   const isMobile = useMobile();
@@ -84,18 +61,12 @@ const LifeQualityTracker = () => {
   const { appState } = globalData || {};
   
   // Integrated dashboard-strategy data
-  const { periodLabel } = useIntegratedData();
+  useIntegratedData();
   
   // Weekly ratings hook
   const {
     ratings: weeklyRatings,
-    currentWeek,
-    getCurrentWeekRating,
-    updateWeekRating,
-    updateMetricRating,
-    deleteWeekRating,
     getAnalytics,
-    goToWeek
   } = useWeeklyRatings();
 
 
@@ -255,8 +226,7 @@ const LifeQualityTracker = () => {
     }
   ];
 
-  // Объединяем базовые и кастомные метрики
-  const allMetrics = [...baseMetrics, ...customMetrics];
+  const allMetrics = baseMetrics;
 
   // Функция для генерации инсайтов на основе реальных данных
   const generateWeeklyInsights = () => {
@@ -379,7 +349,7 @@ const LifeQualityTracker = () => {
   };
 
   // Линейная регрессия для линии тренда
-  const addTrendLine = (data: any[]): any[] => {
+  const addTrendLine = (data: WeekDataRecord[]): WeekDataRecord[] => {
     if (data.length < 2) return data;
     const vals = data.map((d, i) => ({ x: i, y: typeof d.overall === 'number' && isFinite(d.overall) ? d.overall : null }));
     const valid = vals.filter(v => v.y !== null) as { x: number; y: number }[];
@@ -410,7 +380,7 @@ const LifeQualityTracker = () => {
     const sanitizedData = rawData.map(week => {
       if (!week || typeof week !== 'object') return null;
 
-      const sanitizedWeek = { ...week };
+      const sanitizedWeek: WeekDataRecord = { ...week };
 
       // Проверяем и исправляем все числовые значения
       Object.keys(sanitizedWeek).forEach(key => {
@@ -445,7 +415,7 @@ const LifeQualityTracker = () => {
         return null;
       }
       
-      const sanitizedWeek = { 
+      const sanitizedWeek: WeekDataRecord = {
         week: week.week || `W${index + 1}`,
         date: week.date || 'Unknown',
         overall: typeof week.overall === 'number' && !isNaN(week.overall) && isFinite(week.overall) ? week.overall : 0
@@ -536,7 +506,7 @@ const LifeQualityTracker = () => {
         
         return null;
       })
-      .filter(item => item !== null && typeof item.correlation === 'number' && !isNaN(item.correlation) && isFinite(item.correlation) && Math.abs(item.correlation) > 0.3) // Фильтруем слабые корреляции и NaN
+      .filter((item): item is { metric: string; correlation: number; strength: 'strong' | 'moderate' | 'weak' } => item !== null && typeof item.correlation === 'number' && !isNaN(item.correlation) && isFinite(item.correlation) && Math.abs(item.correlation) > 0.3) // Фильтруем слабые корреляции и NaN
       .sort((a, b) => Math.abs(b.correlation) - Math.abs(a.correlation)) // Сортируем по силе
       .slice(0, 5); // Берем топ-5
     
@@ -544,127 +514,13 @@ const LifeQualityTracker = () => {
   }, [allMetrics, mockData]);
 
   // Функция для получения цвета по значению (только функциональные цвета)
-  const getScoreColor = (value) => {
+  const getScoreColor = (value: number) => {
     if (value >= 8) return 'text-green-600';
     if (value >= 6) return 'text-yellow-600';
     if (value >= 4) return 'text-muted-foreground';
     return 'text-red-600';
   };
 
-  // Функции для управления кастомными метриками
-  const addCustomMetric = () => {
-    if (newMetricName.trim() && newMetricDescription.trim()) {
-      const newMetric = {
-        id: `custom_${Date.now()}`,
-        name: newMetricName.trim(),
-        icon: '⭐',
-        description: newMetricDescription.trim(),
-        category: 'custom',
-        isCustom: true
-      };
-      setCustomMetrics(prev => [...prev, newMetric]);
-      setNewMetricName('');
-      setNewMetricDescription('');
-      setIsAddingMetric(false);
-    }
-  };
-
-  const removeCustomMetric = (metricId: string) => {
-    setCustomMetrics(prev => prev.filter(m => m.id !== metricId));
-    // Удаляем оценку если была
-    setWeekRatings(prev => {
-      const metric = allMetrics.find(m => m.id === metricId);
-      if (metric) {
-        const newRatings = { ...prev };
-        delete newRatings[metric.name];
-        return newRatings;
-      }
-      return prev;
-    });
-  };
-
-  // Компонент для ввода рейтинга с улучшенным UX и категориями
-  const RatingInput = ({ metric, value, onChange, onRemove, delay = 0, isCompleted = false }) => {
-    return (
-      <div 
-        className={`bg-card rounded-xl p-4 shadow-soft border transition-all duration-500 animate-fade-in ${
-          isCompleted 
-            ? 'border-success/30 bg-success/5 opacity-90' 
-            : 'border-border hover:shadow-medium hover:border-primary/30'
-        }`}
-        style={{ animationDelay: `${delay}ms` }}
-      >
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2 flex-1">
-            <div className={`text-xl transition-all duration-300 ${isCompleted ? 'grayscale-0' : ''}`}>
-              {metric.icon}
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-1">
-                <h3 className={`font-medium text-sm leading-tight transition-colors ${isCompleted ? 'text-success' : 'text-foreground'}`}>
-                  {metric.name}
-                </h3>
-                {isCompleted && <span className="text-xs bg-success/20 text-success px-1.5 py-0.5 rounded-full">✓</span>}
-              </div>
-              <div className="flex items-center gap-1 mb-1">
-                <CategoryBadge category={metric.category} />
-              </div>
-              <p className="text-xs text-muted-foreground line-clamp-1">{metric.description}</p>
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-2 ml-2">
-            <div className={`text-2xl font-bold ${value ? getScoreColor(value) : 'text-muted-foreground'}`}>
-              {value || '—'}
-            </div>
-            {metric.isCustom && onRemove && (
-              <button
-                onClick={() => onRemove(metric.id)}
-                className="w-6 h-6 rounded-full bg-error/10 text-error hover:bg-error/20 transition-colors flex items-center justify-center"
-                title="Удалить критерий"
-              >
-                <X className="w-3 h-3" />
-              </button>
-            )}
-          </div>
-        </div>
-        
-        {useQuickRating ? (
-          <QuickEmojiRating
-            value={value}
-            onChange={(rating) => onChange(metric.name, rating)}
-            disabled={isCompleted && value !== null}
-          />
-        ) : (
-          <div className="grid grid-cols-5 gap-2">
-            {[1,2,3,4,5,6,7,8,9,10].map(num => (
-              <button
-                key={num}
-                onClick={() => onChange(metric.name, num)}
-                disabled={isCompleted && value !== num}
-                className={`rating-button ${
-                  value === num ? 'selected' : 'unselected'
-                } ${isCompleted && value !== null ? 'opacity-75 cursor-not-allowed' : ''}`}
-              >
-                <span className="relative z-10">{num}</span>
-                {value === num && (
-                  <div className="absolute inset-0 bg-primary/20 rounded-xl animate-pulse" />
-                )}
-              </button>
-            ))}
-          </div>
-        )}
-        
-        {value && (
-          <MetricNotes
-            metricName={metric.name}
-            currentNote={metricNotes[metric.name] || ''}
-            onSaveNote={(note) => setMetricNotes(prev => ({ ...prev, [metric.name]: note }))}
-          />
-        )}
-      </div>
-    );
-  };
 
   // Sidebar компонент для веб интерфейса
   const Sidebar = () => {
@@ -840,279 +696,6 @@ const LifeQualityTracker = () => {
 
   // DashboardView moved to ./dashboard/DashboardView.tsx
 
-  // Компактный обзор областей для интеграции в аналитику
-  const CompactAreasOverview = () => {
-    const categories = {
-      mental: { name: 'Ментальное', icon: '🧠', color: 'primary' },
-      health: { name: 'Здоровье', icon: '💪', color: 'success' },
-      relationships: { name: 'Отношения', icon: '❤️', color: 'warning' },
-      finance: { name: 'Финансы', icon: '💰', color: 'secondary' },
-      social: { name: 'Социальное', icon: '🤝', color: 'info' },
-      personal: { name: 'Личное', icon: '🎯', color: 'accent' },
-      lifestyle: { name: 'Образ жизни', icon: '✈️', color: 'muted' }
-    };
-
-    const latestWeek = mockData && mockData.length > 0 ? mockData[mockData.length - 1] : null;
-
-    return (
-      <div className="card-premium p-6 animate-fade-in">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h3 className="text-xl font-bold text-foreground mb-2">Области жизни</h3>
-            <p className="text-sm text-muted-foreground">Быстрый переход к анализу по категориям</p>
-          </div>
-          <div className="btn-icon bg-gradient-to-br from-emerald-500 to-teal-500 text-white">
-            <Target className="w-5 h-5" />
-          </div>
-        </div>
-        
-        {/* Компактная сетка областей */}
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
-          {Object.entries(categories).map(([key, category]) => {
-            const categoryMetrics = allMetrics.filter(m => m.category === key);
-            const avgScore = categoryMetrics.length > 0 && latestWeek
-              ? categoryMetrics.reduce((sum, m) => sum + (latestWeek[m.name] || 0), 0) / categoryMetrics.length 
-              : 0;
-
-            const isActive = categoryFilter === key;
-
-            return (
-              <button
-                key={key}
-                onClick={() => {
-                  setCategoryFilter(isActive ? 'all' : key);
-                }}
-                className={`group flex flex-col items-center p-4 rounded-xl transition-all duration-200 border-2 ${
-                  isActive 
-                    ? 'bg-primary/10 border-primary/30 shadow-lg scale-105' 
-                    : 'bg-card border-border hover:border-primary/20 hover:bg-primary/5'
-                }`}
-              >
-                <div className={`text-2xl mb-2 transition-transform duration-200 ${
-                  isActive ? 'scale-110' : 'group-hover:scale-105'
-                }`}>
-                  {category.icon}
-                </div>
-                <div className={`text-xl font-bold mb-1 ${getScoreColor(avgScore)} ${
-                  isActive ? 'text-primary' : ''
-                }`}>
-                  {avgScore.toFixed(1)}
-                </div>
-                <div className="text-xs text-center text-muted-foreground font-medium">
-                  {category.name}
-                </div>
-                <div className="text-xs text-muted-foreground mt-1">
-                  {categoryMetrics.length} метрик
-                </div>
-              </button>
-            );
-          })}
-        </div>
-        
-        {/* Индикатор активного фильтра */}
-        {categoryFilter !== 'all' && (
-          <div className="mt-4 flex items-center justify-between p-3 bg-primary/5 rounded-lg border border-primary/20">
-            <div className="flex items-center gap-2">
-              <div className="text-sm font-medium text-primary">
-                Фильтр: {categories[categoryFilter]?.name}
-              </div>
-              <Badge variant="secondary" className="text-xs">
-                {allMetrics.filter(m => m.category === categoryFilter).length} метрик
-              </Badge>
-            </div>
-            <button
-              onClick={() => setCategoryFilter('all')}
-              className="text-xs text-muted-foreground hover:text-primary transition-colors"
-            >
-              Сбросить фильтр
-            </button>
-          </div>
-        )}
-      </div>
-    );
-  };
-
-  // Аналитика для веб интерфейса
-  // Компонент обзора статистики (оптимизированный)
-  const StatisticsOverview = () => {
-    const analytics = getAnalytics();
-    const { averageByMetric, trendsOverTime, bestWeek } = analytics;
-    
-    return (
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">Общий индекс</p>
-              <p className="text-2xl font-bold">
-                {trendsOverTime.length > 0 ? trendsOverTime[trendsOverTime.length - 1]?.averageScore?.toFixed(1) || '—' : '—'}
-              </p>
-              <p className="text-xs text-muted-foreground">Текущая неделя</p>
-            </div>
-            <Target className="w-6 h-6 text-muted-foreground" />
-          </div>
-        </Card>
-
-        <Card className="p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">Лучшая неделя</p>
-              <p className="text-2xl font-bold">
-                {bestWeek ? bestWeek.overallScore.toFixed(1) : '—'}
-              </p>
-              {bestWeek && (
-                <p className="text-xs text-muted-foreground">
-                  {format(bestWeek.startDate, 'dd.MM', { locale: ru })}
-                </p>
-              )}
-            </div>
-            <Award className="w-6 h-6 text-muted-foreground" />
-          </div>
-        </Card>
-
-        <Card className="p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">Оценено метрик</p>
-              <p className="text-2xl font-bold">{Object.keys(averageByMetric).length}</p>
-            </div>
-            <BarChart3 className="w-6 h-6 text-muted-foreground" />
-          </div>
-        </Card>
-
-        <Card className="p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">Всего недель</p>
-              <p className="text-2xl font-bold">{trendsOverTime.length}</p>
-            </div>
-            <Calendar className="w-6 h-6 text-muted-foreground" />
-          </div>
-        </Card>
-      </div>
-    );
-  };
-
-  // Компонент средних оценок (ультра-компактный, 2 колонки)
-  const AverageScoresOverview = () => {
-    const analytics = getAnalytics();
-    const { averageByMetric } = analytics;
-
-    const metricsChartData = Object.entries(averageByMetric)
-      .filter(([, average]) => typeof average === 'number' && !isNaN(average))
-      .map(([metricId, average]) => {
-        const metric = allMetrics.find(m => m.id === metricId);
-        return {
-          name: metric?.name || metricId,
-          value: average,
-          icon: metric?.icon || '📊'
-        };
-      }).sort((a, b) => b.value - a.value);
-
-    const getBarColor = (score: number) => {
-      if (score >= 7) return 'bg-emerald-500 dark:bg-emerald-400';
-      if (score >= 5) return 'bg-amber-500 dark:bg-amber-400';
-      return 'bg-red-500 dark:bg-red-400';
-    };
-
-    const getValueColor = (score: number) => {
-      if (score >= 7) return 'text-emerald-600 dark:text-emerald-400';
-      if (score >= 5) return 'text-amber-600 dark:text-amber-400';
-      return 'text-red-600 dark:text-red-400';
-    };
-
-    if (metricsChartData.length === 0) return null;
-
-    return (
-      <Card className="p-3">
-        <p className="text-xs font-medium text-muted-foreground mb-2">Средние оценки по критериям</p>
-        <div className="grid grid-cols-2 gap-x-4 gap-y-0.5">
-          {metricsChartData.map((metric) => (
-            <div key={metric.name} className="flex items-center gap-1.5">
-              <span className="text-xs shrink-0">{metric.icon}</span>
-              <span className="text-[11px] truncate min-w-0 flex-1 text-muted-foreground">{metric.name}</span>
-              <div className="w-12 bg-muted rounded-full h-1 shrink-0">
-                <div
-                  className={cn("h-1 rounded-full", getBarColor(metric.value))}
-                  style={{ width: `${(metric.value / 10) * 100}%` }}
-                />
-              </div>
-              <span className={cn("text-[11px] font-semibold tabular-nums shrink-0", getValueColor(metric.value))}>
-                {metric.value.toFixed(1)}
-              </span>
-            </div>
-          ))}
-        </div>
-      </Card>
-    );
-  };
-
-  const AnalyticsView = () => {
-    return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-bold">Аналитика</h2>
-          <TimeFilterButtons />
-        </div>
-
-        {/* Обзор статистики */}
-        <StatisticsOverview />
-
-        {/* Компактный обзор областей */}
-        <CompactAreasOverview />
-
-        {/* Средние оценки по критериям */}
-        <AverageScoresOverview />
-
-        {/* Детальные графики */}
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-          {allMetrics
-            .filter(metric => categoryFilter === 'all' || metric.category === categoryFilter)
-            .map(metric => (
-              <div key={metric.id} className="bg-card rounded-xl p-6 border border-border">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-3">
-                    <div className="text-xl">{metric.icon}</div>
-                    <div>
-                      <h3 className="font-semibold">{metric.name}</h3>
-                      <CategoryBadge category={metric.category} />
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => setSelectedMetric(metric.name)}
-                    className="text-primary hover:text-primary/80 transition-colors"
-                  >
-                    <ChevronRight className="w-5 h-5" />
-                  </button>
-                </div>
-                
-                <ResponsiveContainer width="100%" height={200}>
-                  <RechartsLineChart data={getFilteredData(timeFilter)}>
-                    <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
-                    <XAxis dataKey="week" className="text-muted-foreground" />
-                    <YAxis domain={[0, 10]} className="text-muted-foreground" />
-                    <Tooltip 
-                      contentStyle={{ 
-                        backgroundColor: 'hsl(var(--card))', 
-                        border: '1px solid hsl(var(--border))',
-                        borderRadius: '8px'
-                      }}
-                    />
-                    <Line
-                      type="monotone"
-                      dataKey={metric.name}
-                      stroke="hsl(var(--primary))"
-                      strokeWidth={2}
-                      dot={{ fill: 'hsl(var(--primary))', strokeWidth: 2 }}
-                    />
-                  </RechartsLineChart>
-                </ResponsiveContainer>
-              </div>
-            ))}
-        </div>
-      </div>
-    );
-  };
 
   // Компонент переключателей периодов
   const TimeFilterButtons = () => (
@@ -1132,241 +715,6 @@ const LifeQualityTracker = () => {
       ))}
     </div>
   );
-
-  // RatingView с календарной системой
-  const RatingView = () => {
-    const currentWeekRating = getCurrentWeekRating();
-    
-    const handleRatingChange = (metricName, rating) => {
-      const metric = allMetrics.find(m => m.name === metricName);
-      if (metric) {
-        updateMetricRating(currentWeek, metric.id, rating);
-      }
-    };
-
-    const handleWeekSelect = (rating) => {
-      setSelectedWeekRating(rating);
-      setIsWeekModalOpen(true);
-    };
-
-    const completedMetrics = allMetrics.filter(metric => 
-      currentWeekRating?.ratings[metric.id] !== undefined
-    );
-    const pendingMetrics = allMetrics.filter(metric => 
-      currentWeekRating?.ratings[metric.id] === undefined
-    );
-
-    return (
-      <div className="space-y-6">
-        {/* Header with test data button */}
-        <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-bold">Еженедельная оценка</h2>
-        </div>
-
-        <Tabs value={ratingTab} onValueChange={setRatingTab}>
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="current">Текущая неделя</TabsTrigger>
-            <TabsTrigger value="calendar">Календарь</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="current" className="space-y-6">
-        {/* Прогресс */}
-        <div className="bg-gradient-to-r from-primary/5 to-secondary/5 rounded-xl p-6 border border-primary/10">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h3 className="text-lg font-semibold">Прогресс оценки</h3>
-              <p className="text-sm text-muted-foreground">
-                {completedMetrics.length} из {allMetrics.length} метрик оценено
-              </p>
-            </div>
-            <div className="text-2xl font-bold text-primary">
-              {Math.round((completedMetrics.length / allMetrics.length) * 100)}%
-            </div>
-          </div>
-          <div className="w-full bg-muted rounded-full h-2">
-            <div 
-              className="bg-primary h-2 rounded-full transition-all duration-300"
-              style={{ width: `${(completedMetrics.length / allMetrics.length) * 100}%` }}
-            />
-          </div>
-        </div>
-
-        {/* Настройки */}
-        <div className="flex items-center justify-between p-4 bg-card rounded-xl border border-border">
-          <div className="flex items-center gap-3">
-            <Sparkles className="w-5 h-5 text-primary" />
-            <span className="font-medium">Быстрая оценка эмодзи</span>
-          </div>
-          <button
-            onClick={() => setUseQuickRating(!useQuickRating)}
-            className={`w-12 h-6 rounded-full transition-colors relative ${
-              useQuickRating ? 'bg-primary' : 'bg-muted'
-            }`}
-          >
-            <div className={`w-5 h-5 bg-background rounded-full absolute top-0.5 transition-transform border border-border ${
-              useQuickRating ? 'translate-x-6' : 'translate-x-0.5'
-            }`} />
-          </button>
-        </div>
-
-        {/* Ожидающие оценки */}
-        {pendingMetrics.length > 0 && (
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold flex items-center gap-2">
-              <div className="w-2 h-2 bg-warning rounded-full"></div>
-              Ожидающие оценки
-              <span className="text-sm text-muted-foreground">({pendingMetrics.length})</span>
-            </h3>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              {pendingMetrics.map((metric, index) => (
-                <RatingInput
-                  key={metric.id}
-                  metric={metric}
-                  value={currentWeekRating?.ratings[metric.id]}
-                  onChange={handleRatingChange}
-                  onRemove={metric.isCustom ? removeCustomMetric : null}
-                  delay={index * 50}
-                />
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Добавление нового критерия */}
-        <div className="space-y-4">
-          {!isAddingMetric ? (
-            <button
-              onClick={() => setIsAddingMetric(true)}
-              className="w-full border-2 border-dashed border-muted-foreground/30 rounded-xl p-6 text-muted-foreground hover:border-primary/50 hover:text-primary transition-all duration-300 group"
-            >
-              <div className="flex items-center justify-center gap-2">
-                <Plus className="w-5 h-5 group-hover:scale-110 transition-transform" />
-                <span className="font-medium">Добавить критерий</span>
-              </div>
-            </button>
-          ) : (
-            <div className="bg-card rounded-xl p-6 shadow-soft border border-border space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold">Новый критерий</h3>
-                <button
-                  onClick={() => {
-                    setIsAddingMetric(false);
-                    setNewMetricName('');
-                    setNewMetricDescription('');
-                  }}
-                  className="w-8 h-8 rounded-full bg-muted hover:bg-muted/80 transition-colors flex items-center justify-center"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <input
-                  type="text"
-                  placeholder="Название критерия"
-                  value={newMetricName}
-                  onChange={(e) => setNewMetricName(e.target.value)}
-                  className="px-4 py-3 rounded-xl border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
-                />
-                <input
-                  type="text"
-                  placeholder="Описание критерия"
-                  value={newMetricDescription}
-                  onChange={(e) => setNewMetricDescription(e.target.value)}
-                  className="px-4 py-3 rounded-xl border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
-                />
-              </div>
-              
-              <div className="flex gap-3">
-                <button
-                  onClick={() => {
-                    setIsAddingMetric(false);
-                    setNewMetricName('');
-                    setNewMetricDescription('');
-                  }}
-                  className="flex-1 px-4 py-3 rounded-xl border border-border text-muted-foreground hover:bg-muted/50 transition-colors"
-                >
-                  Отмена
-                </button>
-                <button
-                  onClick={addCustomMetric}
-                  disabled={!newMetricName.trim() || !newMetricDescription.trim()}
-                  className="flex-1 px-4 py-3 rounded-xl bg-primary text-primary-foreground font-semibold hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Добавить
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Завершенные критерии */}
-        {completedMetrics.length > 0 && (
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold flex items-center gap-2">
-              <div className="w-2 h-2 bg-success rounded-full"></div>
-              Завершенные
-              <span className="text-sm text-muted-foreground">({completedMetrics.length})</span>
-            </h3>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              {completedMetrics.map((metric, index) => (
-                <RatingInput
-                  key={metric.id}
-                  metric={metric}
-                  value={currentWeekRating?.ratings[metric.id]}
-                  onChange={handleRatingChange}
-                  onRemove={metric.isCustom ? removeCustomMetric : null}
-                  delay={index * 50}
-                  isCompleted={true}
-                />
-              ))}
-            </div>
-          </div>
-        )}
-
-
-          </TabsContent>
-
-          <TabsContent value="calendar">
-            <WeeklyRatingCalendar
-              ratings={weeklyRatings}
-              selectedDate={currentWeek}
-              onDateSelect={goToWeek}
-              onWeekSelect={handleWeekSelect}
-              onUpdateWeek={updateWeekRating}
-              onBulkUpdateWeeks={(weeks) => {
-                weeks.forEach(({ date, data }) => {
-                  updateWeekRating(date, data);
-                });
-              }}
-            />
-          </TabsContent>
-
-
-        </Tabs>
-
-        <WeekDetailModal
-          isOpen={isWeekModalOpen}
-          onClose={() => setIsWeekModalOpen(false)}
-          rating={selectedWeekRating}
-          onSave={(updatedRating) => {
-            updateWeekRating(updatedRating.startDate, {
-              ratings: updatedRating.ratings,
-              notes: updatedRating.notes,
-              mood: updatedRating.mood,
-              keyEvents: updatedRating.keyEvents,
-            });
-            setIsWeekModalOpen(false);
-          }}
-          onDelete={(weekId) => {
-            deleteWeekRating(weekId);
-            setIsWeekModalOpen(false);
-          }}
-          allMetrics={allMetrics}
-        />
-      </div>
-    );
-  };
 
   // MetricDetailView для веб интерфейса
   const MetricDetailView = () => {

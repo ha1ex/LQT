@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components -- context provider exports hook alongside component */
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { UserState, AppDataState, DataSyncStatus } from '@/types/app';
 import { useEnhancedHypotheses } from '@/hooks/strategy';

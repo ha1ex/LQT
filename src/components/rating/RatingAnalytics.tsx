@@ -21,6 +21,21 @@ const RatingAnalytics: React.FC<RatingAnalyticsProps> = ({ analytics, allMetrics
     ...item,
     averageScore: item.hasData === false ? null : item.averageScore
   }));
+
+  // Prepare metrics data for charts (must be before early return to satisfy rules-of-hooks)
+  const metricsChartData = useMemo(() => {
+    return Object.entries(averageByMetric)
+      .filter(([_metricId, average]) => typeof average === 'number' && !isNaN(average))
+      .map(([metricId, average]) => {
+        const metric = allMetrics.find(m => m.id === metricId);
+        return {
+          name: metric?.name || metricId,
+          value: average,
+          icon: metric?.icon || '📊'
+        };
+      }).sort((a, b) => b.value - a.value);
+  }, [averageByMetric, allMetrics]);
+
   // Если данных нет, показываем сообщение о загрузке
   if (trendsOverTime.length === 0) {
     return (
@@ -38,20 +53,6 @@ const RatingAnalytics: React.FC<RatingAnalyticsProps> = ({ analytics, allMetrics
       </div>
     );
   }
-
-  // Prepare metrics data for charts
-  const metricsChartData = useMemo(() => {
-    return Object.entries(averageByMetric)
-      .filter(([metricId, average]) => typeof average === 'number' && !isNaN(average))
-      .map(([metricId, average]) => {
-        const metric = allMetrics.find(m => m.id === metricId);
-        return {
-          name: metric?.name || metricId,
-          value: average,
-          icon: metric?.icon || '📊'
-        };
-      }).sort((a, b) => b.value - a.value);
-  }, [averageByMetric, allMetrics]);
 
   // Mood colors
   const moodColors = {
@@ -117,7 +118,7 @@ const RatingAnalytics: React.FC<RatingAnalyticsProps> = ({ analytics, allMetrics
                     ? (() => {
                         const validScores = trendsOverTime.filter(week => typeof week.averageScore === 'number' && !isNaN(week.averageScore));
                         return validScores.length > 0 
-                          ? (validScores.reduce((sum, week) => sum + week.averageScore, 0) / validScores.length).toFixed(1)
+                          ? (validScores.reduce((sum, week) => sum + (week.averageScore ?? 0), 0) / validScores.length).toFixed(1)
                           : '0.0';
                       })()
                     : '0.0'
@@ -198,7 +199,7 @@ const RatingAnalytics: React.FC<RatingAnalyticsProps> = ({ analytics, allMetrics
                       tickFormatter={(value) => value.toFixed(1)}
                     />
                     <Tooltip 
-                      formatter={(value: any) => [`${value.toFixed(1)}`, 'Средний балл']}
+                      formatter={(value: number) => [`${value.toFixed(1)}`, 'Средний балл']}
                       labelFormatter={(label) => {
                         try {
                           return `Неделя: ${new Date(label).toLocaleDateString('ru-RU')}`;
@@ -289,7 +290,7 @@ const RatingAnalytics: React.FC<RatingAnalyticsProps> = ({ analytics, allMetrics
                       cy="50%"
                       outerRadius={80}
                       dataKey="value"
-                      label={({ name, value }) => `${name}: ${value}`}
+                      label={({ name, value }: { name: string; value: number }) => `${name}: ${value}`}
                     >
                       {moodChartData.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={entry.color} />

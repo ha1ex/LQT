@@ -29,7 +29,7 @@ export const DataClear: React.FC = () => {
       } else {
         throw new Error('LocalStorage недоступен');
       }
-    } catch (error) {
+    } catch (_error) {
       toast({
         title: "Ошибка очистки",
         description: "Не удалось очистить данные",

@@ -1,10 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
-import { 
-  EnhancedHypothesis, 
-  HypothesisFormData, 
+import {
+  EnhancedHypothesis,
+  HypothesisFormData,
   StrategyMetrics,
   ValidationStatus,
-  ExperimentStatus 
+  ExperimentStatus,
+  JournalEntry
 } from '@/types/strategy';
 import { 
   calculatePriority, 
@@ -31,20 +32,27 @@ export const useEnhancedHypotheses = () => {
       if (Array.isArray(stored) && stored.length > 0) {
         
         // Convert date strings back to Date objects and migrate old data
-        const converted = stored.map((h: any) => {
+        // Data from localStorage is serialized EnhancedHypothesis with date strings
+        type StoredHypothesis = Omit<EnhancedHypothesis, 'experimentStartDate' | 'createdAt' | 'updatedAt' | 'journal'> & {
+          experimentStartDate: string;
+          createdAt: string;
+          updatedAt: string;
+          journal: Array<Omit<JournalEntry, 'date'> & { date: string }>;
+          tasks?: unknown;
+        };
+        const converted = (stored as StoredHypothesis[]).map((h) => {
           // Migration: convert old tasks to weeklyProgress if needed
           if (h.tasks && !h.weeklyProgress) {
-            const { createDefaultWeeklyProgress } = require('@/utils/strategy');
             h.weeklyProgress = createDefaultWeeklyProgress(h.timeframe || 6, new Date(h.experimentStartDate));
             delete h.tasks; // Remove old tasks property
           }
-          
+
           return {
             ...h,
             experimentStartDate: new Date(h.experimentStartDate),
             createdAt: new Date(h.createdAt),
             updatedAt: new Date(h.updatedAt),
-            journal: h.journal.map((entry: any) => ({
+            journal: h.journal.map((entry) => ({
               ...entry,
               date: new Date(entry.date)
             })),

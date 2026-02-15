@@ -8,7 +8,7 @@ interface LoginScreenProps {
   onLogin: () => void;
 }
 
-const CORRECT_PASSWORD = 'qwerty87';
+const CORRECT_PASSWORD = import.meta.env.VITE_APP_PASSWORD;
 
 export function LoginScreen({ onLogin }: LoginScreenProps) {
   const [password, setPassword] = useState('');

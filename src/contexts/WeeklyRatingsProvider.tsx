@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components -- context provider exports context alongside component */
 import React, { createContext, useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { WeeklyRating, WeeklyRatingData, WeeklyRatingAnalytics } from '@/types/weeklyRating';
 import { startOfWeek, endOfWeek, format, addWeeks, subWeeks, parseISO } from 'date-fns';
@@ -179,17 +180,21 @@ export const WeeklyRatingsProvider: React.FC<{ children: React.ReactNode }> = ({
         ? Math.round((ratingsValues.reduce((sum, rating) => sum + rating, 0) / ratingsValues.length) * 10) / 10
         : 0;
 
-      const newRating: WeeklyRating = {
+      const base = {
         id: weekId,
         weekNumber: parseInt(format(weekStart, 'w')),
         startDate: weekStart,
         endDate: weekEnd,
         ratings: {},
         notes: {},
-        mood: 'neutral',
+        mood: 'neutral' as const,
         keyEvents: [],
         createdAt: existing?.createdAt || now,
         updatedAt: now,
+      };
+
+      const newRating: WeeklyRating = {
+        ...base,
         ...existing,
         ...updates,
         overallScore,

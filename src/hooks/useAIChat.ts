@@ -14,13 +14,13 @@ export const useAIChat = () => {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) {
         const parsed = JSON.parse(stored);
-        const messagesWithDates = parsed.map((msg: any) => ({
+        const messagesWithDates = parsed.map((msg: Omit<ChatMessage, 'timestamp'> & { timestamp: string }) => ({
           ...msg,
           timestamp: new Date(msg.timestamp)
         }));
         setMessages(messagesWithDates);
       }
-    } catch (err) {
+    } catch (_err) {
       setMessages([]);
     }
   }, []);
@@ -29,7 +29,8 @@ export const useAIChat = () => {
   const saveChatHistory = useCallback((messages: ChatMessage[]) => {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(messages));
-    } catch (err) {
+    } catch (_err) {
+      // Ignore storage errors
     }
   }, []);
 
@@ -37,7 +38,7 @@ export const useAIChat = () => {
   const getApiKey = () => {
     try {
       return localStorage.getItem('openai_api_key');
-    } catch (error) {
+    } catch (_error) {
       return null;
     }
   };
@@ -157,6 +158,7 @@ export const useAIChat = () => {
     } finally {
       setLoading(false);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- callOpenAI is stable (no state deps)
   }, [messages, saveChatHistory]);
 
   // Очистка чата
@@ -164,7 +166,8 @@ export const useAIChat = () => {
     setMessages([]);
     try {
       localStorage.removeItem(STORAGE_KEY);
-    } catch (error) {
+    } catch (_error) {
+      // Ignore storage errors
     }
   }, []);
 

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -9,15 +9,16 @@ import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { GlobalDataProvider } from "@/contexts/GlobalDataProvider";
 import { WeeklyRatingsProvider } from "@/contexts/WeeklyRatingsProvider";
 import { LoginScreen } from "@/components/auth/LoginScreen";
-import Index from "./pages/Index";
-import { Settings } from "./pages/Settings";
-import NotFound from "./pages/NotFound";
+
+const Index = lazy(() => import("./pages/Index"));
+const Settings = lazy(() => import("./pages/Settings").then(m => ({ default: m.Settings })));
+const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
 
 // Сохраняем API ключ при запуске приложения
-const apiKey = "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";
-if (!localStorage.getItem('openai_api_key')) {
+const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
+if (apiKey && !localStorage.getItem('openai_api_key')) {
   localStorage.setItem('openai_api_key', apiKey);
 }
 
@@ -63,12 +64,14 @@ const App = () => {
               <Toaster />
               <Sonner />
               <BrowserRouter>
-                <Routes>
-                  <Route path="/" element={<ErrorBoundary><Index /></ErrorBoundary>} />
-                  <Route path="/settings" element={<ErrorBoundary><Settings /></ErrorBoundary>} />
-                  {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
+                <Suspense fallback={<div className="min-h-screen" />}>
+                  <Routes>
+                    <Route path="/" element={<ErrorBoundary><Index /></ErrorBoundary>} />
+                    <Route path="/settings" element={<ErrorBoundary><Settings /></ErrorBoundary>} />
+                    {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+                </Suspense>
               </BrowserRouter>
             </TooltipProvider>
           </GlobalDataProvider>

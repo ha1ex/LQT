@@ -2,17 +2,17 @@ import React from 'react';
 import { useIntegratedData } from '@/hooks/useIntegratedData';
 
 interface StrengthsProps {
-  allMetrics: any[];
-  currentWeekData: any;
+  allMetrics: Array<{ id: string; name: string; icon: string; category: string }>;
+  currentWeekData: Record<string, unknown> | null;
   onMetricClick: (metricId: string) => void;
   onCreateHypothesis?: (metricId?: string) => void;
 }
 
 const Strengths: React.FC<StrengthsProps> = ({
-  allMetrics,
-  currentWeekData,
+  allMetrics: _allMetrics,
+  currentWeekData: _currentWeekData,
   onMetricClick,
-  onCreateHypothesis
+  onCreateHypothesis: _onCreateHypothesis
 }) => {
   const { integratedMetrics, periodLabel } = useIntegratedData();
 

@@ -10,14 +10,9 @@ import {
   Tooltip,
 } from '@/components/ui/safe-recharts';
 
-interface ChartFilter {
-  key: string;
-  label: string;
-  color: string;
-  active: boolean;
-}
 
 interface MainChartProps {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- chart data with dynamic metric keys
   data: any[];
   availableLines: { key: string; label: string; color: string }[];
   defaultActiveKeys?: string[];

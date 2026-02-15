@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { AIInsight, AIGoalSuggestion, AIHypothesisImprovement, AIAnalysisContext, AIResponse } from '@/types/ai';
+import { AIInsight, AIAnalysisContext, AIResponse } from '@/types/ai';
 
 export const useAIInsights = () => {
   const [insights, setInsights] = useState<AIInsight[]>([]);
@@ -17,6 +17,7 @@ export const useAIInsights = () => {
     }
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- hypothesis data shape varies
   const generatePrompt = (context: 'dashboard' | 'goals' | 'hypothesis', data: AIAnalysisContext, hypothesisData?: any) => {
     const basePrompt = `Ты - AI Life Coach, который анализирует данные о качестве жизни и дает персональные рекомендации.
 
@@ -79,7 +80,7 @@ ${JSON.stringify(hypothesisData, null, 2)}
     return basePrompt;
   };
 
-  const callOpenAI = async (prompt: string, context: 'dashboard' | 'goals' | 'hypothesis'): Promise<AIResponse> => {
+  const callOpenAI = async (prompt: string, _context: 'dashboard' | 'goals' | 'hypothesis'): Promise<AIResponse> => {
     const apiKey = getApiKey();
     if (!apiKey) {
       if (import.meta.env.DEV) console.error('No API key found');
@@ -142,6 +143,7 @@ ${JSON.stringify(hypothesisData, null, 2)}
   const generateInsights = useCallback(async (
     context: 'dashboard' | 'goals' | 'hypothesis',
     data: AIAnalysisContext,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- hypothesis data shape varies
     hypothesisData?: any
   ) => {
     try {
@@ -157,8 +159,8 @@ ${JSON.stringify(hypothesisData, null, 2)}
           setInsights(parsedCache.insights || []);
           return parsedCache;
         }
-      } catch (cacheError) {
-        // Игнорируем ошибки кэша, продолжаем работу
+      } catch (_cacheError) {
+        // Ignore cache errors, continue with fresh request
       }
 
       const prompt = generatePrompt(context, data, hypothesisData);
@@ -167,8 +169,8 @@ ${JSON.stringify(hypothesisData, null, 2)}
       // Кэшируем результат
       try {
         localStorage.setItem(cacheKey, JSON.stringify(response));
-      } catch (cacheError) {
-        // Игнорируем ошибки кэширования
+      } catch (_cacheError) {
+        // Ignore caching errors
       }
 
       if (response.insights) {
@@ -184,6 +186,7 @@ ${JSON.stringify(hypothesisData, null, 2)}
     } finally {
       setLoading(false);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- callOpenAI is stable (no state deps)
   }, []);
 
   const clearCache = useCallback(() => {
@@ -194,7 +197,8 @@ ${JSON.stringify(hypothesisData, null, 2)}
           localStorage.removeItem(key);
         }
       });
-    } catch (error) {
+    } catch (_error) {
+      // Ignore storage errors
     }
   }, []);
 

@@ -2,6 +2,7 @@ import React from 'react';
 import { useIntegratedData } from '@/hooks/useIntegratedData';
 
 interface WeeklyProgressProps {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- chart data with dynamic metric keys
   mockData: any[];
   onViewHistory: () => void;
   onCreateHypothesis?: (metricId?: string) => void;

@@ -42,7 +42,7 @@ export const AIChat: React.FC<AIChatProps> = ({ context }) => {
 
     try {
       await sendMessage(messageContent, context);
-    } catch (err) {
+    } catch (_err) {
       toast({
         title: "Ошибка отправки",
         description: error || "Не удалось отправить сообщение",

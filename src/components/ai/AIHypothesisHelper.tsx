@@ -37,7 +37,7 @@ export const AIHypothesisHelper: React.FC<AIHypothesisHelperProps> = ({
           description: `AI предложил ${response.hypothesis_improvements.length} улучшений`,
         });
       }
-    } catch (err) {
+    } catch (_err) {
       toast({
         title: "Ошибка анализа",
         description: error || "Не удалось проанализировать гипотезу",

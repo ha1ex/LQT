@@ -82,11 +82,11 @@ export const HistoricalDataWizard: React.FC<HistoricalDataWizardProps> = ({
     onClose();
   };
 
-  const updateTemplate = (field: keyof WeekTemplate, value: any) => {
+  const updateTemplate = <K extends keyof WeekTemplate>(field: K, value: WeekTemplate[K]) => {
     setTemplate(prev => ({ ...prev, [field]: value }));
   };
 
-  const updateIndividualWeek = (weekIndex: number, field: keyof WeekTemplate, value: any) => {
+  const updateIndividualWeek = <K extends keyof WeekTemplate>(weekIndex: number, field: K, value: WeekTemplate[K]) => {
     setIndividualWeeks(prev => ({
       ...prev,
       [weekIndex]: {
@@ -286,9 +286,9 @@ export const HistoricalDataWizard: React.FC<HistoricalDataWizardProps> = ({
               value={weekData.mood}
               onValueChange={(value) => {
                 if (fillMode === 'template') {
-                  updateTemplate('mood', value);
+                  updateTemplate('mood', value as WeeklyRating['mood']);
                 } else if (currentWeek) {
-                  updateIndividualWeek(currentWeek.index, 'mood', value);
+                  updateIndividualWeek(currentWeek.index, 'mood', value as WeeklyRating['mood']);
                 }
               }}
             >
