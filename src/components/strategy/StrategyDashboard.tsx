@@ -124,7 +124,7 @@ export const StrategyDashboard: React.FC<StrategyDashboardProps> = ({
   onCreateHypothesis,
   onViewHypothesis
 }) => {
-  const { getActiveHypotheses, getStrategyMetrics, loading } = useEnhancedHypotheses();
+  const { getActiveHypotheses, getStrategyMetrics, deleteHypothesis, loading } = useEnhancedHypotheses();
   
   const activeHypotheses = getActiveHypotheses();
   const metrics = getStrategyMetrics();
@@ -192,6 +192,7 @@ export const StrategyDashboard: React.FC<StrategyDashboardProps> = ({
                     hypothesis={hypothesis}
                     priority={index + 1}
                     onView={() => onViewHypothesis(hypothesis.id)}
+                    onDelete={() => { if (confirm('Удалить эту гипотезу?')) deleteHypothesis(hypothesis.id); }}
                   />
                 </div>
               ))}

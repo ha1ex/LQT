@@ -2,7 +2,7 @@ import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { CheckCircle, AlertTriangle, Target } from 'lucide-react';
+import { CheckCircle, AlertTriangle, Target, Trash2 } from 'lucide-react';
 import { EnhancedHypothesis, ValidationStatus } from '@/types/strategy';
 import { getPriorityCategory } from '@/utils/strategy';
 
@@ -10,12 +10,14 @@ interface HypothesisCardProps {
   hypothesis: EnhancedHypothesis;
   priority: number;
   onView: () => void;
+  onDelete: () => void;
 }
 
 export const HypothesisCard: React.FC<HypothesisCardProps> = ({
   hypothesis,
   priority,
-  onView
+  onView,
+  onDelete
 }) => {
   const priorityCategory = getPriorityCategory(hypothesis.calculatedPriority);
 
@@ -133,10 +135,19 @@ export const HypothesisCard: React.FC<HypothesisCardProps> = ({
           <span className="text-muted-foreground">
             {hypothesis.weeklyProgress?.filter(w => w.rating > 0).length || 0}/{hypothesis.weeklyProgress?.length || 0} недель оценено
           </span>
-          <span className="text-primary font-medium group-hover:text-secondary transition-colors flex items-center gap-1">
-            Подробнее 
-            <span className="group-hover:translate-x-1 transition-transform">→</span>
-          </span>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={(e) => { e.stopPropagation(); onDelete(); }}
+              className="text-muted-foreground hover:text-destructive transition-colors p-1 rounded-md hover:bg-destructive/10"
+              title="Удалить гипотезу"
+            >
+              <Trash2 className="h-4 w-4" />
+            </button>
+            <span className="text-primary font-medium group-hover:text-secondary transition-colors flex items-center gap-1">
+              Подробнее
+              <span className="group-hover:translate-x-1 transition-transform">→</span>
+            </span>
+          </div>
         </div>
       </CardContent>
     </Card>
