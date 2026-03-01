@@ -5,6 +5,7 @@ import {
   StrategyMetrics,
   ValidationStatus,
   ExperimentStatus,
+  ExperimentConclusionData,
   JournalEntry
 } from '@/types/strategy';
 import { 
@@ -33,11 +34,12 @@ export const useEnhancedHypotheses = () => {
         
         // Convert date strings back to Date objects and migrate old data
         // Data from localStorage is serialized EnhancedHypothesis with date strings
-        type StoredHypothesis = Omit<EnhancedHypothesis, 'experimentStartDate' | 'createdAt' | 'updatedAt' | 'journal'> & {
+        type StoredHypothesis = Omit<EnhancedHypothesis, 'experimentStartDate' | 'createdAt' | 'updatedAt' | 'journal' | 'conclusion'> & {
           experimentStartDate: string;
           createdAt: string;
           updatedAt: string;
           journal: Array<Omit<JournalEntry, 'date'> & { date: string }>;
+          conclusion?: Omit<ExperimentConclusionData, 'concludedAt'> & { concludedAt: string };
           tasks?: unknown;
         };
         const converted = (stored as StoredHypothesis[]).map((h) => {
@@ -56,6 +58,11 @@ export const useEnhancedHypotheses = () => {
               ...entry,
               date: new Date(entry.date)
             })),
+            // Convert conclusion date if present
+            conclusion: h.conclusion ? {
+              ...h.conclusion,
+              concludedAt: new Date(h.conclusion.concludedAt)
+            } : undefined,
             // Ensure weeklyProgress exists
             weeklyProgress: h.weeklyProgress || createDefaultWeeklyProgress(h.timeframe || 6, new Date(h.experimentStartDate))
           };
@@ -222,19 +229,46 @@ export const useEnhancedHypotheses = () => {
     return sortHypothesesByPriority(active);
   }, [hypotheses]);
 
+  // Complete experiment with conclusion
+  const completeExperiment = useCallback((
+    hypothesisId: string,
+    result: ExperimentConclusionData['result'],
+    summary?: string
+  ) => {
+    const hypothesis = hypotheses.find(h => h.id === hypothesisId);
+    if (!hypothesis) return;
+
+    const ratedWeeks = hypothesis.weeklyProgress.filter(w => w.rating > 0);
+    const averageRating = ratedWeeks.length > 0
+      ? ratedWeeks.reduce((sum, w) => sum + w.rating, 0) / ratedWeeks.length
+      : 0;
+
+    const conclusion: ExperimentConclusionData = {
+      result,
+      summary,
+      concludedAt: new Date(),
+      averageRating: Math.round(averageRating * 100) / 100
+    };
+
+    updateHypothesis(hypothesisId, {
+      conclusion,
+      experimentStatus: ExperimentStatus.COMPLETED,
+      status: 'completed'
+    });
+  }, [hypotheses, updateHypothesis]);
+
   // Get strategy metrics
   const getStrategyMetrics = useCallback((): StrategyMetrics => {
     const active = hypotheses.filter(h => h.status === 'active');
     const validated = active.filter(h => h.validationStatus === ValidationStatus.VALIDATED);
-    const allSubjects = new Set(active.flatMap(h => h.subjects));
-    const avgProgress = active.length > 0 
-      ? active.reduce((sum, h) => sum + h.progress, 0) / active.length 
+    const avgProgress = active.length > 0
+      ? active.reduce((sum, h) => sum + h.progress, 0) / active.length
       : 0;
 
     return {
       activeHypotheses: active.length,
       validatedHypotheses: validated.length,
-      totalSubjects: allSubjects.size,
+      totalSubjects: 0,
       averageProgress: Math.round(avgProgress)
     };
   }, [hypotheses]);
@@ -247,6 +281,7 @@ export const useEnhancedHypotheses = () => {
     deleteHypothesis,
     updateWeeklyRating,
     addJournalEntry,
+    completeExperiment,
     getHypothesis,
     getActiveHypotheses,
     getStrategyMetrics

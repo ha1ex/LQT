@@ -3,10 +3,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
-import { Slider } from '@/components/ui/slider';
-import { ArrowLeft, ArrowRight, CheckCircle, Target, Users, Lightbulb, BarChart3 } from 'lucide-react';
-import { useSubjects, useEnhancedHypotheses } from '@/hooks/strategy';
+import { ArrowLeft, ArrowRight, CheckCircle, Target, Lightbulb } from 'lucide-react';
+import { useEnhancedHypotheses } from '@/hooks/strategy';
 import { HypothesisFormData } from '@/types/strategy';
 
 interface HypothesisWizardProps {
@@ -18,7 +16,6 @@ interface HypothesisWizardProps {
 export const HypothesisWizard: React.FC<HypothesisWizardProps> = ({ onComplete, onCancel, availableMetrics = [] }) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState<Partial<HypothesisFormData>>({
-    subjects: [],
     impact: 5,
     confidence: 5,
     effort: 5,
@@ -26,19 +23,16 @@ export const HypothesisWizard: React.FC<HypothesisWizardProps> = ({ onComplete, 
     risk: 3
   });
 
-  const { subjects, loading: subjectsLoading } = useSubjects();
   const { createHypothesis } = useEnhancedHypotheses();
 
 
   const steps = [
     { number: 1, title: 'Цель', icon: Target, description: 'Выберите цель для улучшения' },
-    { number: 2, title: 'Субъекты', icon: Users, description: 'Выберите участников изменений' },
-    { number: 3, title: 'Гипотеза', icon: Lightbulb, description: 'Сформулируйте ЕСЛИ-ТО-ПОТОМУ ЧТО' },
-    { number: 4, title: 'Приоритизация', icon: BarChart3, description: 'Оцените параметры' }
+    { number: 2, title: 'Гипотеза', icon: Lightbulb, description: 'Сформулируйте ЕСЛИ-ТО-ПОТОМУ ЧТО' },
   ];
 
   // Используем реальные метрики или fallback
-  const goals = availableMetrics.length > 0 
+  const goals = availableMetrics.length > 0
     ? availableMetrics.map(metric => ({
         id: metric.id,
         name: metric.name,
@@ -53,7 +47,7 @@ export const HypothesisWizard: React.FC<HypothesisWizardProps> = ({ onComplete, 
       ];
 
   const handleNext = () => {
-    if (currentStep < 4) {
+    if (currentStep < 2) {
       setCurrentStep(currentStep + 1);
     }
   };
@@ -72,10 +66,9 @@ export const HypothesisWizard: React.FC<HypothesisWizardProps> = ({ onComplete, 
   };
 
   const isFormValid = () => {
-    return formData.goal && 
-           formData.subjects && formData.subjects.length > 0 && 
-           formData.conditions && 
-           formData.expectedOutcome && 
+    return formData.goal &&
+           formData.conditions &&
+           formData.expectedOutcome &&
            formData.reasoning;
   };
 
@@ -89,7 +82,7 @@ export const HypothesisWizard: React.FC<HypothesisWizardProps> = ({ onComplete, 
       <h3 className="text-lg font-semibold">Выберите цель для улучшения</h3>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {goals.map(goal => (
-          <Card 
+          <Card
             key={goal.id}
             className={`cursor-pointer transition-all hover:shadow-md ${
               formData.goal?.description === goal.name ? 'ring-2 ring-primary bg-primary/5' : ''
@@ -106,72 +99,8 @@ export const HypothesisWizard: React.FC<HypothesisWizardProps> = ({ onComplete, 
     </div>
   );
 
-  // Step 2: Subject Selection
-  const Step2 = () => (
-    <div className="space-y-6">
-      <h3 className="text-lg font-semibold">Выберите участников изменений</h3>
-      <p className="text-sm text-muted-foreground">
-        Кто будет влиять на достижение цели или чье поведение нужно изменить?
-      </p>
-      
-      {subjectsLoading ? (
-        <div className="text-center py-8">
-          <p className="text-muted-foreground">Загрузка участников...</p>
-        </div>
-      ) : subjects.length === 0 ? (
-        <div className="text-center py-8">
-          <p className="text-muted-foreground">Участники не найдены. Попробуйте обновить страницу.</p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {subjects.map(subject => (
-          <Card 
-            key={subject.id}
-            className={`cursor-pointer transition-all hover:shadow-md ${
-              formData.subjects?.includes(subject.id) ? 'ring-2 ring-primary bg-primary/5' : ''
-            }`}
-            onClick={() => {
-              const current = formData.subjects || [];
-              const updated = current.includes(subject.id)
-                ? current.filter(id => id !== subject.id)
-                : [...current, subject.id];
-              updateFormData({ subjects: updated });
-            }}
-          >
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-base">{subject.name}</CardTitle>
-                {formData.subjects?.includes(subject.id) && (
-                  <CheckCircle className="h-5 w-5 text-primary" />
-                )}
-              </div>
-              <CardDescription className="text-sm">{subject.description}</CardDescription>
-            </CardHeader>
-            </Card>
-          ))}
-        </div>
-      )}
-
-      {formData.subjects && formData.subjects.length > 0 && (
-        <div className="p-4 bg-muted/50 rounded-lg">
-          <p className="text-sm font-medium mb-2">Выбранные участники:</p>
-          <div className="flex flex-wrap gap-2">
-            {formData.subjects.map(subjectId => {
-              const subject = subjects.find(s => s.id === subjectId);
-              return subject ? (
-                <Badge key={subjectId} variant="secondary">
-                  {subject.name}
-                </Badge>
-              ) : null;
-            })}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-
-  // Step 3 content - используется inline для избежания пересоздания компонента
-  const step3Content = (
+  // Step 2 content - IF-THEN-BECAUSE formulation
+  const step2Content = (
     <div className="space-y-6">
       <h3 className="text-lg font-semibold">Сформулируйте гипотезу</h3>
       <p className="text-sm text-muted-foreground">
@@ -226,119 +155,6 @@ export const HypothesisWizard: React.FC<HypothesisWizardProps> = ({ onComplete, 
     </div>
   );
 
-  // Step 4: Prioritization
-  const Step4 = () => (
-    <div className="space-y-6">
-      <h3 className="text-lg font-semibold">Оцените параметры гипотезы</h3>
-      <p className="text-sm text-muted-foreground">
-        Оцените каждый параметр от 1 до 10 для расчета приоритета
-      </p>
-
-      <div className="space-y-6">
-        <div>
-          <div className="flex justify-between items-center mb-2">
-            <Label>Влияние на цель</Label>
-            <span className="text-sm font-medium">{formData.impact}/10</span>
-          </div>
-          <Slider
-            value={[formData.impact || 5]}
-            onValueChange={(value) => updateFormData({ impact: value[0] })}
-            max={10}
-            min={1}
-            step={1}
-            className="w-full"
-          />
-          <p className="text-xs text-muted-foreground mt-1">
-            Насколько сильно это повлияет на достижение цели?
-          </p>
-        </div>
-
-        <div>
-          <div className="flex justify-between items-center mb-2">
-            <Label>Уверенность в результате</Label>
-            <span className="text-sm font-medium">{formData.confidence}/10</span>
-          </div>
-          <Slider
-            value={[formData.confidence || 5]}
-            onValueChange={(value) => updateFormData({ confidence: value[0] })}
-            max={10}
-            min={1}
-            step={1}
-            className="w-full"
-          />
-          <p className="text-xs text-muted-foreground mt-1">
-            Насколько вы уверены, что это сработает?
-          </p>
-        </div>
-
-        <div>
-          <div className="flex justify-between items-center mb-2">
-            <Label>Требуемые усилия</Label>
-            <span className="text-sm font-medium">{formData.effort}/10</span>
-          </div>
-          <Slider
-            value={[formData.effort || 5]}
-            onValueChange={(value) => updateFormData({ effort: value[0] })}
-            max={10}
-            min={1}
-            step={1}
-            className="w-full"
-          />
-          <p className="text-xs text-muted-foreground mt-1">
-            Сколько усилий потребуется? (1 = очень мало, 10 = очень много)
-          </p>
-        </div>
-
-        <div>
-          <div className="flex justify-between items-center mb-2">
-            <Label>Временные рамки</Label>
-            <span className="text-sm font-medium">{formData.timeframe}/10</span>
-          </div>
-          <Slider
-            value={[formData.timeframe || 4]}
-            onValueChange={(value) => updateFormData({ timeframe: value[0] })}
-            max={10}
-            min={1}
-            step={1}
-            className="w-full"
-          />
-          <p className="text-xs text-muted-foreground mt-1">
-            Как быстро можно увидеть результаты? (1 = очень долго, 10 = очень быстро)
-          </p>
-        </div>
-
-        <div>
-          <div className="flex justify-between items-center mb-2">
-            <Label>Уровень риска</Label>
-            <span className="text-sm font-medium">{formData.risk}/10</span>
-          </div>
-          <Slider
-            value={[formData.risk || 3]}
-            onValueChange={(value) => updateFormData({ risk: value[0] })}
-            max={10}
-            min={1}
-            step={1}
-            className="w-full"
-          />
-          <p className="text-xs text-muted-foreground mt-1">
-            Насколько рискованная гипотеза? (1 = низкий риск, 10 = высокий риск)
-          </p>
-        </div>
-      </div>
-
-      <div className="p-4 bg-muted/50 rounded-lg">
-        <h4 className="font-medium mb-2">Расчетный приоритет:</h4>
-        <div className="text-2xl font-bold text-primary">
-          {(((formData.impact || 5) * (formData.confidence || 5) * (10 - (formData.effort || 5)) * 
-             (formData.timeframe || 4) * (10 - (formData.risk || 3))) / 100000 * 100).toFixed(1)}
-        </div>
-        <p className="text-xs text-muted-foreground">
-          Рассчитано по формуле: (Влияние × Уверенность × (10-Усилия) × Временные рамки × (10-Риск)) / 1000
-        </p>
-      </div>
-    </div>
-  );
-
   return (
     <div className="max-w-4xl mx-auto">
       {/* Progress Steps */}
@@ -347,8 +163,8 @@ export const HypothesisWizard: React.FC<HypothesisWizardProps> = ({ onComplete, 
           {steps.map((step) => (
             <div key={step.number} className="flex items-center">
               <div className={`flex items-center justify-center w-10 h-10 rounded-full border-2 ${
-                currentStep >= step.number 
-                  ? 'bg-primary text-primary-foreground border-primary' 
+                currentStep >= step.number
+                  ? 'bg-primary text-primary-foreground border-primary'
                   : 'border-muted-foreground text-muted-foreground'
               }`}>
                 <step.icon className="h-5 w-5" />
@@ -359,7 +175,7 @@ export const HypothesisWizard: React.FC<HypothesisWizardProps> = ({ onComplete, 
                 </p>
                 <p className="text-xs text-muted-foreground">{step.description}</p>
               </div>
-              {step.number < 4 && (
+              {step.number < 2 && (
                 <div className={`hidden md:block w-12 h-0.5 mx-4 ${
                   currentStep > step.number ? 'bg-primary' : 'bg-muted'
                 }`} />
@@ -372,20 +188,18 @@ export const HypothesisWizard: React.FC<HypothesisWizardProps> = ({ onComplete, 
       {/* Step Content */}
       <Card>
         <CardHeader>
-          <CardTitle>Шаг {currentStep} из 4</CardTitle>
+          <CardTitle>Шаг {currentStep} из 2</CardTitle>
         </CardHeader>
         <CardContent>
           {currentStep === 1 && <Step1 />}
-          {currentStep === 2 && <Step2 />}
-          {currentStep === 3 && step3Content}
-          {currentStep === 4 && <Step4 />}
+          {currentStep === 2 && step2Content}
         </CardContent>
       </Card>
 
       {/* Navigation */}
       <div className="flex justify-between mt-6">
-        <Button 
-          variant="outline" 
+        <Button
+          variant="outline"
           onClick={currentStep === 1 ? onCancel : handlePrevious}
           className="flex items-center gap-2"
         >
@@ -393,8 +207,8 @@ export const HypothesisWizard: React.FC<HypothesisWizardProps> = ({ onComplete, 
           {currentStep === 1 ? 'Отмена' : 'Назад'}
         </Button>
 
-        {currentStep === 4 ? (
-          <Button 
+        {currentStep === 2 ? (
+          <Button
             onClick={handleSubmit}
             disabled={!isFormValid()}
             className="flex items-center gap-2"
@@ -403,7 +217,7 @@ export const HypothesisWizard: React.FC<HypothesisWizardProps> = ({ onComplete, 
             Создать гипотезу
           </Button>
         ) : (
-          <Button 
+          <Button
             onClick={handleNext}
             disabled={currentStep === 1 && !formData.goal}
             className="flex items-center gap-2"

@@ -1,7 +1,7 @@
 /// <reference types="vitest/globals" />
 import {
   BASE_METRICS,
-  adaptWeeklyRatingsToMockData,
+  adaptWeeklyRatingsToWeeklyData,
   createEmptyDataStructure,
   getLastNWeeks,
   filterDataByPeriod,
@@ -133,7 +133,7 @@ describe('getMetricsFromData', () => {
   });
 });
 
-describe('adaptWeeklyRatingsToMockData', () => {
+describe('adaptWeeklyRatingsToWeeklyData', () => {
   const emptyState: AppDataState = {
     userState: 'empty',
     hasData: false,
@@ -148,11 +148,11 @@ describe('adaptWeeklyRatingsToMockData', () => {
 
   it('returns empty array when userState is "empty"', () => {
     const ratings = { r1: makeRating({ startDate: new Date('2024-01-01'), endDate: new Date('2024-01-07') }) };
-    expect(adaptWeeklyRatingsToMockData(ratings, emptyState)).toEqual([]);
+    expect(adaptWeeklyRatingsToWeeklyData(ratings, emptyState)).toEqual([]);
   });
 
   it('returns empty array for empty ratings object', () => {
-    expect(adaptWeeklyRatingsToMockData({}, realDataState)).toEqual([]);
+    expect(adaptWeeklyRatingsToWeeklyData({}, realDataState)).toEqual([]);
   });
 
   it('transforms a single valid rating into mock data', () => {
@@ -165,7 +165,7 @@ describe('adaptWeeklyRatingsToMockData', () => {
       overallScore: 7.5,
     });
 
-    const result = adaptWeeklyRatingsToMockData({ r1: rating }, realDataState);
+    const result = adaptWeeklyRatingsToWeeklyData({ r1: rating }, realDataState);
     expect(result).toHaveLength(1);
 
     const entry = result[0];
@@ -193,7 +193,7 @@ describe('adaptWeeklyRatingsToMockData', () => {
       ratings: { peace_of_mind: 3 },
     });
 
-    const result = adaptWeeklyRatingsToMockData({ r1, r2 }, realDataState);
+    const result = adaptWeeklyRatingsToWeeklyData({ r1, r2 }, realDataState);
     expect(result[0].week).toBe('W1');
     expect(result[1].week).toBe('W2');
   });
@@ -205,7 +205,7 @@ describe('adaptWeeklyRatingsToMockData', () => {
       ratings: { physical_health: 9 },
     });
 
-    const result = adaptWeeklyRatingsToMockData({ r1: rating }, realDataState);
+    const result = adaptWeeklyRatingsToWeeklyData({ r1: rating }, realDataState);
     // physical_health maps to physical_activity -> "Уровень физической активности"
     expect(result[0]['Уровень физической активности']).toBe(9);
   });
@@ -218,7 +218,7 @@ describe('adaptWeeklyRatingsToMockData', () => {
       overallScore: 6.5,
     });
 
-    const result = adaptWeeklyRatingsToMockData({ r1: rating }, realDataState);
+    const result = adaptWeeklyRatingsToWeeklyData({ r1: rating }, realDataState);
     expect(result[0].overall).toBe(6.5);
   });
 
@@ -244,7 +244,7 @@ describe('adaptWeeklyRatingsToMockData', () => {
       updatedAt: new Date(),
     };
 
-    const result = adaptWeeklyRatingsToMockData({ good, bad }, realDataState);
+    const result = adaptWeeklyRatingsToWeeklyData({ good, bad }, realDataState);
     expect(result).toHaveLength(1);
   });
 
@@ -255,7 +255,7 @@ describe('adaptWeeklyRatingsToMockData', () => {
       ratings: { peace_of_mind: NaN, income: 'bad' as unknown as number, financial_cushion: 7 },
     });
 
-    const result = adaptWeeklyRatingsToMockData({ r1: rating }, realDataState);
+    const result = adaptWeeklyRatingsToWeeklyData({ r1: rating }, realDataState);
     expect(result[0]['Спокойствие ума']).toBeUndefined();
     expect(result[0]['Доход']).toBeUndefined();
     expect(result[0]['Финансовая подушка']).toBe(7);

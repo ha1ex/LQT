@@ -64,6 +64,13 @@ export const useIntegratedData = () => {
     return `W${String(wNum).padStart(2, '0')}, ${start} — ${end}`;
   }, [latestWeekRating]);
 
+  // Get recent weeks sorted by date (most recent first) for multi-week trend analysis
+  const recentWeeks = useMemo(() => {
+    return Object.values(ratings)
+      .sort((a, b) => b.startDate.getTime() - a.startDate.getTime())
+      .slice(0, 6); // last 6 weeks for 4-week lookback + buffer
+  }, [ratings]);
+
   // Create integrated metrics from real BASE_METRICS, using actual weekly rating data
   const integratedMetrics = useMemo((): IntegratedMetric[] => {
     if (!latestWeekRating) return [];
@@ -77,14 +84,23 @@ export const useIntegratedData = () => {
         const currentValue = latestWeekRating.ratings[metric.id] || 0;
         const previousValue = previousWeekRating?.ratings?.[metric.id] || currentValue;
 
+        // 4-week trend: compare current vs average of last 4 weeks (excluding current)
+        const pastValues = recentWeeks
+          .slice(1, 5)
+          .map(w => w.ratings[metric.id])
+          .filter((v): v is number => typeof v === 'number' && v > 0);
+        const pastAvg = pastValues.length > 0
+          ? pastValues.reduce((a, b) => a + b, 0) / pastValues.length
+          : currentValue;
+
         // Find related hypotheses based on goal metric
         const relatedHypotheses = activeHypotheses
           .filter(hyp => hyp.goal.metricId === metric.id)
           .map(hyp => hyp.id);
 
         let trend: 'up' | 'down' | 'stable' = 'stable';
-        if (currentValue > previousValue + 0.5) trend = 'up';
-        else if (currentValue < previousValue - 0.5) trend = 'down';
+        if (currentValue > pastAvg + 0.5) trend = 'up';
+        else if (currentValue < pastAvg - 0.5) trend = 'down';
 
         return {
           id: metric.id,
@@ -98,7 +114,7 @@ export const useIntegratedData = () => {
           hasActiveExperiment: relatedHypotheses.length > 0,
         };
       });
-  }, [latestWeekRating, previousWeekRating, activeHypotheses]);
+  }, [latestWeekRating, previousWeekRating, recentWeeks, activeHypotheses]);
 
   // Create strategy-dashboard links
   const strategyDashboardLinks = useMemo((): DashboardStrategyLink[] => {

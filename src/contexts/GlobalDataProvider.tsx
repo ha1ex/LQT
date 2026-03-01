@@ -3,7 +3,6 @@ import React, { createContext, useContext, useEffect, useState, useCallback } fr
 import { UserState, AppDataState, DataSyncStatus } from '@/types/app';
 import { useEnhancedHypotheses } from '@/hooks/strategy';
 import { useWeeklyRatings } from '@/hooks/useWeeklyRatings';
-import { useSubjects } from '@/hooks/strategy/useSubjects';
 import { clearAllDemoData, logCurrentLocalStorageState } from '@/utils/clearDemoData';
 
 interface GlobalDataContextType {
@@ -55,18 +54,16 @@ export const GlobalDataProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
   const { hypotheses } = useEnhancedHypotheses();
   const { ratings } = useWeeklyRatings();
-  const { subjects } = useSubjects();
 
   // Determine user state based on available data
   const determineUserState = useCallback((): UserState => {
     // Check for real user data (not default system data)
     const hasRealHypotheses = hypotheses && hypotheses.length > 0;
     const hasRealRatings = ratings && Object.keys(ratings).length > 0;
-    const hasUserSubjects = subjects && subjects.some(s => s.type === 'custom');
 
-    if (hasRealHypotheses || hasRealRatings || hasUserSubjects) return 'real_data';
+    if (hasRealHypotheses || hasRealRatings) return 'real_data';
     return 'empty';
-  }, [hypotheses, ratings, subjects]);
+  }, [hypotheses, ratings]);
 
   // Update app state when data changes
   useEffect(() => {
@@ -86,12 +83,12 @@ export const GlobalDataProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       sections: {
         hypotheses: hypotheses && hypotheses.length > 0,
         weeklyRatings: ratings && Object.keys(ratings).length > 0,
-        subjects: subjects && subjects.length > 0,
+        subjects: false,
         aiInsights: false, // TODO: implement AI insights checking
         goals: false, // TODO: implement goals checking
       }
     }));
-  }, [hypotheses, ratings, subjects, determineUserState]);
+  }, [hypotheses, ratings, determineUserState]);
 
   const clearAllData = useCallback(async () => {
     setSyncStatus(prev => ({ ...prev, isLoading: true }));

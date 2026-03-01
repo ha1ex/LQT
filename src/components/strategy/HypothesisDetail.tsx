@@ -1,11 +1,10 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Users, AlertTriangle } from 'lucide-react';
-import { useEnhancedHypotheses, useSubjects } from '@/hooks/strategy';
+import { AlertTriangle } from 'lucide-react';
+import { useEnhancedHypotheses } from '@/hooks/strategy';
 import { HypothesisHero } from './HypothesisHero';
-import { QuickActions } from './QuickActions';
 import { CompactProgressTracker } from './CompactProgressTracker';
+import { ExperimentConclusion } from './ExperimentConclusion';
 import { ExperimentJournal } from './ExperimentJournal';
 
 interface HypothesisDetailProps {
@@ -15,10 +14,16 @@ interface HypothesisDetailProps {
 
 export const HypothesisDetail: React.FC<HypothesisDetailProps> = ({ hypothesisId, onBack }) => {
   const { getHypothesis } = useEnhancedHypotheses();
-  const { getSubjectsByIds } = useSubjects();
-  
+
   const hypothesis = getHypothesis(hypothesisId);
   
+  const allWeeksRated = useMemo(() => {
+    if (!hypothesis || !hypothesis.weeklyProgress || hypothesis.weeklyProgress.length === 0) return false;
+    return hypothesis.weeklyProgress.every(w => w.rating > 0);
+  }, [hypothesis]);
+
+  const showConclusion = allWeeksRated || hypothesis?.conclusion;
+
   if (!hypothesis) {
     return (
       <div className="text-center py-12">
@@ -29,8 +34,6 @@ export const HypothesisDetail: React.FC<HypothesisDetailProps> = ({ hypothesisId
       </div>
     );
   }
-
-  const subjects = getSubjectsByIds(hypothesis.subjects || []);
 
   return (
     <div className="space-y-8 max-w-7xl mx-auto">
@@ -64,48 +67,31 @@ export const HypothesisDetail: React.FC<HypothesisDetailProps> = ({ hypothesisId
             </CardContent>
           </Card>
 
-          {/* Subjects & Validation Errors */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Subjects */}
-            <Card>
+          {/* Validation Errors */}
+          {hypothesis.validationErrors && hypothesis.validationErrors.length > 0 && (
+            <Card className="border-destructive/50">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-base">
-                  <Users className="h-4 w-4" />
-                  Участники ({subjects.length})
+                <CardTitle className="text-destructive flex items-center gap-2 text-base">
+                  <AlertTriangle className="h-4 w-4" />
+                  Требует доработки
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="flex flex-wrap gap-2">
-                  {subjects.map(subject => (
-                    <Badge key={subject.id} variant="outline" className="text-xs">
-                      {subject.name}
-                    </Badge>
+                <ul className="space-y-1">
+                  {hypothesis.validationErrors.map((error, index) => (
+                    <li key={index} className="text-sm text-destructive">
+                      • {error.message}
+                    </li>
                   ))}
-                </div>
+                </ul>
               </CardContent>
             </Card>
+          )}
 
-            {/* Validation Errors */}
-            {hypothesis.validationErrors && hypothesis.validationErrors.length > 0 && (
-              <Card className="border-destructive/50">
-                <CardHeader>
-                  <CardTitle className="text-destructive flex items-center gap-2 text-base">
-                    <AlertTriangle className="h-4 w-4" />
-                    Требует доработки
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <ul className="space-y-1">
-                    {hypothesis.validationErrors.map((error, index) => (
-                      <li key={index} className="text-sm text-destructive">
-                        • {error.message}
-                      </li>
-                    ))}
-                  </ul>
-                </CardContent>
-              </Card>
-            )}
-          </div>
+          {/* Experiment Conclusion */}
+          {showConclusion && (
+            <ExperimentConclusion hypothesis={hypothesis} />
+          )}
 
           {/* Progress Tracker */}
           <CompactProgressTracker hypothesisId={hypothesisId} />
@@ -113,9 +99,6 @@ export const HypothesisDetail: React.FC<HypothesisDetailProps> = ({ hypothesisId
 
         {/* Right Column - Sidebar */}
         <div className="space-y-6">
-          {/* Quick Actions */}
-          <QuickActions hypothesis={hypothesis} />
-
           {/* Experiment Journal */}
           <ExperimentJournal hypothesisId={hypothesisId} />
         </div>

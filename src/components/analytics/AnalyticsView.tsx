@@ -21,7 +21,7 @@ interface Metric {
 
 interface AnalyticsViewProps {
   allMetrics: Metric[];
-  mockData: WeekDataRecord[];
+  weeklyData: WeekDataRecord[];
   timeFilter: string;
   setTimeFilter: (f: string) => void;
   categoryFilter: string;
@@ -46,7 +46,7 @@ const CATEGORY_MAP: Record<string, { name: string; icon: string }> = {
 
 const AnalyticsView: React.FC<AnalyticsViewProps> = ({
   allMetrics,
-  mockData,
+  weeklyData,
   timeFilter,
   setTimeFilter,
   categoryFilter,
@@ -73,7 +73,7 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({
   const totalWeeks = trendsOverTime.length;
 
   // ====== Categories data ======
-  const latestWeek = mockData.length > 0 ? mockData[mockData.length - 1] : null;
+  const latestWeek = weeklyData.length > 0 ? weeklyData[weeklyData.length - 1] : null;
   const categoriesData = useMemo(() => {
     return Object.entries(CATEGORY_MAP).map(([key, cat]) => {
       const catMetrics = allMetrics.filter(m => m.category === key);
@@ -145,7 +145,7 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({
         : allMetrics.filter(m => m.category === categoryFilter);
 
     return filtered.map(m => {
-      const values = mockData
+      const values = weeklyData
         .map(week => (week && typeof week[m.name] === 'number' ? week[m.name] : 0))
         .filter(v => !isNaN(v));
       const latest = values.length > 0 ? values[values.length - 1] : 0;
@@ -163,12 +163,12 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({
         data: sparkData.length > 0 ? sparkData : [0],
       };
     });
-  }, [allMetrics, mockData, categoryFilter]);
+  }, [allMetrics, weeklyData, categoryFilter]);
 
   // ====== Ranking metrics ======
   const rankingMetrics = useMemo(() => {
     return allMetrics.map(m => {
-      const values = mockData
+      const values = weeklyData
         .map(w => (w && typeof w[m.name] === 'number' ? w[m.name] : 0))
         .filter(v => !isNaN(v));
       const latest = values.length > 0 ? values[values.length - 1] : 0;
@@ -180,26 +180,44 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({
         change: latest - prev,
       };
     });
-  }, [allMetrics, mockData]);
+  }, [allMetrics, weeklyData]);
 
-  // ====== Trends data ======
+  // ====== Trends data (4-week longitudinal) ======
   const trendsData = useMemo(() => {
     return allMetrics.map(m => {
-      const values = mockData
+      const values = weeklyData
         .map(w => (w && typeof w[m.name] === 'number' ? w[m.name] : 0))
-        .filter(v => !isNaN(v));
+        .filter(v => !isNaN(v) && v > 0);
       const latest = values.length > 0 ? values[values.length - 1] : 0;
-      const prev = values.length >= 2 ? values[values.length - 2] : 0;
-      const categoryName =
-        CATEGORY_MAP[m.category]?.name || m.category;
+      const categoryName = CATEGORY_MAP[m.category]?.name || m.category;
+
+      // 4-week trend: compare current value vs average of 4 weeks ago window
+      let change = 0;
+      let streak = 0; // consecutive weeks in same direction
+      if (values.length >= 2) {
+        const lookback = Math.min(4, values.length - 1);
+        const pastAvg = values.slice(-lookback - 1, -1).reduce((a, b) => a + b, 0) / lookback;
+        change = latest - pastAvg;
+
+        // Count streak of consecutive up/down weeks
+        for (let i = values.length - 1; i >= 1; i--) {
+          const dir = values[i] - values[i - 1];
+          if (change >= 0 && dir > 0) streak++;
+          else if (change < 0 && dir < 0) streak++;
+          else break;
+        }
+      }
+
       return {
         name: m.name,
         icon: m.icon,
         category: categoryName,
-        change: latest - prev,
+        change,
+        streak,
+        weeksOfData: values.length,
       };
     });
-  }, [allMetrics, mockData]);
+  }, [allMetrics, weeklyData]);
 
   // ====== Correlations data ======
   const correlationsData = useMemo(() => {

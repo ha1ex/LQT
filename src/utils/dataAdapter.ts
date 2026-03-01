@@ -23,8 +23,8 @@ export const BASE_METRICS = [
   { id: 'self_esteem', name: 'Самооценка', icon: '💎', category: 'personal' }
 ];
 
-// Адаптер для преобразования данных из GlobalDataProvider в формат mockData
-export const adaptWeeklyRatingsToMockData = (
+// Адаптер для преобразования данных из GlobalDataProvider в формат weeklyData
+export const adaptWeeklyRatingsToWeeklyData = (
   weeklyRatings: Record<string, WeeklyRating>,
   appState: AppDataState
 ): WeekDataRecord[] => {
@@ -33,7 +33,7 @@ export const adaptWeeklyRatingsToMockData = (
     return [];
   }
 
-  // Преобразуем недельные оценки в формат mockData
+  // Преобразуем недельные оценки в формат weeklyData
   return Object.values(weeklyRatings)
     .filter(rating => rating && rating.startDate && rating.endDate) // Фильтруем некорректные записи
     .sort((a, b) => a.startDate.getTime() - b.startDate.getTime())

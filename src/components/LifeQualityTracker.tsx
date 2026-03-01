@@ -23,8 +23,6 @@ import {
 
 // Новые компоненты для улучшенного UX
 import CategoryBadge from './tracker/CategoryBadge';
-import WeeklyInsights from './tracker/WeeklyInsights';
-import CorrelationAnalysis from './tracker/CorrelationAnalysis';
 import { StrategyDashboard, HypothesisWizard, HypothesisDetail } from './strategy';
 import { AdaptiveDashboard, AIWelcomeWizard } from './ai';
 import { AssessmentSplitView } from './rating';
@@ -35,7 +33,7 @@ import { useIntegratedData } from '@/hooks/useIntegratedData';
 import { useWeeklyRatings } from '@/hooks/useWeeklyRatings';
 import { useGlobalData } from '@/contexts/GlobalDataProvider';
 import { OnboardingWizard } from '@/components/onboarding/OnboardingWizard';
-import { adaptWeeklyRatingsToMockData, filterDataByPeriod, type WeekDataRecord } from '@/utils/dataAdapter';
+import { adaptWeeklyRatingsToWeeklyData, filterDataByPeriod, type WeekDataRecord } from '@/utils/dataAdapter';
 
 
 
@@ -238,10 +236,10 @@ const LifeQualityTracker = () => {
       change?: number;
     }> = [];
 
-    if (mockData.length < 2) return insights;
+    if (weeklyData.length < 2) return insights;
 
-    const latest = mockData[mockData.length - 1];
-    const previous = mockData[mockData.length - 2];
+    const latest = weeklyData[weeklyData.length - 1];
+    const previous = weeklyData[weeklyData.length - 2];
 
     // Find improvements and declines
     allMetrics.forEach(metric => {
@@ -296,11 +294,11 @@ const LifeQualityTracker = () => {
     }
 
     // Total weeks tracked
-    if (mockData.length >= 10) {
+    if (weeklyData.length >= 10) {
       insights.push({
         type: 'achievement',
         title: '📊 Стабильное отслеживание',
-        description: `Вы отслеживаете качество жизни уже ${mockData.length} недель`
+        description: `Вы отслеживаете качество жизни уже ${weeklyData.length} недель`
       });
     }
 
@@ -323,7 +321,7 @@ const LifeQualityTracker = () => {
         isFinite(xi) && isFinite(yi)
       );
     
-    if (validPairs.length < 2) return 0; // Нужно минимум 2 точки
+    if (validPairs.length < 12) return 0; // Нужно минимум 12 точек для статистически значимой корреляции
     
     const validX = validPairs.map(pair => pair[0]);
     const validY = validPairs.map(pair => pair[1]);
@@ -374,7 +372,7 @@ const LifeQualityTracker = () => {
 
   // Функция для получения отфильтрованных данных с санитизацией
   const getFilteredData = (filter: string) => {
-    const rawData = filterDataByPeriod(mockData, filter);
+    const rawData = filterDataByPeriod(weeklyData, filter);
 
     // Санитизируем данные для предотвращения NaN
     const sanitizedData = rawData.map(week => {
@@ -400,15 +398,15 @@ const LifeQualityTracker = () => {
   };
 
   // Адаптированные данные из GlobalDataProvider с полной санитизацией
-  const mockData = useMemo(() => {
-    const adaptedData = adaptWeeklyRatingsToMockData(weeklyRatings, appState);
+  const weeklyData = useMemo(() => {
+    const adaptedData = adaptWeeklyRatingsToWeeklyData(weeklyRatings, appState);
     
     // Если данных нет, создаем пустую структуру с безопасными значениями
     if (!adaptedData || adaptedData.length === 0) {
       return [];
     }
     
-    // Дополнительная санитизация на уровне mockData
+    // Дополнительная санитизация на уровне weeklyData
     const sanitizedData = adaptedData.map((week, index) => {
       if (!week || typeof week !== 'object') {
         if (import.meta.env.DEV) console.warn(`Invalid week data at index ${index}:`, week);
@@ -447,15 +445,15 @@ const LifeQualityTracker = () => {
           const metric1 = allMetrics[i];
           const metric2 = allMetrics[j];
           
-          const values1 = mockData
+          const values1 = weeklyData
             .map(week => week && week[metric1.name] ? week[metric1.name] : 0)
             .filter(val => typeof val === 'number' && !isNaN(val) && isFinite(val));
-          const values2 = mockData
+          const values2 = weeklyData
             .map(week => week && week[metric2.name] ? week[metric2.name] : 0)
             .filter(val => typeof val === 'number' && !isNaN(val) && isFinite(val));
           
-          // Проверяем наличие достаточного количества данных
-          if (values1.length >= 3 && values2.length >= 3 && values1.length === values2.length) {
+          // Проверяем наличие достаточного количества данных (минимум 12 точек)
+          if (values1.length >= 12 && values2.length >= 12 && values1.length === values2.length) {
             const correlation = calculatePearsonCorrelation(values1, values2);
             
             // Добавляем только значимые корреляции (|r| > 0.4) и валидные числа
@@ -478,19 +476,19 @@ const LifeQualityTracker = () => {
     }
     
     // Для отдельных метрик - исключаем целевую метрику из расчета общего индекса
-    const targetValues = mockData
+    const targetValues = weeklyData
       .map(week => week && week[targetMetric] ? week[targetMetric] : 0)
       .filter(val => typeof val === 'number' && !isNaN(val) && isFinite(val));
       
     const correlations = allMetrics
       .filter(metric => metric.name !== targetMetric)
       .map(metric => {
-        const metricValues = mockData
+        const metricValues = weeklyData
           .map(week => week && week[metric.name] ? week[metric.name] : 0)
           .filter(val => typeof val === 'number' && !isNaN(val) && isFinite(val));
         
-        // Проверяем наличие достаточного количества данных
-        if (metricValues.length >= 3 && targetValues.length >= 3 && metricValues.length === targetValues.length) {
+        // Проверяем наличие достаточного количества данных (минимум 12 точек)
+        if (metricValues.length >= 12 && targetValues.length >= 12 && metricValues.length === targetValues.length) {
           const correlation = calculatePearsonCorrelation(targetValues, metricValues);
           
           // Проверяем валидность корреляции
@@ -511,7 +509,7 @@ const LifeQualityTracker = () => {
       .slice(0, 5); // Берем топ-5
     
     return correlations;
-  }, [allMetrics, mockData]);
+  }, [allMetrics, weeklyData]);
 
   // Функция для получения цвета по значению (только функциональные цвета)
   const getScoreColor = (value: number) => {
@@ -609,7 +607,7 @@ const LifeQualityTracker = () => {
                 <span className="text-sm font-medium text-emerald-700">Общий индекс</span>
               </div>
               <div className="text-2xl font-bold text-emerald-600">
-                {mockData[mockData.length - 1]?.overall.toFixed(1) || '0.0'}
+                {weeklyData[weeklyData.length - 1]?.overall.toFixed(1) || '0.0'}
               </div>
               <div className="text-xs text-muted-foreground">текущее значение</div>
             </div>
@@ -641,7 +639,7 @@ const LifeQualityTracker = () => {
 
   // Топ бар для веб интерфейса
   const TopBar = () => {
-    const latestWeek = mockData.length > 0 ? mockData[mockData.length - 1] : null;
+    const latestWeek = weeklyData.length > 0 ? weeklyData[weeklyData.length - 1] : null;
     
     if (isMobile) {
       return (
@@ -721,7 +719,7 @@ const LifeQualityTracker = () => {
     const metric = allMetrics.find(m => m.name === selectedMetric);
     if (!metric) return null;
 
-    const metricData = mockData
+    const metricData = weeklyData
       .map(week => ({
         ...week,
         value: typeof week[metric.name] === 'number' && !isNaN(week[metric.name]) ? week[metric.name] : 0
@@ -806,11 +804,6 @@ const LifeQualityTracker = () => {
           </ResponsiveContainer>
         </div>
 
-        {/* Корреляции */}
-        <CorrelationAnalysis 
-          data={generateCorrelations(metric.name)}
-          targetMetric={metric.name}
-        />
       </div>
     );
   };
@@ -858,16 +851,14 @@ const LifeQualityTracker = () => {
             <div className="max-w-7xl mx-auto p-3 md:p-4 lg:p-6">
               <DashboardViewNew
                 allMetrics={allMetrics}
-                mockData={mockData}
+                weeklyData={weeklyData}
                 appState={appState}
                 generateWeeklyInsights={generateWeeklyInsights}
-                generateCorrelations={generateCorrelations}
                 getFilteredData={getFilteredData}
                 timeFilter={timeFilter}
                 setTimeFilter={setTimeFilter}
                 setCurrentView={setCurrentView}
                 setSelectedMetric={setSelectedMetric}
-                currentStreak={currentStreak}
               />
             </div>
           )}
@@ -875,7 +866,7 @@ const LifeQualityTracker = () => {
             <div className="max-w-7xl mx-auto p-3 md:p-4 lg:p-6">
               <AnalyticsViewNew
                 allMetrics={allMetrics}
-                mockData={mockData}
+                weeklyData={weeklyData}
                 timeFilter={timeFilter}
                 setTimeFilter={setTimeFilter}
                 categoryFilter={categoryFilter}
@@ -900,12 +891,15 @@ const LifeQualityTracker = () => {
           {currentView === 'insights' && (
             <div className="max-w-7xl mx-auto p-3 md:p-4 lg:p-6">
               <h2 className="text-xl md:text-2xl font-bold mb-4 md:mb-6">Инсайты и корреляции</h2>
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
-                <WeeklyInsights insights={generateWeeklyInsights()} />
-                <CorrelationAnalysis 
-                  data={generateCorrelations('Общий индекс')}
-                  targetMetric="Общий индекс"
-                />
+              <div className="text-center py-12 text-muted-foreground">
+                <Activity className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                <p className="font-medium mb-2">Инсайты доступны на главной странице</p>
+                <button
+                  onClick={() => setCurrentView('dashboard')}
+                  className="text-primary hover:underline text-sm"
+                >
+                  Перейти на главную
+                </button>
               </div>
             </div>
           )}
@@ -938,7 +932,7 @@ const LifeQualityTracker = () => {
           {currentView === 'ai' && (
             <div className="max-w-7xl mx-auto p-3 md:p-4 lg:p-6">
               <AdaptiveDashboard
-                weekData={mockData}
+                weekData={weeklyData}
                 goals={[]}
                 hypotheses={[]}
                 onInsightAction={(insight) => {

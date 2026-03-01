@@ -5,6 +5,8 @@ interface TrendItem {
   icon: string;
   category: string;
   change: number;
+  streak?: number;
+  weeksOfData?: number;
 }
 
 interface TrendsPanelProps {
@@ -22,13 +24,15 @@ const TrendsPanel: React.FC<TrendsPanelProps> = ({ trends }) => {
     <div className="bg-card border border-border rounded-2xl p-5">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-[15px] font-semibold flex items-center gap-2">
-          📈 Тренды недели
+          📈 Тренды (4 нед.)
         </h3>
       </div>
 
       <div className="flex flex-col gap-2">
         {sorted.map(t => {
           const isUp = t.change >= 0;
+          const streak = t.streak || 0;
+          const isPersistent = streak >= 3;
           return (
             <div
               key={t.name}
@@ -37,7 +41,14 @@ const TrendsPanel: React.FC<TrendsPanelProps> = ({ trends }) => {
               <span className="text-lg shrink-0">{t.icon}</span>
               <div className="flex-1 min-w-0">
                 <div className="text-[13px] font-medium truncate">{t.name}</div>
-                <div className="text-[11px] text-muted-foreground">{t.category}</div>
+                <div className="text-[11px] text-muted-foreground">
+                  {t.category}
+                  {isPersistent && (
+                    <span className={`ml-1.5 ${isUp ? 'text-emerald-500' : 'text-red-500'}`}>
+                      {isUp ? '↗' : '↘'} {streak} нед.
+                    </span>
+                  )}
+                </div>
               </div>
               <span
                 className={`text-base font-bold px-2.5 py-1 rounded-lg shrink-0 ${
@@ -53,7 +64,7 @@ const TrendsPanel: React.FC<TrendsPanelProps> = ({ trends }) => {
         })}
         {sorted.length === 0 && (
           <div className="text-center text-sm text-muted-foreground py-6">
-            Нет изменений за неделю
+            Нет значимых изменений
           </div>
         )}
       </div>

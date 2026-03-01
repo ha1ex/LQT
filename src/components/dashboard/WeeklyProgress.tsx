@@ -3,19 +3,19 @@ import { useIntegratedData } from '@/hooks/useIntegratedData';
 
 interface WeeklyProgressProps {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- chart data with dynamic metric keys
-  mockData: any[];
+  weeklyData: any[];
   onViewHistory: () => void;
   onCreateHypothesis?: (metricId?: string) => void;
   onViewStrategy?: () => void;
 }
 
 const WeeklyProgress: React.FC<WeeklyProgressProps> = ({
-  mockData,
+  weeklyData,
   onViewHistory,
 }) => {
   const { activeHypotheses, periodLabel } = useIntegratedData();
 
-  const lastFourWeeks = mockData.slice(-4);
+  const lastFourWeeks = weeklyData.slice(-4);
   const currentWeek = lastFourWeeks[lastFourWeeks.length - 1];
   const previousWeek = lastFourWeeks[lastFourWeeks.length - 2];
   const weekNum = periodLabel?.match(/W\d+/)?.[0] || '';

@@ -31,15 +31,6 @@ export enum ExperimentStatus {
   PAUSED = 'paused'
 }
 
-export enum SubjectType {
-  SELF = 'self',
-  FAMILY = 'family',
-  COLLEAGUES = 'colleagues',
-  FRIENDS = 'friends',
-  ENVIRONMENT = 'environment',
-  CUSTOM = 'custom'
-}
-
 export interface ValidationError {
   type: 'format' | 'content' | 'direction' | 'traceability';
   message: string;
@@ -65,15 +56,11 @@ export interface WeeklyProgress {
   lastModified?: Date; // время последнего изменения
 }
 
-export interface Subject {
-  id: string;
-  name: string;
-  type: SubjectType;
-  description: string;
-  influenceLevel: 'high' | 'medium' | 'low';
-  relationshipType: string;
-  motivationFactors: string[];
-  resistanceFactors: string[];
+export interface ExperimentConclusionData {
+  result: 'confirmed' | 'not_confirmed' | 'inconclusive';
+  summary?: string;
+  concludedAt: Date;
+  averageRating: number;
 }
 
 export interface EnhancedHypothesis {
@@ -84,7 +71,7 @@ export interface EnhancedHypothesis {
     targetValue: number;
     currentValue: number;
   };
-  subjects: string[]; // Subject IDs
+  subjects?: string[]; // Subject IDs (legacy, optional)
   conditions: string; // ЕСЛИ: конкретные действия
   expectedOutcome: string; // ТО: ожидаемый результат
   reasoning: string; // ПОТОМУ ЧТО: научное обоснование
@@ -108,6 +95,7 @@ export interface EnhancedHypothesis {
   }>;
   successCriteria: string[];
   weeklyProgress: WeeklyProgress[];
+  conclusion?: ExperimentConclusionData;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -119,7 +107,7 @@ export interface HypothesisFormData {
     targetValue: number;
     currentValue: number;
   };
-  subjects: string[];
+  subjects?: string[];
   conditions: string;
   expectedOutcome: string;
   reasoning: string;

@@ -43,30 +43,58 @@ export const useAIChat = () => {
     }
   };
 
-  // Генерация промпта для чата
-  const generateChatPrompt = (content: string, context: ChatContext) => {
-    const contextInfo = `
-Контекст пользователя:
-- Недельные данные: ${context.weekData?.length || 0} недель
-- Цели: ${context.goals?.length || 0} активных
-- Гипотезы: ${context.hypotheses?.length || 0} активных
-- Последние инсайты: ${context.lastInsights?.length || 0} штук
+  // Подготовка контекста с реальными данными
+  const prepareContextSummary = (context: ChatContext): string => {
+    const weeks = context.weekData || [];
+    if (weeks.length === 0) return 'У пользователя пока нет данных.';
 
-Вопрос пользователя: ${content}
+    const lastWeek = weeks[weeks.length - 1];
+    const metricNames = Object.keys(lastWeek || {}).filter(k => k !== 'date' && k !== 'overall');
 
-Отвечай как AI Life Coach, давая конкретные, практичные советы на основе данных пользователя.
-Используй эмодзи для лучшего восприятия. Отвечай на русском языке.
-`;
+    let summary = `Данные пользователя (${weeks.length} недель, шкала 1-10).\n`;
+    summary += `Последняя неделя (${lastWeek?.date || '?'}):\n`;
+    for (const name of metricNames) {
+      const val = lastWeek[name];
+      if (typeof val === 'number' && val > 0) {
+        summary += `  ${name}: ${val}/10\n`;
+      }
+    }
 
-    return contextInfo;
+    if (context.hypotheses?.length > 0) {
+      summary += `\nЭксперименты: ${context.hypotheses.map(h => h.title || h.id).join(', ')}\n`;
+    }
+
+    return summary;
   };
 
-  // Вызов OpenAI API
-  const callOpenAI = async (prompt: string): Promise<string> => {
+  // Вызов OpenAI API с историей разговора
+  const callOpenAI = async (userMessage: string, context: ChatContext, chatHistory: ChatMessage[]): Promise<string> => {
     const apiKey = getApiKey();
     if (!apiKey) {
       throw new Error('API ключ OpenAI не найден. Пожалуйста, введите его в настройках.');
     }
+
+    const contextSummary = prepareContextSummary(context);
+
+    // Формируем историю: последние 6 сообщений для контекста
+    const recentHistory = chatHistory.slice(-6).map(msg => ({
+      role: msg.type === 'user' ? 'user' as const : 'assistant' as const,
+      content: msg.content
+    }));
+
+    const apiMessages = [
+      {
+        role: 'system' as const,
+        content: `Ты — AI Life Coach для приложения отслеживания качества жизни. Помогай пользователю улучшить жизнь на основе его реальных данных. Не выдумывай данные. Не давай медицинских советов. Отвечай кратко и практично на русском языке.
+
+${contextSummary}`
+      },
+      ...recentHistory,
+      {
+        role: 'user' as const,
+        content: userMessage
+      }
+    ];
 
     try {
       const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -77,17 +105,8 @@ export const useAIChat = () => {
         },
         body: JSON.stringify({
           model: 'gpt-4o-mini',
-          messages: [
-            {
-              role: 'system',
-              content: 'Ты - AI Life Coach, который помогает пользователям улучшить качество жизни. Отвечай дружелюбно, используй эмодзи и давай практичные советы.'
-            },
-            {
-              role: 'user',
-              content: prompt
-            }
-          ],
-          temperature: 0.8,
+          messages: apiMessages,
+          temperature: 0.7,
           max_tokens: 1000,
         }),
       });
@@ -135,9 +154,8 @@ export const useAIChat = () => {
       const updatedMessages = [...messages, userMessage];
       setMessages(updatedMessages);
 
-      // Генерируем ответ AI
-      const prompt = generateChatPrompt(content, context);
-      const aiResponse = await callOpenAI(prompt);
+      // Генерируем ответ AI с историей разговора
+      const aiResponse = await callOpenAI(content, context, messages);
 
       // Добавляем ответ AI
       const aiMessage: ChatMessage = {

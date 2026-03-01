@@ -2,11 +2,12 @@ import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react'
 import { startOfWeek, format, getWeek, parseISO, subWeeks } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { useWeeklyRatings } from '@/hooks/useWeeklyRatings';
+import { useEnhancedHypotheses } from '@/hooks/strategy';
 
 import WeekNavigator from './WeekNavigator';
 import AssessmentPanel from './AssessmentPanel';
 import type { WeeklyRating } from '@/types/weeklyRating';
-import { Plus, Calendar } from 'lucide-react';
+import { Plus, Calendar, FlaskConical } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -227,6 +228,9 @@ const AssessmentSplitView: React.FC<AssessmentSplitViewProps> = ({ allMetrics })
     deleteWeekRating,
   } = useWeeklyRatings();
 
+  const { getActiveHypotheses } = useEnhancedHypotheses();
+  const activeExperiments = useMemo(() => getActiveHypotheses(), [getActiveHypotheses]);
+
   // Current week id
   const currentWeekId = useMemo(() => getWeekId(currentWeek), [currentWeek]);
 
@@ -362,18 +366,34 @@ const AssessmentSplitView: React.FC<AssessmentSplitViewProps> = ({ allMetrics })
       </div>
 
       {/* Right: Assessment Panel (flex-1) */}
-      <div className="flex-1 min-w-0 w-full rounded-xl bg-card border border-border overflow-hidden">
-        <AssessmentPanel
-          weekId={selectedWeekId}
-          rating={selectedRating}
-          allMetrics={allMetrics}
-          onRate={handleRate}
-          onMoodChange={handleMoodChange}
-          onAddEvent={handleAddEvent}
-          onRemoveEvent={handleRemoveEvent}
-          onSave={handleSave}
-          onDelete={handleDelete}
-        />
+      <div className="flex-1 min-w-0 w-full space-y-2.5">
+        {/* Active experiments reminder */}
+        {activeExperiments.length > 0 && (
+          <div className="flex items-start gap-3 p-3 rounded-xl border border-amber-500/20 bg-amber-500/5">
+            <FlaskConical className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
+            <div className="text-sm">
+              <span className="font-medium text-amber-700 dark:text-amber-400">
+                {activeExperiments.length} {activeExperiments.length === 1 ? 'активный эксперимент' : 'активных эксперимента'}
+              </span>
+              <span className="text-muted-foreground">
+                {' '}&mdash; не забудьте оценить прогресс в разделе Стратегия
+              </span>
+            </div>
+          </div>
+        )}
+        <div className="rounded-xl bg-card border border-border overflow-hidden">
+          <AssessmentPanel
+            weekId={selectedWeekId}
+            rating={selectedRating}
+            allMetrics={allMetrics}
+            onRate={handleRate}
+            onMoodChange={handleMoodChange}
+            onAddEvent={handleAddEvent}
+            onRemoveEvent={handleRemoveEvent}
+            onSave={handleSave}
+            onDelete={handleDelete}
+          />
+        </div>
       </div>
     </div>
   );

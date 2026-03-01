@@ -4,9 +4,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Calendar, BarChart3, Star, AlertCircle, CheckCircle2, TrendingUp, Clock, Edit3 } from 'lucide-react';
+import { Calendar, BarChart3, Star, AlertCircle, CheckCircle2, TrendingUp, Edit3 } from 'lucide-react';
 import { useEnhancedHypotheses } from '@/hooks/strategy';
-import { getRatingColor, getRatingLabel, createTestWeeklyProgress } from '@/utils/strategy';
+import { getRatingColor, getRatingLabel } from '@/utils/strategy';
 import { WeekDetailModal } from './WeekDetailModal';
 import { ProgressAnalytics } from './ProgressAnalytics';
 import { WeeklyProgress } from '@/types/strategy';
@@ -70,11 +70,6 @@ export const CompactProgressTracker: React.FC<CompactProgressTrackerProps> = ({ 
     updateHypothesis(hypothesisId, { weeklyProgress: updatedProgress });
   };
 
-  const generateTestData = () => {
-    const testData = createTestWeeklyProgress(hypothesis.experimentStartDate);
-    updateHypothesis(hypothesisId, { weeklyProgress: testData });
-  };
-
   return (
     <Card className="overflow-hidden">
       <CardHeader className="bg-gradient-to-r from-secondary/10 via-secondary/5 to-transparent">
@@ -82,14 +77,8 @@ export const CompactProgressTracker: React.FC<CompactProgressTrackerProps> = ({ 
           <Calendar className="h-5 w-5 text-secondary" />
           Прогресс недель
         </CardTitle>
-        <CardDescription className="flex items-center justify-between">
-          <span>Отслеживание еженедельного прогресса эксперимента</span>
-          {hypothesis.weeklyProgress.length < 10 && (
-            <Button variant="outline" size="sm" onClick={generateTestData}>
-              <Clock className="h-4 w-4 mr-1" />
-              Тестовые данные
-            </Button>
-          )}
+        <CardDescription>
+          Отслеживание еженедельного прогресса эксперимента
         </CardDescription>
       </CardHeader>
       

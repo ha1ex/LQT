@@ -2,9 +2,8 @@ import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { CheckCircle, AlertTriangle, Users, Target } from 'lucide-react';
+import { CheckCircle, AlertTriangle, Target } from 'lucide-react';
 import { EnhancedHypothesis, ValidationStatus } from '@/types/strategy';
-import { useSubjects } from '@/hooks/strategy';
 import { getPriorityCategory } from '@/utils/strategy';
 
 interface HypothesisCardProps {
@@ -18,8 +17,6 @@ export const HypothesisCard: React.FC<HypothesisCardProps> = ({
   priority,
   onView
 }) => {
-  const { getSubjectsByIds } = useSubjects();
-  const subjects = getSubjectsByIds(hypothesis.subjects);
   const priorityCategory = getPriorityCategory(hypothesis.calculatedPriority);
 
   return (
@@ -86,33 +83,6 @@ export const HypothesisCard: React.FC<HypothesisCardProps> = ({
             </div>
           </div>
         </div>
-
-        {/* Subjects */}
-        {subjects.length > 0 && (
-          <div className="mb-4">
-            <div className="flex items-center space-x-2 mb-2">
-              <Users className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm text-muted-foreground">Субъекты:</span>
-            </div>
-            
-            <div className="flex flex-wrap gap-1">
-              {subjects.slice(0, 3).map((subject) => (
-                <Badge 
-                  key={subject.id} 
-                  variant="secondary" 
-                  className="text-xs"
-                >
-                  {subject.name}
-                </Badge>
-              ))}
-              {subjects.length > 3 && (
-                <Badge variant="outline" className="text-xs">
-                  +{subjects.length - 3}
-                </Badge>
-              )}
-            </div>
-          </div>
-        )}
 
         {/* Full Hypothesis Structure */}
         <div className="mb-4 space-y-3">

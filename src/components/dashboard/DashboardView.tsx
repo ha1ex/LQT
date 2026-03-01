@@ -4,13 +4,10 @@ import { useIntegratedData } from '@/hooks/useIntegratedData';
 import ProblemAreas from './ProblemAreas';
 import WeeklyProgress from './WeeklyProgress';
 import Strengths from './Strengths';
-import AIRecommendations from './AIRecommendations';
 import DynamicsChart from './DynamicsChart';
-import CorrelationsSidebar from './CorrelationsSidebar';
 import TopMetricsGrid from './TopMetricsGrid';
 import InsightsOfWeek from './InsightsOfWeek';
-import ActivityCard from './ActivityCard';
-import { PersonalRecommendations, PersonalInsights, PersonalGoals } from '../tracker';
+import { PersonalRecommendations, PersonalGoals } from '../tracker';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -19,19 +16,16 @@ import { PersonalRecommendations, PersonalInsights, PersonalGoals } from '../tra
 interface DashboardViewProps {
   allMetrics: Array<{ id: string; name: string; icon: string; description: string; category: string }>;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- dynamic week data with metric keys
-  mockData: any[];
+  weeklyData: any[];
   appState: { userState: string; hasData: boolean; lastDataSync: Date | null };
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- insights return dynamic shapes
   generateWeeklyInsights: () => any[];
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- correlation data has dynamic structure
-  generateCorrelations: (targetMetric: string) => any[];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- dynamic week data with metric keys
   getFilteredData: (filter: string) => any[];
   timeFilter: string;
   setTimeFilter: (filter: string) => void;
   setCurrentView: (view: string) => void;
   setSelectedMetric: (metric: string | null) => void;
-  currentStreak: number;
 }
 
 // ---------------------------------------------------------------------------
@@ -40,21 +34,19 @@ interface DashboardViewProps {
 
 const DashboardView: React.FC<DashboardViewProps> = ({
   allMetrics,
-  mockData,
+  weeklyData,
   appState,
   generateWeeklyInsights,
-  generateCorrelations,
   getFilteredData,
   timeFilter,
   setTimeFilter,
   setCurrentView,
   setSelectedMetric,
-  currentStreak,
 }) => {
   const { periodLabel } = useIntegratedData();
 
   // Empty state
-  if (appState.userState === 'empty' || mockData.length === 0) {
+  if (appState.userState === 'empty' || weeklyData.length === 0) {
     return (
       <EmptyStateView
         onGetStarted={() => setCurrentView('rate')}
@@ -64,8 +56,8 @@ const DashboardView: React.FC<DashboardViewProps> = ({
   }
 
   // Derived data
-  const latestWeek = mockData[mockData.length - 1] ?? null;
-  const prevWeek = mockData.length > 1 ? mockData[mockData.length - 2] : latestWeek;
+  const latestWeek = weeklyData[weeklyData.length - 1] ?? null;
+  const prevWeek = weeklyData.length > 1 ? weeklyData[weeklyData.length - 2] : latestWeek;
 
   const topMetrics = latestWeek
     ? allMetrics
@@ -89,9 +81,6 @@ const DashboardView: React.FC<DashboardViewProps> = ({
         .slice(0, 6)
     : [];
 
-  // Monthly count — number of weeks with data in last 4 weeks
-  const monthlyCount = mockData.slice(-4).filter(w => w && typeof w.overall === 'number' && w.overall > 0).length;
-
   // Handlers
   const handleMetricClick = (metricId: string) => {
     if (metricId === 'analytics') {
@@ -109,15 +98,15 @@ const DashboardView: React.FC<DashboardViewProps> = ({
 
   return (
     <div className="space-y-2.5">
-      {/* Row 1: 4 summary cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-2.5">
+      {/* Row 1: 3 summary cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2.5">
         <ProblemAreas
           allMetrics={allMetrics}
           currentWeekData={latestWeek}
           onMetricClick={handleMetricClick}
         />
         <WeeklyProgress
-          mockData={mockData}
+          weeklyData={weeklyData}
           onViewHistory={() => setCurrentView('rating')}
         />
         <Strengths
@@ -125,27 +114,14 @@ const DashboardView: React.FC<DashboardViewProps> = ({
           currentWeekData={latestWeek}
           onMetricClick={handleMetricClick}
         />
-        <AIRecommendations
-          allMetrics={allMetrics}
-          currentWeekData={latestWeek}
-          onOpenAIChat={() => setCurrentView('ai')}
-        />
       </div>
 
-      {/* Row 2: Chart (2fr) + Correlations (1fr) */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-2.5">
-        <div className="lg:col-span-2">
-          <DynamicsChart
-            getFilteredData={getFilteredData}
-            timeFilter={timeFilter}
-            setTimeFilter={setTimeFilter}
-          />
-        </div>
-        <CorrelationsSidebar
-          correlations={generateCorrelations('Общий индекс')}
-          allMetrics={allMetrics}
-        />
-      </div>
+      {/* Row 2: Chart (full width) */}
+      <DynamicsChart
+        getFilteredData={getFilteredData}
+        timeFilter={timeFilter}
+        setTimeFilter={setTimeFilter}
+      />
 
       {/* Row 3: Metrics + Insights + Goals */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-2.5">
@@ -160,25 +136,15 @@ const DashboardView: React.FC<DashboardViewProps> = ({
         />
         <PersonalGoals
           metrics={allMetrics}
-          data={mockData}
+          data={weeklyData}
         />
       </div>
 
-      {/* Row 4: AI + Correlations + Activity */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-2.5">
-        <PersonalRecommendations
-          metrics={allMetrics}
-          data={mockData}
-        />
-        <PersonalInsights
-          metrics={allMetrics}
-          data={mockData}
-        />
-        <ActivityCard
-          monthlyCount={monthlyCount}
-          currentStreak={currentStreak}
-        />
-      </div>
+      {/* Row 4: Recommendations (full width) */}
+      <PersonalRecommendations
+        metrics={allMetrics}
+        data={weeklyData}
+      />
     </div>
   );
 };
